@@ -40,9 +40,17 @@ def hash_password(password: str) -> str:
 
 
 def get_connection():
-    """Get database connection."""
-    conn = sqlite3.connect(DB_PATH)
+    """Get optimized database connection."""
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
+    # Enable WAL mode for better concurrent access
+    conn.execute("PRAGMA journal_mode=WAL")
+    # Enable foreign keys
+    conn.execute("PRAGMA foreign_keys=ON")
+    # Optimize for speed
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA cache_size=10000")
+    conn.execute("PRAGMA temp_store=MEMORY")
     return conn
 
 
@@ -134,6 +142,16 @@ def init_database():
             FOREIGN KEY (visit_id) REFERENCES visits (id)
         )
     """)
+
+    # Create indexes for faster queries
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_patients_name ON patients(name)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_patients_contact ON patients(contact)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_visits_patient_id ON visits(patient_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_visits_date ON visits(date)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_prescriptions_visit_id ON prescriptions(visit_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_finance_date ON finance(date)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_finance_type ON finance(type)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_inventory_brand_name ON inventory(brand_name)")
 
     conn.commit()
 

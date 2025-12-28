@@ -532,7 +532,7 @@
 
         <!-- Search Bar -->
         <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="Search patients by name, ID, or contact..." onkeyup="searchPatients()">
+            <input type="text" id="searchInput" placeholder="Search patients by name, ID, or contact...">
             <button class="btn btn-primary" onclick="searchPatients()">
                 <i class="fas fa-search"></i> Search
             </button>
@@ -858,21 +858,37 @@
     <script>
         let inventoryItems = [];
         let medicineCounter = 0;
+        let searchTimeout = null;
+
+        // Debounce helper for search
+        function debounce(func, wait) {
+            return function executedFunction(...args) {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
 
         // Load patients on page load
         document.addEventListener('DOMContentLoaded', () => {
             loadPatients();
             loadInventory();
+            
+            // Add debounced search on input
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', debounce(searchPatients, 300));
         });
 
         // Load all patients
         async function loadPatients() {
+            const tbody = document.getElementById('patientTableBody');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;"><div class="spinner"></div></td></tr>';
             try {
                 const response = await fetch('/api/patients');
                 const patients = await response.json();
                 renderPatients(patients);
             } catch (error) {
                 console.error('Error loading patients:', error);
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">Failed to load patients</td></tr>';
             }
         }
 
