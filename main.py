@@ -982,6 +982,66 @@ async def create_backup():
         raise HTTPException(status_code=500, detail=f"Backup failed: {str(e)}")
 
 
+@app.get("/api/settings/backups")
+async def list_backups():
+    """List available backup files."""
+    if not session.get("logged_in"):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    desktop = Path.home() / "Desktop" / "Backups"
+    backups = []
+    
+    if desktop.exists():
+        for backup_file in sorted(desktop.glob("backup_clinic_*.db"), reverse=True):
+            stat = backup_file.stat()
+            backups.append({
+                "filename": backup_file.name,
+                "path": str(backup_file),
+                "size": f"{stat.st_size / 1024:.1f} KB",
+                "date": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M")
+            })
+    
+    return backups
+
+
+@app.post("/api/settings/restore")
+async def restore_backup(request: Request):
+    """Restore database from a backup file."""
+    if not session.get("logged_in"):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    from database import DB_PATH
+    
+    data = await request.json()
+    backup_path = data.get("backup_path")
+    
+    if not backup_path:
+        raise HTTPException(status_code=400, detail="No backup file specified")
+    
+    backup_file = Path(backup_path)
+    
+    if not backup_file.exists():
+        raise HTTPException(status_code=404, detail="Backup file not found")
+    
+    try:
+        # Create a safety backup before restoring
+        safety_backup = DB_PATH.parent / f"pre_restore_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
+        if DB_PATH.exists():
+            shutil.copy2(DB_PATH, safety_backup)
+        
+        # Restore the backup
+        shutil.copy2(backup_file, DB_PATH)
+        
+        return {
+            "success": True,
+            "message": "Database restored successfully! Please restart the app.",
+            "safety_backup": str(safety_backup)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Restore failed: {str(e)}")
+
+
 # ============ Prescription Routes ============
 
 @app.get("/prescription/{visit_id}/print")

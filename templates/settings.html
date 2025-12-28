@@ -384,16 +384,22 @@
         <div class="settings-grid">
             <!-- Backup Section -->
             <div class="settings-card backup-section">
-                <h3><i class="fas fa-database"></i> Database Backup</h3>
+                <h3><i class="fas fa-database"></i> Database Backup & Restore</h3>
                 <p>
                     Create a secure backup of your entire clinic database including all patients, 
                     visits, prescriptions, inventory, and financial records. Backups are saved to 
                     your Desktop in the <strong>/Backups</strong> folder.
                 </p>
-                <button class="backup-btn" id="backupBtn" onclick="createBackup()">
-                    <i class="fas fa-download"></i>
-                    One-Click Backup
-                </button>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <button class="backup-btn" id="backupBtn" onclick="createBackup()">
+                        <i class="fas fa-download"></i>
+                        One-Click Backup
+                    </button>
+                    <button class="backup-btn" onclick="openRestoreModal()" style="background: #ffc107; color: #333;">
+                        <i class="fas fa-upload"></i>
+                        Restore Backup
+                    </button>
+                </div>
                 <div class="backup-status" id="backupStatus"></div>
                 <div class="last-backup" id="lastBackup"></div>
             </div>
@@ -462,6 +468,28 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Restore Backup Modal -->
+    <div class="modal-overlay" id="restoreModal" style="display: none;">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header" style="background: #ffc107;">
+                <h2 style="color: #333;"><i class="fas fa-upload"></i> Restore Backup</h2>
+                <button class="modal-close" onclick="closeModal('restoreModal')" style="color: #333;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                    <strong><i class="fas fa-exclamation-triangle"></i> Warning:</strong> Restoring a backup will replace ALL current data. A safety backup will be created automatically.
+                </div>
+                <h4 style="margin-bottom: 15px; color: var(--primary-blue);">Available Backups:</h4>
+                <div id="backupList" style="max-height: 300px; overflow-y: auto;">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('restoreModal')">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -590,6 +618,72 @@
                 }
             });
         });
+
+        // Open restore modal and load backups
+        async function openRestoreModal() {
+            document.getElementById('restoreModal').style.display = 'flex';
+            await loadBackups();
+        }
+
+        // Load available backups
+        async function loadBackups() {
+            const container = document.getElementById('backupList');
+            container.innerHTML = '<div class="spinner"></div>';
+            
+            try {
+                const response = await fetch('/api/settings/backups');
+                const backups = await response.json();
+                
+                if (backups.length === 0) {
+                    container.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">No backups found. Create a backup first!</p>';
+                    return;
+                }
+                
+                container.innerHTML = backups.map(backup => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 10px;">
+                        <div>
+                            <strong style="color: var(--primary-blue);">${backup.filename}</strong><br>
+                            <small style="color: #666;">${backup.date} | ${backup.size}</small>
+                        </div>
+                        <button class="btn btn-primary" onclick="restoreBackup('${backup.path.replace(/\\/g, '\\\\')}')" style="background: #dc3545;">
+                            <i class="fas fa-undo"></i> Restore
+                        </button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading backups:', error);
+                container.innerHTML = '<p style="color: red; text-align: center;">Failed to load backups</p>';
+            }
+        }
+
+        // Restore a backup
+        async function restoreBackup(backupPath) {
+            if (!confirm('Are you sure you want to restore this backup? This will replace ALL current data!')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/settings/restore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ backup_path: backupPath })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    alert(result.message);
+                    closeModal('restoreModal');
+                    // Reload page to refresh data
+                    window.location.reload();
+                } else {
+                    alert('Restore failed: ' + (result.detail || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Restore error:', error);
+                alert('Failed to restore backup');
+            }
+        }
     </script>
 </body>
 </html>
