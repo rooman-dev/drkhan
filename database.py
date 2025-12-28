@@ -5,10 +5,33 @@ Database Initialization Module
 
 import sqlite3
 import hashlib
+import sys
+import os
 from pathlib import Path
 
+
+def get_app_data_path():
+    """Get persistent path for app data that works with PyInstaller."""
+    if getattr(sys, 'frozen', False):
+        # Running as compiled executable
+        if sys.platform == 'win32':
+            # Windows: Use AppData/Local
+            app_data = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
+            data_dir = app_data / 'DrKhan'
+        else:
+            # Linux/Mac: Use home directory
+            data_dir = Path.home() / '.drkhan'
+        
+        # Create directory if it doesn't exist
+        data_dir.mkdir(parents=True, exist_ok=True)
+        return data_dir / "clinic.db"
+    else:
+        # Running from source - use current directory
+        return Path(__file__).parent / "clinic.db"
+
+
 # Database file path
-DB_PATH = Path(__file__).parent / "clinic.db"
+DB_PATH = get_app_data_path()
 
 
 def hash_password(password: str) -> str:

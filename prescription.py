@@ -4,6 +4,7 @@ Prescription PDF Generator
 """
 
 import os
+import sys
 import subprocess
 import platform
 from pathlib import Path
@@ -11,6 +12,22 @@ from datetime import datetime
 from fpdf import FPDF
 
 from database import get_connection
+
+
+def get_output_dir():
+    """Get persistent output directory for PDFs."""
+    if getattr(sys, 'frozen', False):
+        # Running as compiled executable
+        if sys.platform == 'win32':
+            app_data = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
+            output_dir = app_data / 'DrKhan' / 'prescriptions'
+        else:
+            output_dir = Path.home() / '.drkhan' / 'prescriptions'
+    else:
+        output_dir = Path(__file__).parent / 'prescriptions'
+    
+    output_dir.mkdir(parents=True, exist_ok=True)
+    return output_dir
 
 
 class PrescriptionPDF(FPDF):
@@ -263,8 +280,7 @@ def generate_prescription_pdf(visit_id: int) -> str:
         pdf.ln()
     
     # Generate output path
-    output_dir = Path(__file__).parent / "prescriptions"
-    output_dir.mkdir(exist_ok=True)
+    output_dir = get_output_dir()
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_file = output_dir / f"prescription_{visit_id}_{timestamp}.pdf"
