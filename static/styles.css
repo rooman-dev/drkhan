@@ -1,0 +1,367 @@
+/**
+ * DrKhan Hospital Management System
+ * Theme Stylesheet
+ */
+
+/* ========== CSS Variables ========== */
+:root {
+    --primary-blue: #001f3f;
+    --accent-white: #ffffff;
+    --text-large: 1.2rem;
+    --bg-light: #f4f6f9;
+    --shadow-soft: 0 4px 15px rgba(0, 0, 0, 0.1);
+    --border-radius: 15px;
+    --transition-smooth: all 0.3s ease;
+}
+
+/* ========== Base Styles ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: var(--text-large);
+    background-color: var(--bg-light);
+    color: #333;
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+/* ========== Sidebar ========== */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 250px;
+    height: 100vh;
+    background-color: var(--primary-blue);
+    color: var(--accent-white);
+    padding: 20px 0;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.sidebar-brand {
+    text-align: center;
+    padding: 20px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 20px;
+}
+
+.sidebar-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-nav li {
+    margin: 5px 0;
+}
+
+.sidebar-nav a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 25px;
+    color: var(--accent-white);
+    text-decoration: none;
+    font-size: var(--text-large);
+    transition: var(--transition-smooth);
+    border-left: 4px solid transparent;
+}
+
+.sidebar-nav a:hover,
+.sidebar-nav a.active {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-left-color: var(--accent-white);
+}
+
+.sidebar-nav a i {
+    width: 24px;
+    text-align: center;
+}
+
+/* ========== Main Content ========== */
+.main-content {
+    margin-left: 250px;
+    padding: 30px;
+    min-height: 100vh;
+    animation: slideIn 0.4s ease-out;
+}
+
+/* ========== Cards ========== */
+.card {
+    background-color: var(--accent-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-soft);
+    border: none;
+    padding: 25px;
+    margin-bottom: 20px;
+    transition: var(--transition-smooth);
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--primary-blue);
+}
+
+/* Hover Lift Effect */
+.hover-lift {
+    transition: var(--transition-smooth);
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* ========== Buttons ========== */
+.btn {
+    padding: 12px 24px;
+    font-size: var(--text-large);
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: var(--primary-blue);
+    color: var(--accent-white);
+}
+
+.btn-primary:hover {
+    background-color: #003366;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: var(--accent-white);
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.btn-success {
+    background-color: #28a745;
+    color: var(--accent-white);
+}
+
+.btn-success:hover {
+    background-color: #218838;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: var(--accent-white);
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 2px solid var(--primary-blue);
+    color: var(--primary-blue);
+}
+
+.btn-outline:hover {
+    background-color: var(--primary-blue);
+    color: var(--accent-white);
+}
+
+/* ========== Form Elements ========== */
+.form-control {
+    padding: 12px 18px;
+    font-size: var(--text-large);
+    border: 2px solid #e0e0e0;
+    border-radius: var(--border-radius);
+    transition: var(--transition-smooth);
+    width: 100%;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(0, 31, 63, 0.1);
+}
+
+.form-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+    color: var(--primary-blue);
+}
+
+/* ========== Tables ========== */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--accent-white);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.table thead {
+    background-color: var(--primary-blue);
+    color: var(--accent-white);
+}
+
+.table th,
+.table td {
+    padding: 15px 20px;
+    text-align: left;
+    font-size: var(--text-large);
+}
+
+.table tbody tr {
+    border-bottom: 1px solid #eee;
+    transition: var(--transition-smooth);
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* ========== Animations ========== */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-in {
+    animation: slideIn 0.4s ease-out;
+}
+
+/* ========== Utility Classes ========== */
+.text-primary {
+    color: var(--primary-blue);
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-bold {
+    font-weight: 700;
+}
+
+.mt-1 { margin-top: 10px; }
+.mt-2 { margin-top: 20px; }
+.mt-3 { margin-top: 30px; }
+.mb-1 { margin-bottom: 10px; }
+.mb-2 { margin-bottom: 20px; }
+.mb-3 { margin-bottom: 30px; }
+.p-1 { padding: 10px; }
+.p-2 { padding: 20px; }
+.p-3 { padding: 30px; }
+
+.d-flex {
+    display: flex;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.align-center {
+    align-items: center;
+}
+
+.gap-1 { gap: 10px; }
+.gap-2 { gap: 20px; }
+
+/* ========== Stats Cards ========== */
+.stat-card {
+    text-align: center;
+    padding: 30px;
+}
+
+.stat-card .stat-number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+}
+
+.stat-card .stat-label {
+    font-size: var(--text-large);
+    color: #666;
+    margin-top: 10px;
+}
+
+/* ========== Lock Screen ========== */
+.lock-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, #003366 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.lock-box {
+    background-color: var(--accent-white);
+    padding: 50px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    min-width: 400px;
+    animation: slideIn 0.5s ease-out;
+}
+
+.lock-box h1 {
+    color: var(--primary-blue);
+    margin-bottom: 30px;
+    font-size: 2.5rem;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 70px;
+        padding: 10px 0;
+    }
+
+    .sidebar-brand {
+        font-size: 1rem;
+        padding: 10px;
+    }
+
+    .sidebar-nav a span {
+        display: none;
+    }
+
+    .sidebar-nav a {
+        justify-content: center;
+        padding: 15px;
+    }
+
+    .main-content {
+        margin-left: 70px;
+        padding: 15px;
+    }
+}

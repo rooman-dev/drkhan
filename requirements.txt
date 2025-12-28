@@ -1,0 +1,15 @@
+# DrKhan Hospital Management System
+# Dependencies
+
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pywebview>=4.4.0
+jinja2>=3.1.2
+python-multipart>=0.0.6
+pydantic>=2.5.0
+fpdf2>=2.7.0
+# Windows only (for pywebview)
+pythonnet>=3.0.0; sys_platform == 'win32'
+
+# Build tools
+pyinstaller>=6.0.0

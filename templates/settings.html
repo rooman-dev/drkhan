@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DrKhan Clinic - Settings</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Page Specific Styles */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            color: var(--primary-blue);
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        /* Settings Sections */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+
+        .settings-card {
+            background: var(--accent-white);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .settings-card h3 {
+            color: var(--primary-blue);
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .settings-card h3 i {
+            font-size: 1.6rem;
+        }
+
+        .settings-card p {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        /* Backup Section */
+        .backup-section {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #001f3f 0%, #003366 100%);
+            color: white;
+        }
+
+        .backup-section h3 {
+            color: white;
+        }
+
+        .backup-section p {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .backup-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px 40px;
+            background: white;
+            color: var(--primary-blue);
+            border: none;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .backup-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .backup-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .backup-btn i {
+            font-size: 1.5rem;
+        }
+
+        .backup-status {
+            margin-top: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            display: none;
+            font-size: 1.1rem;
+        }
+
+        .backup-status.success {
+            display: block;
+            background: rgba(40, 167, 69, 0.2);
+            color: #90EE90;
+            border: 1px solid rgba(40, 167, 69, 0.5);
+        }
+
+        .backup-status.error {
+            display: block;
+            background: rgba(220, 53, 69, 0.2);
+            color: #ffcccc;
+            border: 1px solid rgba(220, 53, 69, 0.5);
+        }
+
+        .last-backup {
+            margin-top: 15px;
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Info Cards */
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-item .label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .info-item .value {
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        /* About Section */
+        .about-logo {
+            font-size: 4rem;
+            color: var(--primary-blue);
+            margin-bottom: 15px;
+        }
+
+        .version-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            background: #e9ecef;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        /* Sidebar Footer */
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .income-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 15px;
+            background: #28a745;
+            color: var(--accent-white);
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            margin-bottom: 10px;
+        }
+
+        .income-btn:hover {
+            background: #218838;
+        }
+
+        .lock-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--accent-white);
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .lock-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--accent-white);
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            background: var(--primary-blue);
+            color: var(--accent-white);
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--primary-blue);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 1.1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            outline: none;
+            transition: var(--transition-smooth);
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-blue);
+        }
+
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        @media (max-width: 992px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+            .backup-section {
+                grid-column: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 10px;">
+            <img src="/static/logo.png" alt="DrKhan Logo" style="width: 90px; height: 90px; border-radius: 15px; margin-bottom: 10px; border: 3px solid white;">
+            <span style="font-size: 1.1rem; font-weight: 700; white-space: nowrap;">DR.Khan Clinic</span>
+        </div>
+        <ul class="sidebar-nav">
+            <li>
+                <a href="/dashboard">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="/patients">
+                    <i class="fas fa-users"></i>
+                    <span>Patients</span>
+                </a>
+            </li>
+            <li>
+                <a href="/pharmacy">
+                    <i class="fas fa-pills"></i>
+                    <span>Pharmacy</span>
+                </a>
+            </li>
+            <li>
+                <a href="/finance">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Finance</span>
+                </a>
+            </li>
+            <li>
+                <a href="/settings" class="active">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <button class="income-btn" onclick="openIncomeModal()">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Add Income</span>
+            </button>
+            <button class="lock-btn" onclick="lockApp()">
+                <i class="fas fa-lock"></i>
+                <span>Lock App</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title"><i class="fas fa-cog"></i> Settings</h1>
+        </div>
+
+        <div class="settings-grid">
+            <!-- Backup Section -->
+            <div class="settings-card backup-section">
+                <h3><i class="fas fa-database"></i> Database Backup</h3>
+                <p>
+                    Create a secure backup of your entire clinic database including all patients, 
+                    visits, prescriptions, inventory, and financial records. Backups are saved to 
+                    your Desktop in the <strong>/Backups</strong> folder.
+                </p>
+                <button class="backup-btn" id="backupBtn" onclick="createBackup()">
+                    <i class="fas fa-download"></i>
+                    One-Click Backup
+                </button>
+                <div class="backup-status" id="backupStatus"></div>
+                <div class="last-backup" id="lastBackup"></div>
+            </div>
+
+            <!-- System Info -->
+            <div class="settings-card">
+                <h3><i class="fas fa-info-circle"></i> System Information</h3>
+                <div class="info-item">
+                    <span class="label">Database File</span>
+                    <span class="value">clinic.db</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Database Size</span>
+                    <span class="value" id="dbSize">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Total Patients</span>
+                    <span class="value" id="totalPatients">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Total Visits</span>
+                    <span class="value" id="totalVisits">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Inventory Items</span>
+                    <span class="value" id="inventoryCount">--</span>
+                </div>
+            </div>
+
+            <!-- About Section -->
+            <div class="settings-card" style="text-align: center;">
+                <div class="about-logo">
+                    <i class="fas fa-hospital"></i>
+                </div>
+                <h3 style="justify-content: center;">DrKhan Clinic</h3>
+                <div class="version-badge">Version 1.0.0</div>
+                <p style="margin-bottom: 0;">
+                    Hospital Management System<br>
+                    Built with ❤️ for efficient clinic operations
+                </p>
+                <p style="font-size: 0.9rem; color: #999; margin-top: 15px;">
+                    © 2025 DrKhan Clinic. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Quick Income Modal -->
+    <div class="modal-overlay" id="incomeModal" style="display: none;">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-money-bill-wave"></i> Add Patient Fee</h2>
+                <button class="modal-close" onclick="closeModal('incomeModal')">&times;</button>
+            </div>
+            <form id="incomeForm" onsubmit="saveIncome(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="incomeAmount">Amount (Cash) *</label>
+                        <input type="number" id="incomeAmount" name="amount" required min="1" step="0.01" placeholder="Enter amount" style="font-size: 1.5rem; text-align: center;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('incomeModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="background: #28a745;">
+                        <i class="fas fa-plus"></i> Add Income
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Load system info on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSystemInfo();
+        });
+
+        // Load system information
+        async function loadSystemInfo() {
+            try {
+                const response = await fetch('/api/settings/info');
+                const data = await response.json();
+
+                document.getElementById('dbSize').textContent = data.db_size;
+                document.getElementById('totalPatients').textContent = data.total_patients;
+                document.getElementById('totalVisits').textContent = data.total_visits;
+                document.getElementById('inventoryCount').textContent = data.inventory_count;
+
+                if (data.last_backup) {
+                    document.getElementById('lastBackup').textContent = 'Last backup: ' + data.last_backup;
+                }
+            } catch (error) {
+                console.error('Error loading system info:', error);
+            }
+        }
+
+        // Create backup
+        async function createBackup() {
+            const btn = document.getElementById('backupBtn');
+            const status = document.getElementById('backupStatus');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Backup...';
+            status.className = 'backup-status';
+            status.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/settings/backup', {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    status.className = 'backup-status success';
+                    status.innerHTML = '<i class="fas fa-check-circle"></i> ' + result.message;
+                    document.getElementById('lastBackup').textContent = 'Last backup: Just now';
+                } else {
+                    status.className = 'backup-status error';
+                    status.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + (result.detail || 'Backup failed');
+                }
+            } catch (error) {
+                console.error('Backup error:', error);
+                status.className = 'backup-status error';
+                status.innerHTML = '<i class="fas fa-exclamation-circle"></i> Failed to create backup';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-download"></i> One-Click Backup';
+            }
+        }
+
+        // Lock app
+        function lockApp() {
+            fetch('/logout', { method: 'POST' })
+                .then(() => window.location.href = '/')
+                .catch(() => window.location.href = '/');
+        }
+
+        // Income modal functions
+        function openIncomeModal() {
+            document.getElementById('incomeForm').reset();
+            document.getElementById('incomeModal').style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        async function saveIncome(event) {
+            event.preventDefault();
+            const form = event.target;
+            const today = new Date().toISOString().split('T')[0];
+            const data = {
+                type: 'Income',
+                amount: parseFloat(form.amount.value),
+                date: today,
+                notes: 'Patient fee'
+            };
+
+            try {
+                const response = await fetch('/api/finance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('incomeModal');
+                    alert('Income added successfully!');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                console.error('Error saving income:', error);
+                alert('Failed to save income');
+            }
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay').forEach(modal => {
+                    modal.style.display = 'none';
+                });
+            }
+        });
+
+        // Close modal on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DrKhan Clinic - Finance</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Page Specific Styles */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            color: var(--primary-blue);
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-large {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Finance Stats Cards */
+        .finance-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .finance-card {
+            background: var(--accent-white);
+            border-radius: var(--border-radius);
+            padding: 35px 30px;
+            text-align: center;
+            box-shadow: var(--shadow-soft);
+            transition: var(--transition-smooth);
+            border-top: 5px solid;
+        }
+
+        .finance-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .finance-card.revenue {
+            border-top-color: #28a745;
+        }
+
+        .finance-card.expense {
+            border-top-color: #dc3545;
+        }
+
+        .finance-card.profit {
+            border-top-color: var(--primary-blue);
+        }
+
+        .finance-card .card-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .finance-card.revenue .card-icon {
+            color: #28a745;
+        }
+
+        .finance-card.expense .card-icon {
+            color: #dc3545;
+        }
+
+        .finance-card.profit .card-icon {
+            color: var(--primary-blue);
+        }
+
+        .finance-card .card-amount {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .finance-card.revenue .card-amount {
+            color: #28a745;
+        }
+
+        .finance-card.expense .card-amount {
+            color: #dc3545;
+        }
+
+        .finance-card.profit .card-amount {
+            color: var(--primary-blue);
+        }
+
+        .finance-card .card-label {
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-section select,
+        .filter-section input {
+            padding: 12px 18px;
+            font-size: 1.1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            outline: none;
+            transition: var(--transition-smooth);
+        }
+
+        .filter-section select:focus,
+        .filter-section input:focus {
+            border-color: var(--primary-blue);
+        }
+
+        .filter-section label {
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-right: 8px;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Transaction Table */
+        .transaction-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--accent-white);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .transaction-table thead {
+            background: var(--primary-blue);
+            color: var(--accent-white);
+        }
+
+        .transaction-table th,
+        .transaction-table td {
+            padding: 18px 20px;
+            text-align: left;
+            font-size: 1.1rem;
+        }
+
+        .transaction-table tbody tr {
+            border-bottom: 1px solid #eee;
+            transition: var(--transition-smooth);
+        }
+
+        .transaction-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .type-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .type-income {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .type-expense {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .amount-income {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .amount-expense {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .btn-delete {
+            padding: 8px 14px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--accent-white);
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 550px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .modal-header {
+            background: var(--primary-blue);
+            color: var(--accent-white);
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--primary-blue);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 1.1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            outline: none;
+            transition: var(--transition-smooth);
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: var(--primary-blue);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        /* Transaction Type Selector */
+        .type-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .type-option {
+            padding: 20px;
+            border: 3px solid #e0e0e0;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .type-option:hover {
+            border-color: #999;
+        }
+
+        .type-option.selected {
+            border-width: 3px;
+        }
+
+        .type-option.income.selected {
+            border-color: #28a745;
+            background: #f0fff4;
+        }
+
+        .type-option.expense.selected {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .type-option i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .type-option.income i {
+            color: #28a745;
+        }
+
+        .type-option.expense i {
+            color: #dc3545;
+        }
+
+        .type-option span {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* Sidebar Footer */
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .income-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 15px;
+            background: #28a745;
+            color: var(--accent-white);
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            margin-bottom: 10px;
+        }
+
+        .income-btn:hover {
+            background: #218838;
+        }
+
+        .lock-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--accent-white);
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .lock-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        @media (max-width: 992px) {
+            .finance-stats {
+                grid-template-columns: 1fr;
+            }
+            .filter-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 10px;">
+            <img src="/static/logo.png" alt="DrKhan Logo" style="width: 90px; height: 90px; border-radius: 15px; margin-bottom: 10px; border: 3px solid white;">
+            <span style="font-size: 1.1rem; font-weight: 700; white-space: nowrap;">DR.Khan Clinic</span>
+        </div>
+        <ul class="sidebar-nav">
+            <li>
+                <a href="/dashboard">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="/patients">
+                    <i class="fas fa-users"></i>
+                    <span>Patients</span>
+                </a>
+            </li>
+            <li>
+                <a href="/pharmacy">
+                    <i class="fas fa-pills"></i>
+                    <span>Pharmacy</span>
+                </a>
+            </li>
+            <li>
+                <a href="/finance" class="active">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Finance</span>
+                </a>
+            </li>
+            <li>
+                <a href="/settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <button class="income-btn" onclick="openIncomeModal()">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Add Income</span>
+            </button>
+            <button class="lock-btn" onclick="lockApp()">
+                <i class="fas fa-lock"></i>
+                <span>Lock App</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title"><i class="fas fa-chart-line"></i> Finance & Accounting</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary btn-large" onclick="openTransactionModal()">
+                    <i class="fas fa-plus"></i> Manual Transaction
+                </button>
+            </div>
+        </div>
+
+        <!-- Finance Stats Cards -->
+        <div class="finance-stats">
+            <div class="finance-card revenue hover-lift">
+                <div class="card-icon">
+                    <i class="fas fa-arrow-circle-down"></i>
+                </div>
+                <div class="card-amount" id="totalRevenue">Rs. 0</div>
+                <div class="card-label">Total Revenue</div>
+            </div>
+            <div class="finance-card expense hover-lift">
+                <div class="card-icon">
+                    <i class="fas fa-arrow-circle-up"></i>
+                </div>
+                <div class="card-amount" id="totalExpenses">Rs. 0</div>
+                <div class="card-label">Total Expenses</div>
+            </div>
+            <div class="finance-card profit hover-lift">
+                <div class="card-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="card-amount" id="netProfit">Rs. 0</div>
+                <div class="card-label">Net Profit</div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-group">
+                <label for="filterType">Type:</label>
+                <select id="filterType" onchange="loadTransactions()">
+                    <option value="">All Transactions</option>
+                    <option value="Income">Income Only</option>
+                    <option value="Expense">Expenses Only</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterDate">Date:</label>
+                <input type="date" id="filterDate" onchange="loadTransactions()">
+            </div>
+            <div class="filter-group">
+                <label for="filterMonth">Month:</label>
+                <input type="month" id="filterMonth" onchange="loadTransactions()">
+            </div>
+            <button class="btn btn-outline" onclick="clearFilters()">
+                <i class="fas fa-times"></i> Clear Filters
+            </button>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="card">
+            <table class="transaction-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionTableBody">
+                    <!-- Transactions loaded here -->
+                </tbody>
+            </table>
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <i class="fas fa-receipt"></i>
+                <p>No transactions found</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Quick Income Modal -->
+    <div class="modal-overlay" id="incomeModal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-money-bill-wave"></i> Add Patient Fee</h2>
+                <button class="modal-close" onclick="closeModal('incomeModal')">&times;</button>
+            </div>
+            <form id="incomeForm" onsubmit="saveQuickIncome(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="incomeAmount">Amount (Cash) *</label>
+                        <input type="number" id="incomeAmount" name="amount" required min="1" step="0.01" placeholder="Enter amount" style="font-size: 1.5rem; text-align: center;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('incomeModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="background: #28a745;">
+                        <i class="fas fa-plus"></i> Add Income
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Manual Transaction Modal -->
+    <div class="modal-overlay" id="transactionModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-plus-circle"></i> Add Manual Transaction</h2>
+                <button class="modal-close" onclick="closeModal('transactionModal')">&times;</button>
+            </div>
+            <form id="transactionForm" onsubmit="saveTransaction(event)">
+                <div class="modal-body">
+                    <!-- Transaction Type Selector -->
+                    <div class="type-selector">
+                        <div class="type-option income selected" onclick="selectType('Income')">
+                            <i class="fas fa-arrow-circle-down"></i>
+                            <span>Income</span>
+                        </div>
+                        <div class="type-option expense" onclick="selectType('Expense')">
+                            <i class="fas fa-arrow-circle-up"></i>
+                            <span>Expense</span>
+                        </div>
+                    </div>
+                    <input type="hidden" id="transactionType" name="type" value="Income">
+
+                    <div class="form-group">
+                        <label for="transactionAmount">Amount (Rs.) *</label>
+                        <input type="number" id="transactionAmount" name="amount" step="0.01" min="0.01" required placeholder="Enter amount">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="transactionDate">Date *</label>
+                        <input type="date" id="transactionDate" name="date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="transactionNotes">Description / Notes *</label>
+                        <textarea id="transactionNotes" name="notes" required placeholder="e.g., Patient cash payment, Electricity bill, Discount given..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('transactionModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Transaction
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let selectedType = 'Income';
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTransactions();
+            loadSummary();
+            // Set default date to today
+            document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
+        });
+
+        // Load summary stats
+        async function loadSummary() {
+            try {
+                const response = await fetch('/api/finance/summary');
+                const data = await response.json();
+
+                document.getElementById('totalRevenue').textContent = 'Rs. ' + data.total_income.toFixed(0);
+                document.getElementById('totalExpenses').textContent = 'Rs. ' + data.total_expense.toFixed(0);
+                document.getElementById('netProfit').textContent = 'Rs. ' + data.net_profit.toFixed(0);
+
+                // Change color if negative profit
+                const profitElement = document.getElementById('netProfit');
+                if (data.net_profit < 0) {
+                    profitElement.style.color = '#dc3545';
+                } else {
+                    profitElement.style.color = '#001f3f';
+                }
+            } catch (error) {
+                console.error('Error loading summary:', error);
+            }
+        }
+
+        // Load transactions
+        async function loadTransactions() {
+            const type = document.getElementById('filterType').value;
+            const date = document.getElementById('filterDate').value;
+            const month = document.getElementById('filterMonth').value;
+
+            let url = '/api/finance?';
+            if (type) url += `type=${type}&`;
+            if (date) url += `date=${date}&`;
+            if (month) url += `month=${month}&`;
+
+            try {
+                const response = await fetch(url);
+                const transactions = await response.json();
+                renderTransactions(transactions);
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+            }
+        }
+
+        // Render transactions table
+        function renderTransactions(transactions) {
+            const tbody = document.getElementById('transactionTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const table = document.querySelector('.transaction-table');
+
+            if (transactions.length === 0) {
+                tbody.innerHTML = '';
+                table.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            table.style.display = 'table';
+            emptyState.style.display = 'none';
+
+            tbody.innerHTML = transactions.map(t => `
+                <tr>
+                    <td>${formatDate(t.date)}</td>
+                    <td>
+                        <span class="type-badge type-${t.type.toLowerCase()}">${t.type}</span>
+                    </td>
+                    <td class="amount-${t.type.toLowerCase()}">
+                        ${t.type === 'Income' ? '+' : '-'} Rs. ${t.amount.toFixed(0)}
+                    </td>
+                    <td>${t.notes || '-'}</td>
+                    <td>
+                        <button class="btn-delete" onclick="deleteTransaction(${t.id})" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Format date
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('filterType').value = '';
+            document.getElementById('filterDate').value = '';
+            document.getElementById('filterMonth').value = '';
+            loadTransactions();
+        }
+
+        // Select transaction type
+        function selectType(type) {
+            selectedType = type;
+            document.getElementById('transactionType').value = type;
+
+            // Update UI
+            document.querySelectorAll('.type-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.querySelector(`.type-option.${type.toLowerCase()}`).classList.add('selected');
+        }
+
+        // Modal functions
+        function openTransactionModal() {
+            document.getElementById('transactionForm').reset();
+            document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
+            selectType('Income');
+            document.getElementById('transactionModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Save transaction
+        async function saveTransaction(event) {
+            event.preventDefault();
+            
+            const data = {
+                type: document.getElementById('transactionType').value,
+                amount: parseFloat(document.getElementById('transactionAmount').value),
+                date: document.getElementById('transactionDate').value,
+                notes: document.getElementById('transactionNotes').value
+            };
+
+            try {
+                const response = await fetch('/api/finance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('transactionModal');
+                    loadTransactions();
+                    loadSummary();
+                    alert('Transaction saved successfully!');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                console.error('Error saving transaction:', error);
+                alert('Failed to save transaction');
+            }
+        }
+
+        // Delete transaction
+        async function deleteTransaction(id) {
+            if (!confirm('Are you sure you want to delete this transaction?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/finance/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadTransactions();
+                    loadSummary();
+                    alert('Transaction deleted successfully!');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                console.error('Error deleting transaction:', error);
+                alert('Failed to delete transaction');
+            }
+        }
+
+        // Lock app
+        function lockApp() {
+            fetch('/logout', { method: 'POST' })
+                .then(() => window.location.href = '/')
+                .catch(() => window.location.href = '/');
+        }
+
+        // Quick income modal functions
+        function openIncomeModal() {
+            document.getElementById('incomeForm').reset();
+            document.getElementById('incomeModal').classList.add('active');
+        }
+
+        async function saveQuickIncome(event) {
+            event.preventDefault();
+            const form = event.target;
+            const today = new Date().toISOString().split('T')[0];
+            const data = {
+                type: 'Income',
+                amount: parseFloat(form.amount.value),
+                date: today,
+                notes: 'Patient fee'
+            };
+
+            try {
+                const response = await fetch('/api/finance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('incomeModal');
+                    alert('Income added successfully!');
+                    loadFinanceData();
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                console.error('Error saving income:', error);
+                alert('Failed to save income');
+            }
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+        });
+
+        // Close modal on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

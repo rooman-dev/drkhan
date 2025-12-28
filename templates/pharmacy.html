@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DrKhan Clinic - Pharmacy</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Page Specific Styles */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            color: var(--primary-blue);
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-large {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Search Bar */
+        .search-section {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 15px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            outline: none;
+            transition: var(--transition-smooth);
+        }
+
+        .search-bar input:focus {
+            border-color: var(--primary-blue);
+        }
+
+        /* Inventory Table */
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--accent-white);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .inventory-table thead {
+            background: var(--primary-blue);
+            color: var(--accent-white);
+        }
+
+        .inventory-table th,
+        .inventory-table td {
+            padding: 18px 20px;
+            text-align: left;
+            font-size: 1.1rem;
+        }
+
+        .inventory-table tbody tr {
+            border-bottom: 1px solid #eee;
+            transition: var(--transition-smooth);
+        }
+
+        .inventory-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .inventory-table tbody tr.low-stock {
+            background: #fff5f5;
+        }
+
+        .inventory-table tbody tr.low-stock:hover {
+            background: #ffe5e5;
+        }
+
+        .inventory-table tbody tr.out-of-stock {
+            background: #ffebeb;
+        }
+
+        .stock-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .stock-ok {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .stock-low {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .stock-out {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .btn-action {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            margin-right: 8px;
+        }
+
+        .btn-edit {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #003366;
+        }
+
+        .btn-stock {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-stock:hover {
+            background: #218838;
+        }
+
+        .btn-find-alt {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-find-alt:hover {
+            background: #138496;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--accent-white);
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .modal-header {
+            background: var(--primary-blue);
+            color: var(--accent-white);
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--primary-blue);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 1.1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            outline: none;
+            transition: var(--transition-smooth);
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: var(--primary-blue);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        /* Alternatives Section */
+        .alternatives-section {
+            background: #e7f5ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .alternatives-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: #0066cc;
+            font-weight: 600;
+        }
+
+        .alternative-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #d0e8ff;
+        }
+
+        .alternative-item .info {
+            flex: 1;
+        }
+
+        .alternative-item .name {
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
+        .alternative-item .formula {
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        .alternative-item .stock-info {
+            text-align: right;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* Stats Cards */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--accent-white);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            text-align: center;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .stat-card .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .stat-card .stat-label {
+            font-size: 1rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .stat-card.alert .stat-number {
+            color: #dc3545;
+        }
+
+        /* Sidebar Footer */
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .income-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 15px;
+            background: #28a745;
+            color: var(--accent-white);
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            margin-bottom: 10px;
+        }
+
+        .income-btn:hover {
+            background: #218838;
+        }
+
+        .lock-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--accent-white);
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .lock-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        @media (max-width: 992px) {
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 10px;">
+            <img src="/static/logo.png" alt="DrKhan Logo" style="width: 90px; height: 90px; border-radius: 15px; margin-bottom: 10px; border: 3px solid white;">
+            <span style="font-size: 1.1rem; font-weight: 700; white-space: nowrap;">DR.Khan Clinic</span>
+        </div>
+        <ul class="sidebar-nav">
+            <li>
+                <a href="/dashboard">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="/patients">
+                    <i class="fas fa-users"></i>
+                    <span>Patients</span>
+                </a>
+            </li>
+            <li>
+                <a href="/pharmacy" class="active">
+                    <i class="fas fa-pills"></i>
+                    <span>Pharmacy</span>
+                </a>
+            </li>
+            <li>
+                <a href="/finance">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Finance</span>
+                </a>
+            </li>
+            <li>
+                <a href="/settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <button class="income-btn" onclick="openIncomeModal()">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Add Income</span>
+            </button>
+            <button class="lock-btn" onclick="lockApp()">
+                <i class="fas fa-lock"></i>
+                <span>Lock App</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title"><i class="fas fa-pills"></i> Pharmacy & Inventory</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary btn-large" onclick="openAddMedicineModal()">
+                    <i class="fas fa-plus"></i> Add New Medicine
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-number" id="totalMedicines">0</div>
+                <div class="stat-label">Total Medicines</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalStock">0</div>
+                <div class="stat-label">Total Stock Units</div>
+            </div>
+            <div class="stat-card alert" id="lowStockCard">
+                <div class="stat-number" id="lowStockCount">0</div>
+                <div class="stat-label">Low Stock Items</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="inventoryValue">Rs. 0</div>
+                <div class="stat-label">Inventory Value</div>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-section">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search by medicine name or formula..." onkeyup="searchMedicines()">
+                <button class="btn btn-primary" onclick="searchMedicines()">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+            <button class="btn btn-outline" onclick="openAlternativeSearch()">
+                <i class="fas fa-exchange-alt"></i> Find Alternative
+            </button>
+        </div>
+
+        <!-- Inventory Table -->
+        <div class="card">
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Brand Name</th>
+                        <th>Formula (Generic)</th>
+                        <th>Stock</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTableBody">
+                    <!-- Inventory loaded here -->
+                </tbody>
+            </table>
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <i class="fas fa-box-open"></i>
+                <p>No medicines in inventory</p>
+                <button class="btn btn-primary mt-2" onclick="openAddMedicineModal()">
+                    <i class="fas fa-plus"></i> Add First Medicine
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Quick Income Modal -->
+    <div class="modal-overlay" id="incomeModal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-money-bill-wave"></i> Add Patient Fee</h2>
+                <button class="modal-close" onclick="closeModal('incomeModal')">&times;</button>
+            </div>
+            <form id="incomeForm" onsubmit="saveIncome(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="incomeAmount">Amount (Cash) *</label>
+                        <input type="number" id="incomeAmount" name="amount" required min="1" step="0.01" placeholder="Enter amount" style="font-size: 1.5rem; text-align: center;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('incomeModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="background: #28a745;">
+                        <i class="fas fa-plus"></i> Add Income
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Medicine Modal -->
+    <div class="modal-overlay" id="addMedicineModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-pills"></i> Add New Medicine</h2>
+                <button class="modal-close" onclick="closeModal('addMedicineModal')">&times;</button>
+            </div>
+            <form id="addMedicineForm" onsubmit="saveMedicine(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="brandName">Brand Name *</label>
+                        <input type="text" id="brandName" name="brand_name" required placeholder="e.g., Panadol">
+                    </div>
+                    <div class="form-group">
+                        <label for="formula">Formula (Generic Name) *</label>
+                        <input type="text" id="formula" name="formula" required placeholder="e.g., Paracetamol 500mg">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="initialStock">Initial Stock</label>
+                            <input type="number" id="initialStock" name="stock" min="0" value="0" placeholder="Quantity">
+                        </div>
+                        <div class="form-group">
+                            <label for="price">Price per Unit (Rs.)</label>
+                            <input type="number" id="price" name="price" step="1" min="0" value="0" placeholder="Price">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addMedicineModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Medicine
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stock In Modal -->
+    <div class="modal-overlay" id="stockInModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-boxes"></i> Add Stock - <span id="stockMedicineName"></span></h2>
+                <button class="modal-close" onclick="closeModal('stockInModal')">&times;</button>
+            </div>
+            <form id="stockInForm" onsubmit="addStock(event)">
+                <input type="hidden" id="stockMedicineId">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Current Stock</label>
+                        <input type="text" id="currentStock" readonly style="background: #f8f9fa;">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="addQuantity">Quantity to Add *</label>
+                            <input type="number" id="addQuantity" name="quantity" min="1" required placeholder="Enter quantity">
+                        </div>
+                        <div class="form-group">
+                            <label for="purchasePrice">Total Purchase Cost (Rs.) *</label>
+                            <input type="number" id="purchasePrice" name="cost" step="1" min="0" required placeholder="Total cost">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="stockNotes">Notes (Optional)</label>
+                        <input type="text" id="stockNotes" name="notes" placeholder="e.g., Supplier name, batch number">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('stockInModal')">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Add Stock
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Medicine Modal -->
+    <div class="modal-overlay" id="editMedicineModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> Edit Medicine</h2>
+                <button class="modal-close" onclick="closeModal('editMedicineModal')">&times;</button>
+            </div>
+            <form id="editMedicineForm" onsubmit="updateMedicine(event)">
+                <input type="hidden" id="editMedicineId">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editBrandName">Brand Name *</label>
+                        <input type="text" id="editBrandName" name="brand_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editFormula">Formula (Generic Name) *</label>
+                        <input type="text" id="editFormula" name="formula" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPrice">Price per Unit (Rs.)</label>
+                        <input type="number" id="editPrice" name="price" step="1" min="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editMedicineModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Update Medicine
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alternative Search Modal -->
+    <div class="modal-overlay" id="alternativeModal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-exchange-alt"></i> Find Alternative Medicine</h2>
+                <button class="modal-close" onclick="closeModal('alternativeModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="search-bar" style="margin-bottom: 20px;">
+                    <input type="text" id="altSearchInput" placeholder="Enter medicine name (e.g., Panadol)">
+                    <button class="btn btn-primary" onclick="findAlternatives()">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+                <div id="alternativeResults">
+                    <!-- Results shown here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('alternativeModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadInventory();
+        });
+
+        // Load inventory
+        async function loadInventory() {
+            try {
+                const response = await fetch('/api/inventory');
+                const inventory = await response.json();
+                renderInventory(inventory);
+                updateStats(inventory);
+            } catch (error) {
+                console.error('Error loading inventory:', error);
+            }
+        }
+
+        // Render inventory table
+        function renderInventory(items) {
+            const tbody = document.getElementById('inventoryTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const table = document.querySelector('.inventory-table');
+
+            if (items.length === 0) {
+                tbody.innerHTML = '';
+                table.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            table.style.display = 'table';
+            emptyState.style.display = 'none';
+
+            tbody.innerHTML = items.map(item => {
+                let rowClass = '';
+                let stockBadgeClass = 'stock-ok';
+                let stockText = item.stock;
+
+                if (item.stock === 0) {
+                    rowClass = 'out-of-stock';
+                    stockBadgeClass = 'stock-out';
+                    stockText = 'OUT';
+                } else if (item.stock < 10) {
+                    rowClass = 'low-stock';
+                    stockBadgeClass = 'stock-low';
+                }
+
+                return `
+                    <tr class="${rowClass}">
+                        <td>#${item.id}</td>
+                        <td><strong>${item.brand_name}</strong></td>
+                        <td>${item.formula || '-'}</td>
+                        <td>
+                            <span class="stock-badge ${stockBadgeClass}">${stockText}</span>
+                        </td>
+                        <td>Rs. ${item.price.toFixed(0)}</td>
+                        <td>
+                            <button class="btn-action btn-stock" onclick="openStockInModal(${item.id}, '${item.brand_name}', ${item.stock})">
+                                <i class="fas fa-plus"></i> Stock
+                            </button>
+                            <button class="btn-action btn-edit" onclick="openEditModal(${item.id}, '${item.brand_name}', '${item.formula || ''}', ${item.price})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ${item.stock === 0 ? `
+                                <button class="btn-action btn-find-alt" onclick="findAlternativeFor('${item.formula || ''}')">
+                                    <i class="fas fa-exchange-alt"></i> Alt
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Update stats
+        function updateStats(items) {
+            const totalMedicines = items.length;
+            const totalStock = items.reduce((sum, item) => sum + item.stock, 0);
+            const lowStockCount = items.filter(item => item.stock < 10).length;
+            const inventoryValue = items.reduce((sum, item) => sum + (item.stock * item.price), 0);
+
+            document.getElementById('totalMedicines').textContent = totalMedicines;
+            document.getElementById('totalStock').textContent = totalStock;
+            document.getElementById('lowStockCount').textContent = lowStockCount;
+            document.getElementById('inventoryValue').textContent = 'Rs. ' + inventoryValue.toFixed(0);
+
+            // Highlight low stock card if needed
+            const lowStockCard = document.getElementById('lowStockCard');
+            if (lowStockCount > 0) {
+                lowStockCard.classList.add('alert');
+            } else {
+                lowStockCard.classList.remove('alert');
+            }
+        }
+
+        // Search medicines
+        async function searchMedicines() {
+            const query = document.getElementById('searchInput').value.trim();
+            try {
+                const response = await fetch(`/api/inventory/search?q=${encodeURIComponent(query)}`);
+                const items = await response.json();
+                renderInventory(items);
+            } catch (error) {
+                console.error('Error searching:', error);
+            }
+        }
+
+        // Modal functions
+        function openAddMedicineModal() {
+            document.getElementById('addMedicineForm').reset();
+            document.getElementById('addMedicineModal').classList.add('active');
+        }
+
+        function openStockInModal(id, name, currentStock) {
+            document.getElementById('stockMedicineId').value = id;
+            document.getElementById('stockMedicineName').textContent = name;
+            document.getElementById('currentStock').value = currentStock + ' units';
+            document.getElementById('stockInForm').reset();
+            document.getElementById('stockMedicineId').value = id;
+            document.getElementById('stockInModal').classList.add('active');
+        }
+
+        function openEditModal(id, brandName, formula, price) {
+            document.getElementById('editMedicineId').value = id;
+            document.getElementById('editBrandName').value = brandName;
+            document.getElementById('editFormula').value = formula;
+            document.getElementById('editPrice').value = price;
+            document.getElementById('editMedicineModal').classList.add('active');
+        }
+
+        function openAlternativeSearch() {
+            document.getElementById('altSearchInput').value = '';
+            document.getElementById('alternativeResults').innerHTML = `
+                <div class="empty-state" style="padding: 30px;">
+                    <i class="fas fa-search"></i>
+                    <p>Enter a medicine name to find alternatives</p>
+                </div>
+            `;
+            document.getElementById('alternativeModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Save new medicine
+        async function saveMedicine(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = {
+                brand_name: form.brand_name.value,
+                formula: form.formula.value,
+                stock: parseInt(form.stock.value) || 0,
+                price: parseFloat(form.price.value) || 0
+            };
+
+            try {
+                const response = await fetch('/api/inventory', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('addMedicineModal');
+                    loadInventory();
+                    alert('Medicine added successfully!');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                console.error('Error saving medicine:', error);
+                alert('Failed to save medicine');
+            }
+        }
+
+        // Add stock
+        async function addStock(event) {
+            event.preventDefault();
+            const id = document.getElementById('stockMedicineId').value;
+            const data = {
+                quantity: parseInt(document.getElementById('addQuantity').value),
+                cost: parseFloat(document.getElementById('purchasePrice').value),
+                notes: document.getElementById('stockNotes').value
+            };
+
+            try {
+                const response = await fetch(`/api/inventory/${id}/stock`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('stockInModal');
+                    loadInventory();
+                    alert('Stock added successfully!');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                console.error('Error adding stock:', error);
+                alert('Failed to add stock');
+            }
+        }
+
+        // Update medicine
+        async function updateMedicine(event) {
+            event.preventDefault();
+            const id = document.getElementById('editMedicineId').value;
+            const data = {
+                brand_name: document.getElementById('editBrandName').value,
+                formula: document.getElementById('editFormula').value,
+                price: parseFloat(document.getElementById('editPrice').value) || 0
+            };
+
+            try {
+                const response = await fetch(`/api/inventory/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('editMedicineModal');
+                    loadInventory();
+                    alert('Medicine updated successfully!');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                console.error('Error updating medicine:', error);
+                alert('Failed to update medicine');
+            }
+        }
+
+        // Find alternatives
+        async function findAlternatives() {
+            const query = document.getElementById('altSearchInput').value.trim();
+            if (!query) {
+                alert('Please enter a medicine name');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/search_medicine?q=${encodeURIComponent(query)}`);
+                const result = await response.json();
+                
+                renderAlternativeResults(result);
+            } catch (error) {
+                console.error('Error finding alternatives:', error);
+                alert('Failed to search for alternatives');
+            }
+        }
+
+        function findAlternativeFor(formula) {
+            document.getElementById('altSearchInput').value = formula;
+            document.getElementById('alternativeModal').classList.add('active');
+            findAlternatives();
+        }
+
+        function renderAlternativeResults(result) {
+            const container = document.getElementById('alternativeResults');
+            
+            if (!result.searched_medicine && result.alternatives.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="padding: 30px;">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>No medicines found matching your search</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+
+            // Show searched medicine
+            if (result.searched_medicine) {
+                const med = result.searched_medicine;
+                const stockClass = med.stock === 0 ? 'stock-out' : (med.stock < 10 ? 'stock-low' : 'stock-ok');
+                html += `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--primary-blue); margin-bottom: 10px;">Searched Medicine:</h4>
+                        <div class="alternative-item" style="border-color: var(--primary-blue);">
+                            <div class="info">
+                                <div class="name">${med.brand_name}</div>
+                                <div class="formula">${med.formula || 'No formula specified'}</div>
+                            </div>
+                            <div class="stock-info">
+                                <span class="stock-badge ${stockClass}">${med.stock === 0 ? 'OUT OF STOCK' : med.stock + ' units'}</span>
+                                <div style="margin-top: 5px;">$${med.price.toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Show alternatives
+            if (result.alternatives && result.alternatives.length > 0) {
+                html += `
+                    <div class="alternatives-section">
+                        <div class="alternatives-header">
+                            <i class="fas fa-exchange-alt"></i>
+                            Available Alternatives (Same Formula)
+                        </div>
+                        ${result.alternatives.map(alt => `
+                            <div class="alternative-item">
+                                <div class="info">
+                                    <div class="name">${alt.brand_name}</div>
+                                    <div class="formula">${alt.formula}</div>
+                                </div>
+                                <div class="stock-info">
+                                    <span class="stock-badge stock-ok">${alt.stock} units</span>
+                                    <div style="margin-top: 5px;">$${alt.price.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (result.searched_medicine && result.searched_medicine.stock === 0) {
+                html += `
+                    <div class="alternatives-section" style="background: #fff3cd;">
+                        <div class="alternatives-header" style="color: #856404;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            No alternatives available with the same formula
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Lock app
+        function lockApp() {
+            fetch('/logout', { method: 'POST' })
+                .then(() => window.location.href = '/')
+                .catch(() => window.location.href = '/');
+        }
+
+        // Income modal functions
+        function openIncomeModal() {
+            document.getElementById('incomeForm').reset();
+            document.getElementById('incomeModal').classList.add('active');
+        }
+
+        async function saveIncome(event) {
+            event.preventDefault();
+            const form = event.target;
+            const today = new Date().toISOString().split('T')[0];
+            const data = {
+                type: 'Income',
+                amount: parseFloat(form.amount.value),
+                date: today,
+                notes: 'Patient fee'
+            };
+
+            try {
+                const response = await fetch('/api/finance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('incomeModal');
+                    alert('Income added successfully!');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                console.error('Error saving income:', error);
+                alert('Failed to save income');
+            }
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+        });
+
+        // Close modal on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+
+        // Enter key search
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchMedicines();
+        });
+
+        document.getElementById('altSearchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') findAlternatives();
+        });
+    </script>
+</body>
+</html>

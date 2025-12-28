@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DrKhan Clinic - Patients</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Page Specific Styles */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            color: var(--primary-blue);
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-large {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Search Bar */
+        .search-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            outline: none;
+            transition: var(--transition-smooth);
+        }
+
+        .search-bar input:focus {
+            border-color: var(--primary-blue);
+        }
+
+        /* Patient Table */
+        .patient-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--accent-white);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .patient-table thead {
+            background: var(--primary-blue);
+            color: var(--accent-white);
+        }
+
+        .patient-table th,
+        .patient-table td {
+            padding: 18px 20px;
+            text-align: left;
+            font-size: 1.1rem;
+        }
+
+        .patient-table tbody tr {
+            border-bottom: 1px solid #eee;
+            transition: var(--transition-smooth);
+        }
+
+        .patient-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .btn-action {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            margin-right: 8px;
+        }
+
+        .btn-view {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .btn-view:hover {
+            background: #003366;
+        }
+
+        .btn-visit {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-visit:hover {
+            background: #218838;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--accent-white);
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .modal-header {
+            background: var(--primary-blue);
+            color: var(--accent-white);
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--primary-blue);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 1.1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            outline: none;
+            transition: var(--transition-smooth);
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: var(--primary-blue);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        /* Radio Button Styles */
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            padding: 10px 0;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: var(--primary-blue);
+        }
+
+        .radio-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--primary-blue);
+        }
+
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        /* Prescription Section */
+        .prescription-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .prescription-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .prescription-header h4 {
+            color: var(--primary-blue);
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .btn-add-medicine {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-add-medicine:hover {
+            background: #218838;
+        }
+
+        .medicine-list {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .medicine-item {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 10px;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .medicine-item select,
+        .medicine-item input {
+            padding: 12px;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .medicine-item .freq-label {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-blue);
+            white-space: nowrap;
+        }
+
+        .btn-remove-medicine {
+            padding: 10px 12px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-remove-medicine:hover {
+            background: #c82333;
+        }
+
+        .medicine-total {
+            text-align: right;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            padding: 15px;
+            border-top: 2px solid #e0e0e0;
+            margin-top: 15px;
+        }
+
+        /* Patient History Modal */
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .history-item .date {
+            color: var(--primary-blue);
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .history-item .vitals {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .history-item .diagnosis {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .history-item .prescriptions {
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* Patient History Panel in Visit Form */
+        #patientHistoryPanel::-webkit-scrollbar {
+            width: 6px;
+        }
+        #patientHistoryPanel::-webkit-scrollbar-track {
+            background: #e9ecef;
+            border-radius: 3px;
+        }
+        #patientHistoryPanel::-webkit-scrollbar-thumb {
+            background: var(--primary-blue);
+            border-radius: 3px;
+        }
+        #previousVisitsList details summary::-webkit-details-marker {
+            display: none;
+        }
+        #previousVisitsList details summary::before {
+            content: '▶ ';
+            font-size: 10px;
+            margin-right: 5px;
+        }
+        #previousVisitsList details[open] summary::before {
+            content: '▼ ';
+        }
+
+        /* Sidebar Footer */
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .income-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 15px;
+            background: #28a745;
+            color: var(--accent-white);
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            margin-bottom: 10px;
+        }
+
+        .income-btn:hover {
+            background: #218838;
+        }
+
+        .lock-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--accent-white);
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .lock-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 10px;">
+            <img src="/static/logo.png" alt="DrKhan Logo" style="width: 90px; height: 90px; border-radius: 15px; margin-bottom: 10px; border: 3px solid white;">
+            <span style="font-size: 1.1rem; font-weight: 700; white-space: nowrap;">DR.Khan Clinic</span>
+        </div>
+        <ul class="sidebar-nav">
+            <li>
+                <a href="/dashboard">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="/patients" class="active">
+                    <i class="fas fa-users"></i>
+                    <span>Patients</span>
+                </a>
+            </li>
+            <li>
+                <a href="/pharmacy">
+                    <i class="fas fa-pills"></i>
+                    <span>Pharmacy</span>
+                </a>
+            </li>
+            <li>
+                <a href="/finance">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Finance</span>
+                </a>
+            </li>
+            <li>
+                <a href="/settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <button class="income-btn" onclick="openIncomeModal()">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Add Income</span>
+            </button>
+            <button class="lock-btn" onclick="lockApp()">
+                <i class="fas fa-lock"></i>
+                <span>Lock App</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title"><i class="fas fa-users"></i> Patient Management</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary btn-large" onclick="openNewPatientModal()">
+                    <i class="fas fa-user-plus"></i> Register New Patient
+                </button>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search patients by name, ID, or contact..." onkeyup="searchPatients()">
+            <button class="btn btn-primary" onclick="searchPatients()">
+                <i class="fas fa-search"></i> Search
+            </button>
+        </div>
+
+        <!-- Patient Table -->
+        <div class="card">
+            <table class="patient-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Age</th>
+                        <th>Gender</th>
+                        <th>Contact</th>
+                        <th>Address</th>
+                        <th>Last Visit</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="patientTableBody">
+                    <!-- Patients loaded here -->
+                </tbody>
+            </table>
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <i class="fas fa-user-slash"></i>
+                <p>No patients found</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- New Patient Modal -->
+    <div class="modal-overlay" id="newPatientModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-plus"></i> Register New Patient</h2>
+                <button class="modal-close" onclick="closeModal('newPatientModal')">&times;</button>
+            </div>
+            <form id="newPatientForm" onsubmit="saveNewPatient(event)">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="patientName">Full Name *</label>
+                            <input type="text" id="patientName" name="name" required placeholder="Enter patient name">
+                        </div>
+                        <div class="form-group">
+                            <label for="patientAge">Age *</label>
+                            <input type="number" id="patientAge" name="age" required min="0" max="150" placeholder="Age">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="patientContact">Contact Number</label>
+                            <input type="tel" id="patientContact" name="contact" placeholder="Phone number">
+                        </div>
+                        <div class="form-group">
+                            <label for="patientOccupation">Occupation</label>
+                            <input type="text" id="patientOccupation" name="occupation" placeholder="e.g., Teacher, Engineer">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Gender *</label>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="gender" value="Male" required> Male
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="gender" value="Female"> Female
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Marital Status</label>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="marital_status" value="Single"> Single
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="marital_status" value="Married"> Married
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="marital_status" value="Other"> Other
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="patientAddress">Address</label>
+                        <textarea id="patientAddress" name="address" placeholder="Enter full address" style="min-height: 80px;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('newPatientModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Patient
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- New Visit Modal - Full Page -->
+    <div class="modal-overlay" id="newVisitModal">
+        <div class="modal" style="max-width: 98%; width: 1400px; max-height: 95vh;">
+            <div class="modal-header">
+                <h2><i class="fas fa-stethoscope"></i> New Visit - <span id="visitPatientName"></span></h2>
+                <button class="modal-close" onclick="closeModal('newVisitModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 80vh; overflow-y: auto; display: flex; gap: 20px;">
+                <!-- Left Panel - Patient Info & History -->
+                <div id="patientHistoryPanel" style="width: 350px; flex-shrink: 0; background: #f8f9fa; border-radius: 15px; padding: 15px; max-height: calc(80vh - 40px); overflow-y: auto;">
+                    <!-- Patient Demographics -->
+                    <div style="background: var(--primary-blue); color: white; border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                        <h5 style="margin: 0 0 10px 0;"><i class="fas fa-user"></i> Patient Info</h5>
+                        <div id="patientDemographics" style="font-size: 14px; line-height: 1.8;">
+                            Loading...
+                        </div>
+                    </div>
+                    
+                    <!-- Previous Visits -->
+                    <h5 style="color: var(--primary-blue); margin-bottom: 10px;">
+                        <i class="fas fa-history"></i> Previous Visits
+                    </h5>
+                    <div id="previousVisitsList" style="font-size: 13px;">
+                        Loading...
+                    </div>
+                </div>
+                
+                <!-- Right Panel - Visit Form -->
+                <div style="flex: 1; min-width: 0;">
+                    <form id="newVisitForm" onsubmit="saveNewVisit(event)">
+                        <input type="hidden" id="visitPatientId" name="patient_id">
+                        <!-- Vitals Section -->
+                        <h4 style="color: var(--primary-blue); margin-bottom: 15px;">
+                            <i class="fas fa-heartbeat"></i> Vitals
+                        </h4>
+                        <div class="form-row" style="grid-template-columns: repeat(6, 1fr);">
+                            <div class="form-group">
+                            <label for="vitalsBP">BP</label>
+                            <input type="text" id="vitalsBP" name="vitals_bp" placeholder="120/80">
+                        </div>
+                        <div class="form-group">
+                            <label for="vitalsWeight">Weight (kg)</label>
+                            <input type="number" id="vitalsWeight" name="vitals_weight" step="0.1" placeholder="70.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="vitalsTemp">TMP (°F)</label>
+                            <input type="number" id="vitalsTemp" name="vitals_temp" step="0.1" placeholder="98.6">
+                        </div>
+                        <div class="form-group">
+                            <label for="vitalsBSR">BSR</label>
+                            <input type="text" id="vitalsBSR" name="vitals_bsr" placeholder="100 mg/dL">
+                        </div>
+                        <div class="form-group">
+                            <label for="vitalsSPO2">SPO2 (%)</label>
+                            <input type="text" id="vitalsSPO2" name="vitals_spo2" placeholder="98%">
+                        </div>
+                        <div class="form-group">
+                            <label for="vitalsHeartRate">Heart Rate</label>
+                            <input type="text" id="vitalsHeartRate" name="vitals_heart_rate" placeholder="72 bpm">
+                        </div>
+                    </div>
+
+                    <!-- Clinical Assessment Section -->
+                    <h4 style="color: var(--primary-blue); margin: 20px 0 15px;">
+                        <i class="fas fa-notes-medical"></i> Clinical Assessment
+                    </h4>
+                    <div class="form-group">
+                        <label for="presentingComplaint">Presenting Complaint *</label>
+                        <textarea id="presentingComplaint" name="presenting_complaint" placeholder="Chief complaint..." style="min-height: 60px;"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="signsSymptoms">Signs & Symptoms</label>
+                            <textarea id="signsSymptoms" name="signs_symptoms" placeholder="Observed signs and reported symptoms..." style="min-height: 80px;"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="historyPresentingIllness">History of Presenting Illness</label>
+                            <textarea id="historyPresentingIllness" name="history_presenting_illness" placeholder="Duration, onset, progression..." style="min-height: 80px;"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="pastMedicalHx">Past Medical History</label>
+                            <textarea id="pastMedicalHx" name="past_medical_hx" placeholder="Previous conditions, surgeries, allergies..." style="min-height: 80px;"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="familyHistory">Family History</label>
+                            <textarea id="familyHistory" name="family_history" placeholder="Family medical history..." style="min-height: 80px;"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="examination">Examination Findings</label>
+                            <textarea id="examination" name="examination" placeholder="Physical examination findings..." style="min-height: 80px;"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="differentials">Differential Diagnosis</label>
+                            <textarea id="differentials" name="differentials" placeholder="Possible diagnoses to consider..." style="min-height: 80px;"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="treatmentPlan">Treatment Plan</label>
+                        <textarea id="treatmentPlan" name="treatment_plan" placeholder="Recommended treatment, follow-up instructions..." style="min-height: 80px;"></textarea>
+                    </div>
+
+                    <!-- Prescription Section -->
+                    <div class="prescription-section">
+                        <div class="prescription-header">
+                            <h4><i class="fas fa-pills"></i> Prescription</h4>
+                            <button type="button" class="btn-add-medicine" onclick="addMedicineRow()">
+                                <i class="fas fa-plus"></i> Add Medicine
+                            </button>
+                        </div>
+                        <div class="medicine-list" id="medicineList">
+                            <!-- Medicine rows added here -->
+                        </div>
+                        <div class="medicine-total">
+                            Total: Rs. <span id="prescriptionTotal">0</span>
+                        </div>
+                    </div>
+                    
+                    <!-- WhatsApp Message Template Section -->
+                    <div class="prescription-section" style="background: #e8f5e9; margin-top: 20px;">
+                        <h4 style="color: #28a745; margin-bottom: 15px;">
+                            <i class="fab fa-whatsapp"></i> WhatsApp Recovery Message
+                        </h4>
+                        <div class="form-group">
+                            <label for="messageTemplate">Select Message Template</label>
+                            <select id="messageTemplate" name="message_template" style="width: 100%; padding: 12px; font-size: 1rem; border-radius: 10px; border: 2px solid #28a745;">
+                                <option value="general">🏥 General Recovery (Catch-All)</option>
+                                <option value="flu">🤒 Viral Fever / Flu / Cold</option>
+                                <option value="antibiotic">💊 Antibiotic Course Compliance</option>
+                                <option value="hypertension">❤️ Hypertension (BP Management)</option>
+                                <option value="gastro">🍽️ Gastrointestinal / Food Poisoning</option>
+                                <option value="none">❌ No Message</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer" style="margin-top: 20px; padding: 0; border: none;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('newVisitModal')">Cancel</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Save Visit & Generate Bill
+                        </button>
+                    </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient View Modal - Complete Record -->
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal" style="max-width: 95%; width: 1200px; max-height: 95vh;">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-circle"></i> Patient Record - <span id="historyPatientName"></span></h2>
+                <button class="modal-close" onclick="closeModal('historyModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 75vh; overflow-y: auto; padding: 20px;">
+                <!-- Patient Info Card -->
+                <div id="viewPatientInfo" style="background: linear-gradient(135deg, var(--primary-blue) 0%, #003366 100%); color: white; border-radius: 15px; padding: 25px; margin-bottom: 25px;">
+                    <h3 style="margin: 0 0 15px 0; font-size: 1.4rem;"><i class="fas fa-id-card"></i> Patient Information</h3>
+                    <div id="viewPatientDetails" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 1.05rem;">
+                        Loading...
+                    </div>
+                </div>
+                
+                <!-- Medical Records Section -->
+                <div style="margin-bottom: 25px;">
+                    <h3 style="color: var(--primary-blue); margin-bottom: 15px; font-size: 1.3rem;">
+                        <i class="fas fa-notes-medical"></i> Medical Records
+                    </h3>
+                    <div id="viewMedicalRecords" class="history-list" style="max-height: 400px; overflow-y: auto;">
+                        Loading...
+                    </div>
+                </div>
+                
+                <!-- Pharmacy Records Section -->
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: var(--primary-blue); margin-bottom: 15px; font-size: 1.3rem;">
+                        <i class="fas fa-pills"></i> Pharmacy Records (All Prescriptions)
+                    </h3>
+                    <div id="viewPharmacyRecords" style="background: #f8f9fa; border-radius: 12px; padding: 20px; max-height: 300px; overflow-y: auto;">
+                        Loading...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content: space-between;">
+                <button type="button" class="btn btn-primary" onclick="printPatientRecord()" style="background: #dc3545;">
+                    <i class="fas fa-file-pdf"></i> Download PDF
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('historyModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Income Modal -->
+    <div class="modal-overlay" id="incomeModal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-money-bill-wave"></i> Add Patient Fee</h2>
+                <button class="modal-close" onclick="closeModal('incomeModal')">&times;</button>
+            </div>
+            <form id="incomeForm" onsubmit="saveIncome(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="incomeAmount">Amount (Cash) *</label>
+                        <input type="number" id="incomeAmount" name="amount" required min="1" step="0.01" placeholder="Enter amount" style="font-size: 1.5rem; text-align: center;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('incomeModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="background: #28a745;">
+                        <i class="fas fa-plus"></i> Add Income
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let inventoryItems = [];
+        let medicineCounter = 0;
+
+        // Load patients on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPatients();
+            loadInventory();
+        });
+
+        // Load all patients
+        async function loadPatients() {
+            try {
+                const response = await fetch('/api/patients');
+                const patients = await response.json();
+                renderPatients(patients);
+            } catch (error) {
+                console.error('Error loading patients:', error);
+            }
+        }
+
+        // Load inventory for prescription dropdown
+        async function loadInventory() {
+            try {
+                const response = await fetch('/api/inventory');
+                inventoryItems = await response.json();
+            } catch (error) {
+                console.error('Error loading inventory:', error);
+            }
+        }
+
+        // Render patients table
+        function renderPatients(patients) {
+            const tbody = document.getElementById('patientTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const table = document.querySelector('.patient-table');
+
+            if (patients.length === 0) {
+                tbody.innerHTML = '';
+                table.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            table.style.display = 'table';
+            emptyState.style.display = 'none';
+
+            tbody.innerHTML = patients.map(patient => `
+                <tr>
+                    <td>#${patient.id}</td>
+                    <td><strong>${patient.name}</strong></td>
+                    <td>${patient.age || '-'}</td>
+                    <td>${patient.gender || '-'}</td>
+                    <td>${patient.contact || '-'}</td>
+                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${patient.address || ''}">${patient.address || '-'}</td>
+                    <td>${patient.last_visit || 'Never'}</td>
+                    <td>
+                        <button class="btn-action btn-view" onclick="viewPatientRecord(${patient.id}, '${patient.name}')">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <button class="btn-action btn-visit" onclick="openVisitModal(${patient.id}, '${patient.name}')">
+                            <i class="fas fa-plus"></i> Add Visit
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Search patients
+        async function searchPatients() {
+            const query = document.getElementById('searchInput').value.trim();
+            try {
+                const response = await fetch(`/api/patients?search=${encodeURIComponent(query)}`);
+                const patients = await response.json();
+                renderPatients(patients);
+            } catch (error) {
+                console.error('Error searching patients:', error);
+            }
+        }
+
+        // Modal functions
+        function openNewPatientModal() {
+            document.getElementById('newPatientForm').reset();
+            document.getElementById('newPatientModal').classList.add('active');
+        }
+
+        // Store current patient info for WhatsApp
+        let currentPatientName = '';
+        let currentPatientContact = '';
+
+        async function openVisitModal(patientId, patientName) {
+            document.getElementById('newVisitForm').reset();
+            document.getElementById('visitPatientId').value = patientId;
+            document.getElementById('visitPatientName').textContent = patientName;
+            document.getElementById('medicineList').innerHTML = '';
+            document.getElementById('prescriptionTotal').textContent = '0';
+            medicineCounter = 0;
+            currentPatientName = patientName;
+            currentPatientContact = '';
+            
+            // Load patient full record
+            document.getElementById('patientDemographics').innerHTML = 'Loading...';
+            document.getElementById('previousVisitsList').innerHTML = 'Loading...';
+            document.getElementById('newVisitModal').classList.add('active');
+            
+            try {
+                const response = await fetch(`/api/patients/${patientId}/full-record`);
+                const data = await response.json();
+                const patient = data.patient;
+                const visits = data.visits;
+                
+                // Store patient contact for WhatsApp
+                currentPatientContact = patient.contact || '';
+                
+                // Display patient demographics
+                document.getElementById('patientDemographics').innerHTML = `
+                    <div><strong>Age:</strong> ${patient.age || 'N/A'} years</div>
+                    <div><strong>Gender:</strong> ${patient.gender || 'N/A'}</div>
+                    <div><strong>Contact:</strong> ${patient.contact || 'N/A'}</div>
+                    <div><strong>Occupation:</strong> ${patient.occupation || 'N/A'}</div>
+                    <div><strong>Marital Status:</strong> ${patient.marital_status || 'N/A'}</div>
+                    ${patient.address ? `<div><strong>Address:</strong> ${patient.address}</div>` : ''}
+                `;
+                
+                // Display previous visits
+                if (visits.length === 0) {
+                    document.getElementById('previousVisitsList').innerHTML = `
+                        <div style="text-align: center; color: #6c757d; padding: 20px;">
+                            <i class="fas fa-clipboard" style="font-size: 24px;"></i>
+                            <p style="margin: 10px 0 0;">No previous visits</p>
+                        </div>
+                    `;
+                } else {
+                    let visitsHtml = '';
+                    visits.forEach((visit, index) => {
+                        const isExpanded = index === 0 ? 'open' : '';
+                        visitsHtml += `
+                            <details ${isExpanded} style="margin-bottom: 10px; background: white; border-radius: 8px; padding: 10px;">
+                                <summary style="cursor: pointer; font-weight: 600; color: var(--primary-blue);">
+                                    <i class="fas fa-calendar"></i> ${visit.date}
+                                </summary>
+                                <div style="padding: 10px 0; border-top: 1px solid #eee; margin-top: 10px;">
+                                    ${visit.vitals_bp || visit.vitals_weight || visit.vitals_temp || visit.vitals_bsr || visit.vitals_spo2 || visit.vitals_heart_rate ? `
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="color: #dc3545;"><i class="fas fa-heartbeat"></i> Vitals:</strong>
+                                            <div style="padding-left: 10px; font-size: 12px;">
+                                                ${visit.vitals_bp ? `BP: ${visit.vitals_bp} | ` : ''}
+                                                ${visit.vitals_weight ? `Wt: ${visit.vitals_weight}kg | ` : ''}
+                                                ${visit.vitals_temp ? `TMP: ${visit.vitals_temp}°F | ` : ''}
+                                                ${visit.vitals_bsr ? `BSR: ${visit.vitals_bsr} | ` : ''}
+                                                ${visit.vitals_spo2 ? `SPO2: ${visit.vitals_spo2} | ` : ''}
+                                                ${visit.vitals_heart_rate ? `HR: ${visit.vitals_heart_rate}` : ''}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                    ${visit.presenting_complaint ? `<div style="margin-bottom: 5px;"><strong>Complaint:</strong> ${visit.presenting_complaint}</div>` : ''}
+                                    ${visit.signs_symptoms ? `<div style="margin-bottom: 5px;"><strong>Signs/Symptoms:</strong> ${visit.signs_symptoms}</div>` : ''}
+                                    ${visit.past_medical_hx ? `<div style="margin-bottom: 5px;"><strong>Past Medical Hx:</strong> ${visit.past_medical_hx}</div>` : ''}
+                                    ${visit.family_history ? `<div style="margin-bottom: 5px;"><strong>Family Hx:</strong> ${visit.family_history}</div>` : ''}
+                                    ${visit.differentials ? `<div style="margin-bottom: 5px;"><strong>Differentials:</strong> ${visit.differentials}</div>` : ''}
+                                    ${visit.treatment_plan ? `<div style="margin-bottom: 5px;"><strong>Treatment:</strong> ${visit.treatment_plan}</div>` : ''}
+                                    ${visit.prescriptions && visit.prescriptions.length > 0 ? `
+                                        <div style="margin-top: 8px; background: #e7f3ff; padding: 8px; border-radius: 5px;">
+                                            <strong style="color: var(--primary-blue);"><i class="fas fa-pills"></i> Medicines:</strong>
+                                            <ul style="margin: 5px 0 0 15px; padding: 0; font-size: 12px;">
+                                                ${visit.prescriptions.map(p => `
+                                                    <li>${p.medicine_name} - ${p.dosage} (Qty: ${p.quantity})</li>
+                                                `).join('')}
+                                            </ul>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </details>
+                        `;
+                    });
+                    document.getElementById('previousVisitsList').innerHTML = visitsHtml;
+                }
+            } catch (error) {
+                console.error('Error loading patient record:', error);
+                document.getElementById('patientDemographics').innerHTML = '<span style="color: #dc3545;">Error loading data</span>';
+                document.getElementById('previousVisitsList').innerHTML = '<span style="color: #dc3545;">Error loading visits</span>';
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Save new patient
+        async function saveNewPatient(event) {
+            event.preventDefault();
+            const form = event.target;
+            const genderRadio = form.querySelector('input[name="gender"]:checked');
+            const maritalRadio = form.querySelector('input[name="marital_status"]:checked');
+            const data = {
+                name: form.name.value,
+                age: parseInt(form.age.value),
+                contact: form.contact.value,
+                gender: genderRadio ? genderRadio.value : null,
+                occupation: form.occupation.value,
+                marital_status: maritalRadio ? maritalRadio.value : null,
+                address: form.address.value
+            };
+
+            try {
+                const response = await fetch('/api/patients', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('newPatientModal');
+                    loadPatients();
+                    alert('Patient registered successfully!');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                console.error('Error saving patient:', error);
+                alert('Failed to save patient');
+            }
+        }
+
+        // Add medicine row
+        function addMedicineRow() {
+            medicineCounter++;
+            const medicineList = document.getElementById('medicineList');
+            
+            const optionsHtml = inventoryItems.map(item => 
+                `<option value="${item.brand_name}" data-id="${item.id}" data-price="${item.price}" data-stock="${item.stock}">`
+            ).join('');
+
+            const row = document.createElement('div');
+            row.className = 'medicine-item';
+            row.id = `medicine-${medicineCounter}`;
+            row.innerHTML = `
+                <div style="flex: 2; min-width: 200px;">
+                    <input type="text" name="medicine_search" list="medicineList-${medicineCounter}" 
+                        placeholder="Type to search medicine..." 
+                        onchange="selectMedicine(this, ${medicineCounter})" 
+                        oninput="filterMedicines(this, ${medicineCounter})"
+                        autocomplete="off"
+                        style="width: 100%;">
+                    <datalist id="medicineList-${medicineCounter}">
+                        ${optionsHtml}
+                    </datalist>
+                    <input type="hidden" name="medicine_id" id="selectedMedicine-${medicineCounter}">
+                    <small id="stockInfo-${medicineCounter}" style="color: #666; font-size: 11px;"></small>
+                </div>
+                <input type="number" name="quantity" min="1" value="1" placeholder="Qty" onchange="updateMedicineTotal()" style="width: 70px;">
+                <div style="flex: 1;"></div>
+                <input type="number" name="freq_times" min="1" max="9" value="1" style="width: 60px; text-align: center;" title="Times per day">
+                <span class="freq-label">×</span>
+                <input type="number" name="freq_days" min="1" max="99" value="3" style="width: 60px; text-align: center;" title="Number of days">
+                <input type="hidden" name="dosage" id="dosage-${medicineCounter}">
+                <button type="button" class="btn-remove-medicine" onclick="removeMedicineRow(${medicineCounter})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            medicineList.appendChild(row);
+            updateMedicineTotal();
+        }
+
+        // Select medicine from search
+        function selectMedicine(input, rowId) {
+            const value = input.value;
+            const item = inventoryItems.find(i => i.brand_name === value);
+            
+            if (item) {
+                document.getElementById(`selectedMedicine-${rowId}`).value = item.id;
+                document.getElementById(`stockInfo-${rowId}`).innerHTML = 
+                    `<span style="color: ${item.stock < 10 ? '#dc3545' : '#28a745'};">Stock: ${item.stock}</span> | Price: $${item.price.toFixed(2)}`;
+                updateMedicineTotal();
+            } else {
+                document.getElementById(`selectedMedicine-${rowId}`).value = '';
+                document.getElementById(`stockInfo-${rowId}`).innerHTML = '';
+            }
+        }
+
+        // Filter medicines as user types
+        function filterMedicines(input, rowId) {
+            // Datalist handles filtering automatically
+            // Just clear selection if text doesn't match
+            const value = input.value;
+            const item = inventoryItems.find(i => i.brand_name === value);
+            if (!item) {
+                document.getElementById(`selectedMedicine-${rowId}`).value = '';
+                document.getElementById(`stockInfo-${rowId}`).innerHTML = '';
+            }
+        }
+
+        // Remove medicine row
+        function removeMedicineRow(id) {
+            const row = document.getElementById(`medicine-${id}`);
+            if (row) {
+                row.remove();
+                updateMedicineTotal();
+            }
+        }
+
+        // Update prescription total
+        function updateMedicineTotal() {
+            let total = 0;
+            const rows = document.querySelectorAll('.medicine-item');
+            
+            rows.forEach(row => {
+                const hiddenInput = row.querySelector('input[name="medicine_id"]');
+                const quantity = row.querySelector('input[name="quantity"]');
+                
+                if (hiddenInput && hiddenInput.value && quantity.value) {
+                    const item = inventoryItems.find(i => i.id === parseInt(hiddenInput.value));
+                    if (item) {
+                        total += item.price * parseInt(quantity.value);
+                    }
+                }
+            });
+
+            document.getElementById('prescriptionTotal').textContent = total.toFixed(0);
+        }
+
+        // Save new visit
+        async function saveNewVisit(event) {
+            event.preventDefault();
+            
+            // Gather medicines
+            const medicines = [];
+            const rows = document.querySelectorAll('.medicine-item');
+            rows.forEach(row => {
+                const hiddenInput = row.querySelector('input[name="medicine_id"]');
+                const quantity = row.querySelector('input[name="quantity"]');
+                const freqTimes = row.querySelector('input[name="freq_times"]');
+                const freqDays = row.querySelector('input[name="freq_days"]');
+                
+                if (hiddenInput && hiddenInput.value && quantity.value) {
+                    const item = inventoryItems.find(i => i.id === parseInt(hiddenInput.value));
+                    if (item) {
+                        const times = freqTimes ? freqTimes.value : '1';
+                        const days = freqDays ? freqDays.value : '3';
+                        const dosage = `${times}×${days} daily`;
+                        
+                        medicines.push({
+                            inventory_id: parseInt(hiddenInput.value),
+                            quantity: parseInt(quantity.value),
+                            dosage: dosage,
+                            price: item.price
+                        });
+                    }
+                }
+            });
+
+            const data = {
+                patient_id: parseInt(document.getElementById('visitPatientId').value),
+                vitals_bp: document.getElementById('vitalsBP').value,
+                vitals_weight: parseFloat(document.getElementById('vitalsWeight').value) || null,
+                vitals_temp: parseFloat(document.getElementById('vitalsTemp').value) || null,
+                vitals_bsr: document.getElementById('vitalsBSR').value,
+                vitals_spo2: document.getElementById('vitalsSPO2').value,
+                vitals_heart_rate: document.getElementById('vitalsHeartRate').value,
+                presenting_complaint: document.getElementById('presentingComplaint').value,
+                signs_symptoms: document.getElementById('signsSymptoms').value,
+                history_presenting_illness: document.getElementById('historyPresentingIllness').value,
+                past_medical_hx: document.getElementById('pastMedicalHx').value,
+                family_history: document.getElementById('familyHistory').value,
+                examination: document.getElementById('examination').value,
+                differentials: document.getElementById('differentials').value,
+                treatment_plan: document.getElementById('treatmentPlan').value,
+                consultation_fee: 0,
+                medicines: medicines
+            };
+
+            try {
+                const response = await fetch('/api/visits', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    closeModal('newVisitModal');
+                    loadPatients();
+                    loadInventory(); // Refresh inventory after deduction
+                    
+                    // Send WhatsApp message to patient with selected template
+                    const templateType = document.getElementById('messageTemplate').value;
+                    if (currentPatientContact && templateType !== 'none') {
+                        sendWhatsAppMessage(currentPatientName, currentPatientContact, templateType);
+                    }
+                    
+                    alert(`Visit saved successfully!`);
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                console.error('Error saving visit:', error);
+                alert('Failed to save visit');
+            }
+        }
+
+        // Message templates
+        const messageTemplates = {
+            general: `Assalam o Alaikum [PATIENT_NAME]! 🏥
+
+It was a pleasure seeing you today at DR.Khan Clinic. To speed up your recovery, please follow these care instructions:
+
+💊 *Medication:* Take your prescribed medication exactly as directed. Do not skip doses.
+
+💧 *Hydration:* Drink at least 8-10 glasses of water daily to help flush out toxins.
+
+😴 *Rest:* Ensure you get at least 7-8 hours of sleep tonight. Avoid strenuous activity for the next 24 hours.
+
+🍽️ *Diet:* Stick to light, home-cooked meals. Avoid spicy or oily foods until you feel 100%.
+
+⚠️ If your symptoms worsen or you develop a high fever, please contact us immediately at +92 304 7501095.
+
+Get well soon! 🤲
+*DR.Khan Clinic*`,
+
+            flu: `Assalam o Alaikum [PATIENT_NAME]! 🤒
+
+We hope you are resting well. Managing a viral infection takes patience. Here is your care plan:
+
+🏠 *Isolation:* Try to stay in a separate room to protect your family members.
+
+🍵 *Fluids:* Warm fluids (soups, herbal tea, warm water) are essential for your throat and hydration.
+
+🌡️ *Temperature:* Monitor your fever every 6 hours. If it exceeds 102°F (39°C), take the prescribed fever reducer.
+
+⚠️ *Warning Sign:* If you experience shortness of breath or severe chest pain, go to the ER immediately.
+
+Wishing you a speedy recovery! 🤲
+*DR.Khan Clinic*
+📞 +92 304 7501095`,
+
+            antibiotic: `Assalam o Alaikum [PATIENT_NAME]! 💊
+
+*IMPORTANT MEDICATION INSTRUCTIONS*
+
+You have been prescribed an antibiotic for your infection. To ensure the infection does not return, please read this carefully:
+
+✅ *Complete the Course:* You MUST finish ALL prescribed pills, even if you feel better after a few days. Stopping early can make the bacteria resistant.
+
+⏰ *Timing:* Try to take the medication at the same time every day.
+
+🍽️ *Side Effects:* Mild nausea is common. Take the medicine with food unless told otherwise.
+
+⚠️ If you develop a rash or difficulty breathing, stop the medication and call us immediately at +92 304 7501095.
+
+Take care! 🤲
+*DR.Khan Clinic*`,
+
+            hypertension: `Assalam o Alaikum [PATIENT_NAME]! ❤️
+
+*BP MANAGEMENT TIPS*
+
+To keep your blood pressure in a healthy range this week, please remember:
+
+🧂 *Sodium Limit:* Avoid adding table salt to your meals and limit processed foods (chips, canned soups).
+
+🚶 *Movement:* Try to walk for at least 20 minutes a day.
+
+💊 *Medication:* Take your BP medication in the morning (or as prescribed). Do NOT stop abruptly.
+
+📊 *Monitoring:* Please log your BP readings daily for the next 3 days and bring them to your next visit.
+
+Your health is our priority! 🤲
+*DR.Khan Clinic*
+📞 +92 304 7501095`,
+
+            gastro: `Assalam o Alaikum [PATIENT_NAME]! 🍽️
+
+We are sorry to hear you are feeling unwell. While your stomach settles, please follow the "BRAT" protocol:
+
+🍌 *Diet:* Eat Bananas, Rice, Applesauce, and Toast. Avoid dairy, caffeine, and spicy foods.
+
+💧 *Hydration (Crucial):* Take small sips of water or an electrolyte solution (ORS) every 15 minutes. Do NOT gulp large amounts at once.
+
+🛏️ *Rest:* Lying down with your head slightly elevated can help reduce nausea.
+
+⚠️ If you cannot keep fluids down for more than 24 hours, please visit the clinic again.
+
+Take care! 🤲
+*DR.Khan Clinic*
+📞 +92 304 7501095`
+        };
+
+        // Send WhatsApp message to patient via backend API
+        async function sendWhatsAppMessage(patientName, patientContact, templateType) {
+            // If no message template selected, skip
+            if (templateType === 'none') return;
+            
+            // Get the selected template and replace patient name
+            let message = messageTemplates[templateType] || messageTemplates.general;
+            message = message.replace(/\[PATIENT_NAME\]/g, patientName);
+            
+            try {
+                const response = await fetch('/api/send-whatsapp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: patientContact,
+                        message: message
+                    })
+                });
+                
+                const result = await response.json();
+                if (!result.success) {
+                    console.error('WhatsApp error:', result.error);
+                }
+            } catch (error) {
+                console.error('Error sending WhatsApp:', error);
+            }
+        }
+
+        // View complete patient record
+        let currentViewPatientId = null;
+        
+        async function viewPatientRecord(patientId, patientName) {
+            currentViewPatientId = patientId;
+            document.getElementById('historyPatientName').textContent = patientName;
+            document.getElementById('viewPatientDetails').innerHTML = 'Loading...';
+            document.getElementById('viewMedicalRecords').innerHTML = 'Loading...';
+            document.getElementById('viewPharmacyRecords').innerHTML = 'Loading...';
+            document.getElementById('historyModal').classList.add('active');
+            
+            try {
+                const response = await fetch(`/api/patients/${patientId}/full-record`);
+                const data = await response.json();
+                const patient = data.patient;
+                const visits = data.visits;
+                
+                // Display patient demographics
+                document.getElementById('viewPatientDetails').innerHTML = `
+                    <div><strong>ID:</strong> #${patient.id}</div>
+                    <div><strong>Name:</strong> ${patient.name}</div>
+                    <div><strong>Age:</strong> ${patient.age || 'N/A'} years</div>
+                    <div><strong>Gender:</strong> ${patient.gender || 'N/A'}</div>
+                    <div><strong>Contact:</strong> ${patient.contact || 'N/A'}</div>
+                    <div><strong>Occupation:</strong> ${patient.occupation || 'N/A'}</div>
+                    <div><strong>Marital Status:</strong> ${patient.marital_status || 'N/A'}</div>
+                    <div style="grid-column: span 2;"><strong>Address:</strong> ${patient.address || 'N/A'}</div>
+                `;
+                
+                // Display medical records (visits)
+                if (visits.length === 0) {
+                    document.getElementById('viewMedicalRecords').innerHTML = `
+                        <div class="empty-state" style="padding: 30px;">
+                            <i class="fas fa-clipboard"></i>
+                            <p>No medical records found</p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('viewMedicalRecords').innerHTML = visits.map((visit, index) => `
+                        <div class="history-item" style="position: relative;">
+                            <div style="position: absolute; top: 15px; right: 15px;">
+                                <button class="btn btn-primary" onclick="printPrescription(${visit.id})" style="padding: 8px 15px; font-size: 0.9rem;">
+                                    <i class="fas fa-print"></i> Print Rx
+                                </button>
+                            </div>
+                            <div class="date" style="font-size: 1.2rem; margin-bottom: 15px;">
+                                <i class="fas fa-calendar-alt"></i> Visit ${visits.length - index}: ${visit.date}
+                            </div>
+                            
+                            <!-- Vitals -->
+                            <div style="background: #e9ecef; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                                <strong style="color: var(--primary-blue);"><i class="fas fa-heartbeat"></i> Vitals:</strong>
+                                <div class="vitals" style="margin-top: 8px; flex-wrap: wrap;">
+                                    ${visit.vitals_bp ? `<span><i class="fas fa-heart"></i> BP: ${visit.vitals_bp}</span>` : ''}
+                                    ${visit.vitals_weight ? `<span><i class="fas fa-weight"></i> Weight: ${visit.vitals_weight} kg</span>` : ''}
+                                    ${visit.vitals_temp ? `<span><i class="fas fa-thermometer-half"></i> Temp: ${visit.vitals_temp}°F</span>` : ''}
+                                    ${visit.vitals_bsr ? `<span><i class="fas fa-tint"></i> BSR: ${visit.vitals_bsr}</span>` : ''}
+                                    ${visit.vitals_spo2 ? `<span><i class="fas fa-lungs"></i> SPO2: ${visit.vitals_spo2}</span>` : ''}
+                                    ${visit.vitals_heart_rate ? `<span><i class="fas fa-pulse"></i> HR: ${visit.vitals_heart_rate}</span>` : ''}
+                                </div>
+                            </div>
+                            
+                            <!-- Clinical Details -->
+                            <div style="display: grid; gap: 10px; font-size: 1rem;">
+                                ${visit.presenting_complaint ? `<div><strong style="color: var(--primary-blue);">Presenting Complaint:</strong> ${visit.presenting_complaint}</div>` : ''}
+                                ${visit.signs_symptoms ? `<div><strong style="color: var(--primary-blue);">Signs & Symptoms:</strong> ${visit.signs_symptoms}</div>` : ''}
+                                ${visit.history_presenting_illness ? `<div><strong style="color: var(--primary-blue);">History of Presenting Illness:</strong> ${visit.history_presenting_illness}</div>` : ''}
+                                ${visit.past_medical_hx ? `<div><strong style="color: var(--primary-blue);">Past Medical History:</strong> ${visit.past_medical_hx}</div>` : ''}
+                                ${visit.family_history ? `<div><strong style="color: var(--primary-blue);">Family History:</strong> ${visit.family_history}</div>` : ''}
+                                ${visit.examination ? `<div><strong style="color: var(--primary-blue);">Examination:</strong> ${visit.examination}</div>` : ''}
+                                ${visit.differentials ? `<div><strong style="color: var(--primary-blue);">Differential Diagnosis:</strong> ${visit.differentials}</div>` : ''}
+                                ${visit.treatment_plan ? `<div><strong style="color: var(--primary-blue);">Treatment Plan:</strong> ${visit.treatment_plan}</div>` : ''}
+                            </div>
+                            
+                            <!-- Prescription for this visit -->
+                            ${visit.prescriptions && visit.prescriptions.length > 0 ? `
+                                <div style="margin-top: 12px; background: #fff3cd; border-radius: 8px; padding: 12px;">
+                                    <strong style="color: #856404;"><i class="fas fa-prescription"></i> Prescription:</strong>
+                                    <ul style="margin: 8px 0 0 20px; color: #856404;">
+                                        ${visit.prescriptions.map(rx => `
+                                            <li>${rx.medicine_name} - Qty: ${rx.quantity}, ${rx.dosage || ''} ${rx.duration || ''}</li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('');
+                }
+                
+                // Display pharmacy records (all prescriptions combined)
+                const allPrescriptions = [];
+                visits.forEach(visit => {
+                    if (visit.prescriptions) {
+                        visit.prescriptions.forEach(rx => {
+                            allPrescriptions.push({
+                                ...rx,
+                                date: visit.date
+                            });
+                        });
+                    }
+                });
+                
+                if (allPrescriptions.length === 0) {
+                    document.getElementById('viewPharmacyRecords').innerHTML = `
+                        <div class="empty-state" style="padding: 20px;">
+                            <i class="fas fa-pills"></i>
+                            <p>No prescriptions found</p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('viewPharmacyRecords').innerHTML = `
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: var(--primary-blue); color: white;">
+                                    <th style="padding: 12px; text-align: left;">Date</th>
+                                    <th style="padding: 12px; text-align: left;">Medicine</th>
+                                    <th style="padding: 12px; text-align: center;">Qty</th>
+                                    <th style="padding: 12px; text-align: left;">Dosage</th>
+                                    <th style="padding: 12px; text-align: left;">Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${allPrescriptions.map(rx => `
+                                    <tr style="border-bottom: 1px solid #ddd;">
+                                        <td style="padding: 10px;">${rx.date}</td>
+                                        <td style="padding: 10px; font-weight: 600;">${rx.medicine_name}</td>
+                                        <td style="padding: 10px; text-align: center;">${rx.quantity}</td>
+                                        <td style="padding: 10px;">${rx.dosage || '-'}</td>
+                                        <td style="padding: 10px;">${rx.duration || '-'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <div style="text-align: right; margin-top: 15px; font-weight: 600; color: var(--primary-blue);">
+                            Total Prescriptions: ${allPrescriptions.length}
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Error loading patient record:', error);
+                alert('Failed to load patient record');
+            }
+        }
+        
+        // Print patient record PDF
+        async function printPatientRecord() {
+            if (!currentViewPatientId) return;
+            
+            try {
+                const response = await fetch(`/api/patients/${currentViewPatientId}/pdf`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Patient record PDF opened for printing!');
+                } else {
+                    alert('Error: ' + (result.detail || 'Failed to generate PDF'));
+                }
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Failed to generate patient record PDF');
+            }
+        }
+        
+        // Print single prescription
+        async function printPrescription(visitId) {
+            try {
+                const response = await fetch(`/prescription/${visitId}/print`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    // PDF opened
+                } else {
+                    alert('Error: ' + (result.detail || 'Failed to print prescription'));
+                }
+            } catch (error) {
+                console.error('Error printing prescription:', error);
+                alert('Failed to print prescription');
+            }
+        }
+
+        // Lock app
+        function lockApp() {
+            fetch('/logout', { method: 'POST' })
+                .then(() => window.location.href = '/')
+                .catch(() => window.location.href = '/');
+        }
+
+        // Open income modal
+        function openIncomeModal() {
+            document.getElementById('incomeForm').reset();
+            document.getElementById('incomeModal').classList.add('active');
+        }
+
+        // Save income
+        async function saveIncome(event) {
+            event.preventDefault();
+            const form = event.target;
+            const today = new Date().toISOString().split('T')[0];
+            const data = {
+                type: 'Income',
+                amount: parseFloat(form.amount.value),
+                date: today,
+                notes: 'Patient fee'
+            };
+
+            try {
+                const response = await fetch('/api/finance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('incomeModal');
+                    alert('Income added successfully!');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                console.error('Error saving income:', error);
+                alert('Failed to save income');
+            }
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+        });
+
+        // Close modal on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

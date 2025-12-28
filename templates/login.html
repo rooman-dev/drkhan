@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DrKhan Clinic - Login</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        /* Login Page Specific Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #001f3f 0%, #003366 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-card {
+            background-color: #ffffff;
+            padding: 50px 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            max-width: 420px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-header h1 {
+            color: #001f3f;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .login-header p {
+            color: #666;
+            margin-top: 10px;
+            font-size: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #001f3f;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.2rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            border-color: #001f3f;
+            box-shadow: 0 0 0 4px rgba(0, 31, 63, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px 24px;
+            background-color: #001f3f;
+            color: #ffffff;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            background-color: #003366;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 31, 63, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            font-weight: 600;
+            margin-top: 20px;
+            font-size: 1.1rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* Shake Animation */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
+
+        .shake {
+            animation: shake 0.6s ease-in-out;
+        }
+
+        /* Slide In Animation */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Footer */
+        .login-footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #999;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card" id="loginCard">
+        <div class="login-header">
+            <img src="/static/logo.png" alt="DrKhan Logo" style="width: 100px; height: 100px; border-radius: 15px; margin-bottom: 15px; border: 3px solid var(--primary-blue);">
+            <h1>DR.Khan Clinic</h1>
+            <p>Hospital Management System</p>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    placeholder="Enter your username"
+                    autocomplete="username"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn">
+                Unlock Dashboard
+            </button>
+
+            <div class="error-message" id="errorMessage">
+                Access Denied
+            </div>
+        </form>
+
+        <div class="login-footer">
+            &copy; 2025 DrKhan Clinic. All rights reserved.
+        </div>
+    </div>
+
+    <script>
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const loginCard = document.getElementById('loginCard');
+            const errorMessage = document.getElementById('errorMessage');
+            const loginBtn = document.getElementById('loginBtn');
+
+            // Reset previous error state
+            loginCard.classList.remove('shake');
+            errorMessage.classList.remove('show');
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Verifying...';
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Success - redirect to dashboard
+                    loginBtn.textContent = 'Welcome!';
+                    window.location.href = '/dashboard';
+                } else {
+                    // Failure - shake and show error
+                    showError(data.message || 'Access Denied');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('Connection Error');
+            }
+        }
+
+        function showError(message) {
+            const loginCard = document.getElementById('loginCard');
+            const errorMessage = document.getElementById('errorMessage');
+            const loginBtn = document.getElementById('loginBtn');
+
+            // Trigger shake animation
+            loginCard.classList.add('shake');
+            
+            // Show error message
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+
+            // Reset button
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Unlock Dashboard';
+
+            // Remove shake class after animation completes
+            setTimeout(() => {
+                loginCard.classList.remove('shake');
+            }, 600);
+        }
+
+        // Focus on username field on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('username').focus();
+        });
+
+        // Allow Enter key to submit from password field
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>
