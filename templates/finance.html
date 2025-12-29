@@ -673,9 +673,9 @@
                 const response = await fetch('/api/finance/summary');
                 const data = await response.json();
 
-                document.getElementById('totalRevenue').textContent = 'Rs. ' + data.total_income.toFixed(0);
-                document.getElementById('totalExpenses').textContent = 'Rs. ' + data.total_expense.toFixed(0);
-                document.getElementById('netProfit').textContent = 'Rs. ' + data.net_profit.toFixed(0);
+                document.getElementById('totalRevenue').textContent = 'Rs. ' + data.total_income.toFixed(2);
+                document.getElementById('totalExpenses').textContent = 'Rs. ' + data.total_expense.toFixed(2);
+                document.getElementById('netProfit').textContent = 'Rs. ' + data.net_profit.toFixed(2);
 
                 // Change color if negative profit
                 const profitElement = document.getElementById('netProfit');
@@ -732,7 +732,7 @@
                         <span class="type-badge type-${t.type.toLowerCase()}">${t.type}</span>
                     </td>
                     <td class="amount-${t.type.toLowerCase()}">
-                        ${t.type === 'Income' ? '+' : '-'} Rs. ${t.amount.toFixed(0)}
+                        ${t.type === 'Income' ? '+' : '-'} Rs. ${t.amount.toFixed(2)}
                     </td>
                     <td>${t.notes || '-'}</td>
                     <td>

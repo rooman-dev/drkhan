@@ -1150,7 +1150,7 @@
             if (item) {
                 document.getElementById(`selectedMedicine-${rowId}`).value = item.id;
                 document.getElementById(`stockInfo-${rowId}`).innerHTML = 
-                    `<span style="color: ${item.stock < 10 ? '#dc3545' : '#28a745'};">Stock: ${item.stock}</span> | Price: $${item.price.toFixed(2)}`;
+                    `<span style="color: ${item.stock < 10 ? '#dc3545' : '#28a745'};">Stock: ${item.stock}</span> | Price: Rs. ${item.price.toFixed(2)}`;
                 updateMedicineTotal();
             } else {
                 document.getElementById(`selectedMedicine-${rowId}`).value = '';
@@ -1196,7 +1196,7 @@
                 }
             });
 
-            document.getElementById('prescriptionTotal').textContent = total.toFixed(0);
+            document.getElementById('prescriptionTotal').textContent = total.toFixed(2);
         }
 
         // Save new visit

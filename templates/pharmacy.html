@@ -589,7 +589,7 @@
                         </div>
                         <div class="form-group">
                             <label for="price">Price per Unit (Rs.)</label>
-                            <input type="number" id="price" name="price" step="1" min="0" value="0" placeholder="Price">
+                            <input type="number" id="price" name="price" step="0.01" min="0" value="0" placeholder="Price">
                         </div>
                     </div>
                 </div>
@@ -624,7 +624,7 @@
                         </div>
                         <div class="form-group">
                             <label for="purchasePrice">Total Purchase Cost (Rs.) *</label>
-                            <input type="number" id="purchasePrice" name="cost" step="1" min="0" required placeholder="Total cost">
+                            <input type="number" id="purchasePrice" name="cost" step="0.01" min="0" required placeholder="Total cost">
                         </div>
                     </div>
                     <div class="form-group">
@@ -662,7 +662,7 @@
                     </div>
                     <div class="form-group">
                         <label for="editPrice">Price per Unit (Rs.)</label>
-                        <input type="number" id="editPrice" name="price" step="1" min="0">
+                        <input type="number" id="editPrice" name="price" step="0.01" min="0">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -755,7 +755,7 @@
                         <td>
                             <span class="stock-badge ${stockBadgeClass}">${stockText}</span>
                         </td>
-                        <td>Rs. ${item.price.toFixed(0)}</td>
+                        <td>Rs. ${item.price.toFixed(2)}</td>
                         <td>
                             <button class="btn-action btn-stock" onclick="openStockInModal(${item.id}, '${item.brand_name}', ${item.stock})">
                                 <i class="fas fa-plus"></i> Stock
@@ -784,7 +784,7 @@
             document.getElementById('totalMedicines').textContent = totalMedicines;
             document.getElementById('totalStock').textContent = totalStock;
             document.getElementById('lowStockCount').textContent = lowStockCount;
-            document.getElementById('inventoryValue').textContent = 'Rs. ' + inventoryValue.toFixed(0);
+            document.getElementById('inventoryValue').textContent = 'Rs. ' + inventoryValue.toFixed(2);
 
             // Highlight low stock card if needed
             const lowStockCard = document.getElementById('lowStockCard');
@@ -993,7 +993,7 @@
                             </div>
                             <div class="stock-info">
                                 <span class="stock-badge ${stockClass}">${med.stock === 0 ? 'OUT OF STOCK' : med.stock + ' units'}</span>
-                                <div style="margin-top: 5px;">$${med.price.toFixed(2)}</div>
+                                <div style="margin-top: 5px;">Rs. ${med.price.toFixed(2)}</div>
                             </div>
                         </div>
                     </div>
@@ -1016,7 +1016,7 @@
                                 </div>
                                 <div class="stock-info">
                                     <span class="stock-badge stock-ok">${alt.stock} units</span>
-                                    <div style="margin-top: 5px;">$${alt.price.toFixed(2)}</div>
+                                    <div style="margin-top: 5px;">Rs. ${alt.price.toFixed(2)}</div>
                                 </div>
                             </div>
                         `).join('')}
