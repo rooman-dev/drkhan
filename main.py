@@ -1205,7 +1205,7 @@ async def generate_patient_record_pdf(patient_id: int):
         # Header
         pdf.set_font('Helvetica', 'B', 20)
         pdf.set_text_color(0, 31, 63)
-        pdf.cell(0, 12, 'DR.Khan Clinic', new_x='LMARGIN', new_y='NEXT', align='C')
+        pdf.cell(0, 12, 'DrKhan Clinic', new_x='LMARGIN', new_y='NEXT', align='C')
         pdf.set_font('Helvetica', '', 10)
         pdf.set_text_color(100, 100, 100)
         pdf.cell(0, 6, 'Complete Patient Record', new_x='LMARGIN', new_y='NEXT', align='C')

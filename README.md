@@ -62,4 +62,4 @@ python main.py
 All amounts are in PKR (Rs.)
 
 ## Contact
-DR.Khan Clinic - +92 304 7501095
+DrKhan Clinic - +92 304 7501095

@@ -44,7 +44,7 @@ class PrescriptionPDF(FPDF):
         
         # Clinic name
         self.set_font('Helvetica', 'B', 24)
-        self.cell(0, 12, 'DR.Khan Clinic', new_x='LMARGIN', new_y='NEXT', align='C')
+        self.cell(0, 12, 'DrKhan Clinic', new_x='LMARGIN', new_y='NEXT', align='C')
         
         # Subtitle
         self.set_font('Helvetica', '', 11)
