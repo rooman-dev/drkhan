@@ -188,13 +188,12 @@ async def get_dashboard_stats():
         SELECT 
             v.id,
             v.date,
-            TIME(v.date) as time,
             v.presenting_complaint,
             p.name as patient_name
         FROM visits v
         JOIN patients p ON v.patient_id = p.id
-        WHERE DATE(v.date) = ?
-        ORDER BY v.date DESC
+        WHERE v.date = ?
+        ORDER BY v.id DESC
         LIMIT 10
     """, (today,))
     visits = [dict(row) for row in cursor.fetchall()]
@@ -255,6 +254,124 @@ async def logout_redirect():
     session["logged_in"] = False
     session["user"] = None
     return RedirectResponse(url="/", status_code=302)
+
+
+# ============ Visit Management Routes ============
+
+@app.get("/visits", response_class=HTMLResponse)
+async def visits_page(request: Request):
+    """Serve the visit management page."""
+    if not session.get("logged_in"):
+        return RedirectResponse(url="/", status_code=302)
+    return templates.TemplateResponse("visits.html", {
+        "request": request,
+        "user": session["user"]
+    })
+
+
+@app.get("/api/visits/all")
+async def get_all_visits(search: str = "", date_filter: str = "", page: int = 1, page_size: int = 20):
+    """Get all visits with search and pagination."""
+    if not session.get("logged_in"):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    # Build date filter
+    date_condition = ""
+    today = date.today().isoformat()
+    
+    if date_filter == "today":
+        date_condition = f"AND v.date = '{today}'"
+    elif date_filter == "week":
+        from datetime import timedelta
+        week_ago = (date.today() - timedelta(days=7)).isoformat()
+        date_condition = f"AND v.date >= '{week_ago}'"
+    elif date_filter == "month":
+        from datetime import timedelta
+        month_ago = (date.today() - timedelta(days=30)).isoformat()
+        date_condition = f"AND v.date >= '{month_ago}'"
+    
+    # Build search condition
+    if search:
+        search_condition = f"""
+            AND (p.name LIKE '%{search}%' 
+            OR v.presenting_complaint LIKE '%{search}%' 
+            OR CAST(v.id AS TEXT) LIKE '%{search}%')
+        """
+    else:
+        search_condition = ""
+    
+    # Get total count
+    cursor.execute(f"""
+        SELECT COUNT(*) as count 
+        FROM visits v
+        JOIN patients p ON v.patient_id = p.id
+        WHERE 1=1 {date_condition} {search_condition}
+    """)
+    total = cursor.fetchone()["count"]
+    total_pages = max(1, (total + page_size - 1) // page_size)
+    
+    # Get paginated results
+    offset = (page - 1) * page_size
+    cursor.execute(f"""
+        SELECT 
+            v.id,
+            v.date,
+            v.presenting_complaint,
+            p.name as patient_name
+        FROM visits v
+        JOIN patients p ON v.patient_id = p.id
+        WHERE 1=1 {date_condition} {search_condition}
+        ORDER BY v.id DESC
+        LIMIT ? OFFSET ?
+    """, (page_size, offset))
+    
+    visits = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    
+    return {
+        "visits": visits,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages
+    }
+
+
+@app.get("/api/visits/stats")
+async def get_visits_stats():
+    """Get visit statistics."""
+    if not session.get("logged_in"):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    today = date.today().isoformat()
+    from datetime import timedelta
+    week_ago = (date.today() - timedelta(days=7)).isoformat()
+    
+    # Total visits
+    cursor.execute("SELECT COUNT(*) as count FROM visits")
+    total = cursor.fetchone()["count"]
+    
+    # Today's visits
+    cursor.execute("SELECT COUNT(*) as count FROM visits WHERE date = ?", (today,))
+    today_count = cursor.fetchone()["count"]
+    
+    # This week's visits
+    cursor.execute("SELECT COUNT(*) as count FROM visits WHERE date >= ?", (week_ago,))
+    week_count = cursor.fetchone()["count"]
+    
+    conn.close()
+    
+    return {
+        "total": total,
+        "today": today_count,
+        "week": week_count
+    }
 
 
 # ============ Patient Management Routes ============
