@@ -114,6 +114,15 @@
             background: #218838;
         }
 
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
         /* Modal Styles */
         .modal-overlay {
             position: fixed;
@@ -940,6 +949,9 @@
                         <button class="btn-action btn-visit" onclick="openVisitModal(${patient.id}, '${patient.name}')">
                             <i class="fas fa-plus"></i> Add Visit
                         </button>
+                        <button class="btn-action btn-delete" onclick="deletePatient(${patient.id}, '${patient.name}')" title="Delete Patient">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </td>
                 </tr>
             `).join('');
@@ -961,6 +973,30 @@
         function openNewPatientModal() {
             document.getElementById('newPatientForm').reset();
             document.getElementById('newPatientModal').classList.add('active');
+        }
+
+        // Delete patient function
+        async function deletePatient(patientId, patientName) {
+            if (!confirm(`Are you sure you want to delete patient "${patientName}"?\n\nThis will also delete all their visits and prescriptions. This action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/patients/${patientId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('Patient deleted successfully');
+                    searchPatients(); // Reload patients list
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Failed to delete patient');
+                }
+            } catch (error) {
+                console.error('Error deleting patient:', error);
+                alert('Failed to delete patient');
+            }
         }
 
         // Store current patient info for WhatsApp
@@ -1107,9 +1143,11 @@
             medicineCounter++;
             const medicineList = document.getElementById('medicineList');
             
-            const optionsHtml = inventoryItems.map(item => 
-                `<option value="${item.brand_name}" data-id="${item.id}" data-price="${item.price}" data-stock="${item.stock}">`
-            ).join('');
+            // Include formula in option value for searchability
+            const optionsHtml = inventoryItems.map(item => {
+                const displayText = item.formula ? `${item.brand_name} (${item.formula})` : item.brand_name;
+                return `<option value="${displayText}" data-id="${item.id}" data-brand="${item.brand_name}" data-formula="${item.formula || ''}" data-price="${item.price}" data-stock="${item.stock}">`;
+            }).join('');
 
             const row = document.createElement('div');
             row.className = 'medicine-item';
@@ -1117,7 +1155,7 @@
             row.innerHTML = `
                 <div style="flex: 2; min-width: 200px;">
                     <input type="text" name="medicine_search" list="medicineList-${medicineCounter}" 
-                        placeholder="Type to search medicine..." 
+                        placeholder="Type brand name or formula..." 
                         onchange="selectMedicine(this, ${medicineCounter})" 
                         oninput="filterMedicines(this, ${medicineCounter})"
                         autocomplete="off"
@@ -1142,10 +1180,16 @@
             updateMedicineTotal();
         }
 
-        // Select medicine from search
+        // Select medicine from search - matches by brand name, formula, or display text
         function selectMedicine(input, rowId) {
-            const value = input.value;
-            const item = inventoryItems.find(i => i.brand_name === value);
+            const value = input.value.toLowerCase();
+            // Find by brand name, formula, or the combined display text
+            const item = inventoryItems.find(i => {
+                const displayText = i.formula ? `${i.brand_name} (${i.formula})` : i.brand_name;
+                return i.brand_name.toLowerCase() === value || 
+                       (i.formula && i.formula.toLowerCase() === value) ||
+                       displayText.toLowerCase() === value;
+            });
             
             if (item) {
                 document.getElementById(`selectedMedicine-${rowId}`).value = item.id;
@@ -1158,12 +1202,17 @@
             }
         }
 
-        // Filter medicines as user types
+        // Filter medicines as user types - datalist handles filtering automatically
         function filterMedicines(input, rowId) {
             // Datalist handles filtering automatically
             // Just clear selection if text doesn't match
-            const value = input.value;
-            const item = inventoryItems.find(i => i.brand_name === value);
+            const value = input.value.toLowerCase();
+            const item = inventoryItems.find(i => {
+                const displayText = i.formula ? `${i.brand_name} (${i.formula})` : i.brand_name;
+                return i.brand_name.toLowerCase() === value || 
+                       (i.formula && i.formula.toLowerCase() === value) ||
+                       displayText.toLowerCase() === value;
+            });
             if (!item) {
                 document.getElementById(`selectedMedicine-${rowId}`).value = '';
                 document.getElementById(`stockInfo-${rowId}`).innerHTML = '';

@@ -460,6 +460,42 @@ async def get_patient(patient_id: int):
     return dict(patient)
 
 
+@app.delete("/api/patients/{patient_id}")
+async def delete_patient(patient_id: int):
+    """Delete a patient and all their associated visits and prescriptions."""
+    if not session.get("logged_in"):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    # Check if patient exists
+    cursor.execute("SELECT id FROM patients WHERE id = ?", (patient_id,))
+    if not cursor.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
+    # Get all visit IDs for this patient to delete prescriptions
+    cursor.execute("SELECT id FROM visits WHERE patient_id = ?", (patient_id,))
+    visit_ids = [row['id'] for row in cursor.fetchall()]
+    
+    # Delete prescriptions for all visits
+    if visit_ids:
+        placeholders = ','.join('?' * len(visit_ids))
+        cursor.execute(f"DELETE FROM prescriptions WHERE visit_id IN ({placeholders})", visit_ids)
+    
+    # Delete all visits for this patient
+    cursor.execute("DELETE FROM visits WHERE patient_id = ?", (patient_id,))
+    
+    # Delete the patient
+    cursor.execute("DELETE FROM patients WHERE id = ?", (patient_id,))
+    
+    conn.commit()
+    conn.close()
+    
+    return {"success": True, "message": "Patient and all associated records deleted successfully"}
+
+
 @app.get("/api/patients/{patient_id}/history")
 async def get_patient_history(patient_id: int):
     """Get visit history for a patient."""
@@ -779,6 +815,76 @@ async def add_stock(item_id: int, request: Request):
         
         conn.commit()
         return {"success": True, "message": "Stock added successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
+@app.post("/api/inventory/{item_id}/stock-out")
+async def subtract_stock(item_id: int, request: Request):
+    """Subtract stock from an inventory item."""
+    if not session.get("logged_in"):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    data = await request.json()
+    quantity = data.get("quantity", 0)
+    notes = data.get("notes", "")
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Get current stock
+        cursor.execute("SELECT brand_name, stock FROM inventory WHERE id = ?", (item_id,))
+        item = cursor.fetchone()
+        if not item:
+            raise HTTPException(status_code=404, detail="Medicine not found")
+        
+        if item["stock"] < quantity:
+            raise HTTPException(status_code=400, detail="Insufficient stock")
+        
+        # Update stock
+        cursor.execute("""
+            UPDATE inventory SET stock = stock - ? WHERE id = ?
+        """, (quantity, item_id))
+        
+        conn.commit()
+        return {"success": True, "message": "Stock subtracted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
+@app.delete("/api/inventory/{item_id}")
+async def delete_inventory_item(item_id: int):
+    """Delete a medicine from inventory."""
+    if not session.get("logged_in"):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Check if medicine exists
+        cursor.execute("SELECT id FROM inventory WHERE id = ?", (item_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Medicine not found")
+        
+        # Delete the medicine
+        cursor.execute("DELETE FROM inventory WHERE id = ?", (item_id,))
+        
+        conn.commit()
+        return {"success": True, "message": "Medicine deleted successfully"}
         
     except HTTPException:
         raise
@@ -1384,24 +1490,42 @@ async def generate_patient_record_pdf(patient_id: int):
             if visit.get('vitals_heart_rate'): vitals.append(f"HR: {visit['vitals_heart_rate']}")
             
             if vitals:
-                pdf.cell(0, 6, "Vitals: " + " | ".join(vitals), new_x='LMARGIN', new_y='NEXT')
+                vitals_text = "Vitals: " + " | ".join(vitals)
+                pdf.multi_cell(0, 6, vitals_text)
             
-            if visit.get('presenting_complaint'):
-                pdf.multi_cell(0, 5, f"Complaint: {visit['presenting_complaint']}")
-            if visit.get('signs_symptoms'):
-                pdf.multi_cell(0, 5, f"Signs & Symptoms: {visit['signs_symptoms']}")
-            if visit.get('differentials'):
-                pdf.multi_cell(0, 5, f"Differential Diagnosis: {visit['differentials']}")
-            if visit.get('treatment_plan'):
-                pdf.multi_cell(0, 5, f"Treatment Plan: {visit['treatment_plan']}")
+            complaint = visit.get('presenting_complaint')
+            if complaint:
+                pdf.set_x(10)
+                pdf.multi_cell(0, 5, f"Complaint: {str(complaint)[:200]}")
+            
+            symptoms = visit.get('signs_symptoms')
+            if symptoms:
+                pdf.set_x(10)
+                pdf.multi_cell(0, 5, f"Signs & Symptoms: {str(symptoms)[:200]}")
+            
+            differentials = visit.get('differentials')
+            if differentials:
+                pdf.set_x(10)
+                pdf.multi_cell(0, 5, f"Differential Diagnosis: {str(differentials)[:200]}")
+            
+            treatment = visit.get('treatment_plan')
+            if treatment:
+                pdf.set_x(10)
+                pdf.multi_cell(0, 5, f"Treatment Plan: {str(treatment)[:200]}")
             
             # Prescriptions
             if visit.get('prescriptions'):
                 pdf.set_font('Helvetica', 'I', 10)
-                pdf.cell(0, 6, "Prescription:", new_x='LMARGIN', new_y='NEXT')
+                pdf.set_x(10)
+                pdf.multi_cell(0, 6, "Prescription:")
                 for rx in visit['prescriptions']:
-                    rx_text = f"  - {rx['medicine_name']} (Qty: {rx['quantity']}) {rx.get('dosage', '')} {rx.get('duration', '')}"
-                    pdf.cell(0, 5, rx_text, new_x='LMARGIN', new_y='NEXT')
+                    med_name = str(rx.get('medicine_name', '') or '')[:40]
+                    qty = str(rx.get('quantity', '') or '')
+                    dosage = str(rx.get('dosage', '') or '')[:25]
+                    duration = str(rx.get('duration', '') or '')[:20]
+                    rx_text = f"  - {med_name} (Qty: {qty}) {dosage} {duration}"
+                    pdf.set_x(10)
+                    pdf.multi_cell(0, 5, rx_text)
                 pdf.set_font('Helvetica', '', 10)
             
             pdf.ln(3)

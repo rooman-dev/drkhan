@@ -154,6 +154,24 @@
             background: #218838;
         }
 
+        .btn-stock-out {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-stock-out:hover {
+            background: #e0a800;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
         .btn-find-alt {
             background: #17a2b8;
             color: white;
@@ -642,6 +660,39 @@
         </div>
     </div>
 
+    <!-- Stock Out Modal -->
+    <div class="modal-overlay" id="stockOutModal">
+        <div class="modal">
+            <div class="modal-header" style="background: #ffc107;">
+                <h2 style="color: #212529;"><i class="fas fa-minus-circle"></i> Subtract Stock - <span id="stockOutMedicineName"></span></h2>
+                <button class="modal-close" style="color: #212529;" onclick="closeModal('stockOutModal')">&times;</button>
+            </div>
+            <form id="stockOutForm" onsubmit="subtractStock(event)">
+                <input type="hidden" id="stockOutMedicineId">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Current Stock</label>
+                        <input type="text" id="stockOutCurrentStock" readonly style="background: #f8f9fa;">
+                    </div>
+                    <div class="form-group">
+                        <label for="subtractQuantity">Quantity to Subtract *</label>
+                        <input type="number" id="subtractQuantity" name="quantity" min="1" required placeholder="Enter quantity">
+                    </div>
+                    <div class="form-group">
+                        <label for="stockOutNotes">Reason (Optional)</label>
+                        <input type="text" id="stockOutNotes" name="notes" placeholder="e.g., Damaged, expired, adjustment">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('stockOutModal')">Cancel</button>
+                    <button type="submit" class="btn" style="background: #ffc107; color: #212529;">
+                        <i class="fas fa-minus"></i> Subtract Stock
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Edit Medicine Modal -->
     <div class="modal-overlay" id="editMedicineModal">
         <div class="modal">
@@ -757,17 +808,18 @@
                         </td>
                         <td>Rs. ${item.price.toFixed(2)}</td>
                         <td>
-                            <button class="btn-action btn-stock" onclick="openStockInModal(${item.id}, '${item.brand_name}', ${item.stock})">
-                                <i class="fas fa-plus"></i> Stock
+                            <button class="btn-action btn-stock" onclick="openStockInModal(${item.id}, '${item.brand_name}', ${item.stock})" title="Add Stock">
+                                <i class="fas fa-plus"></i>
                             </button>
-                            <button class="btn-action btn-edit" onclick="openEditModal(${item.id}, '${item.brand_name}', '${item.formula || ''}', ${item.price})">
+                            <button class="btn-action btn-stock-out" onclick="openStockOutModal(${item.id}, '${item.brand_name}', ${item.stock})" title="Subtract Stock">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <button class="btn-action btn-edit" onclick="openEditModal(${item.id}, '${item.brand_name}', '${item.formula || ''}', ${item.price})" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            ${item.stock === 0 ? `
-                                <button class="btn-action btn-find-alt" onclick="findAlternativeFor('${item.formula || ''}')">
-                                    <i class="fas fa-exchange-alt"></i> Alt
-                                </button>
-                            ` : ''}
+                            <button class="btn-action btn-delete" onclick="deleteMedicine(${item.id}, '${item.brand_name}')" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </td>
                     </tr>
                 `;
@@ -905,6 +957,79 @@
             } catch (error) {
                 console.error('Error adding stock:', error);
                 alert('Failed to add stock');
+            }
+        }
+
+        // Open stock out modal
+        function openStockOutModal(id, name, stock) {
+            document.getElementById('stockOutMedicineId').value = id;
+            document.getElementById('stockOutMedicineName').textContent = name;
+            document.getElementById('stockOutCurrentStock').value = stock + ' units';
+            document.getElementById('subtractQuantity').value = '';
+            document.getElementById('subtractQuantity').max = stock;
+            document.getElementById('stockOutNotes').value = '';
+            document.getElementById('stockOutModal').classList.add('active');
+        }
+
+        // Subtract stock
+        async function subtractStock(event) {
+            event.preventDefault();
+            const id = document.getElementById('stockOutMedicineId').value;
+            const quantity = parseInt(document.getElementById('subtractQuantity').value);
+            const currentStock = parseInt(document.getElementById('stockOutCurrentStock').value);
+            
+            if (quantity > currentStock) {
+                alert('Cannot subtract more than current stock!');
+                return;
+            }
+            
+            const data = {
+                quantity: quantity,
+                notes: document.getElementById('stockOutNotes').value
+            };
+
+            try {
+                const response = await fetch(`/api/inventory/${id}/stock-out`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('stockOutModal');
+                    loadInventory();
+                    alert('Stock subtracted successfully!');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                console.error('Error subtracting stock:', error);
+                alert('Failed to subtract stock');
+            }
+        }
+
+        // Delete medicine
+        async function deleteMedicine(id, name) {
+            if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/inventory/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadInventory();
+                    alert('Medicine deleted successfully!');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                console.error('Error deleting medicine:', error);
+                alert('Failed to delete medicine');
             }
         }
 
