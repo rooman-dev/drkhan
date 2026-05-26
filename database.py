@@ -79,16 +79,26 @@ def init_database():
             gender TEXT,
             occupation TEXT,
             marital_status TEXT,
-            address TEXT
+            address TEXT,
+            created_at TEXT,
+            modified_at TEXT
         )
     """)
+
+    # Migration-safe add for older databases missing timestamp columns
+    cursor.execute("PRAGMA table_info(patients)")
+    patient_columns = {row[1] for row in cursor.fetchall()}
+    if "created_at" not in patient_columns:
+        cursor.execute("ALTER TABLE patients ADD COLUMN created_at TEXT")
+    if "modified_at" not in patient_columns:
+        cursor.execute("ALTER TABLE patients ADD COLUMN modified_at TEXT")
 
     # Create visits table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS visits (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             patient_id INTEGER NOT NULL,
-            date TEXT NOT NULL,
+            date TEXT NOT NULL DEFAULT CURRENT_DATE,
             vitals_bp TEXT,
             vitals_weight REAL,
             vitals_temp REAL,
@@ -103,9 +113,16 @@ def init_database():
             examination TEXT,
             differentials TEXT,
             treatment_plan TEXT,
+            lab_report_path TEXT,
             FOREIGN KEY (patient_id) REFERENCES patients (id)
         )
     """)
+
+    # Migration-safe add for older databases missing visit lab report path
+    cursor.execute("PRAGMA table_info(visits)")
+    visit_columns = {row[1] for row in cursor.fetchall()}
+    if "lab_report_path" not in visit_columns:
+        cursor.execute("ALTER TABLE visits ADD COLUMN lab_report_path TEXT")
 
     # Create inventory table
     cursor.execute("""
@@ -122,7 +139,7 @@ def init_database():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS finance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
+            date TEXT NOT NULL DEFAULT CURRENT_DATE,
             type TEXT CHECK(type IN ('Income', 'Expense')) NOT NULL,
             amount REAL NOT NULL,
             notes TEXT
@@ -152,6 +169,24 @@ def init_database():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_finance_date ON finance(date)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_finance_type ON finance(type)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_inventory_brand_name ON inventory(brand_name)")
+
+    # Backfill missing history dates for older databases.
+    cursor.execute("UPDATE visits SET date = CURRENT_DATE WHERE date IS NULL OR TRIM(date) = ''")
+    cursor.execute("UPDATE finance SET date = CURRENT_DATE WHERE date IS NULL OR TRIM(date) = ''")
+    cursor.execute("""
+        UPDATE patients
+        SET created_at = datetime('now')
+        WHERE created_at IS NULL OR TRIM(created_at) = ''
+    """)
+    cursor.execute("""
+        UPDATE patients
+        SET modified_at = COALESCE(
+            (SELECT MAX(v.date || ' 00:00:00') FROM visits v WHERE v.patient_id = patients.id),
+            created_at,
+            datetime('now')
+        )
+        WHERE modified_at IS NULL OR TRIM(modified_at) = ''
+    """)
 
     conn.commit()
 

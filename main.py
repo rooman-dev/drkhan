@@ -8,17 +8,21 @@ import webview
 import threading
 import shutil
 import os
-from datetime import date, datetime
+import json
+import socket
+from datetime import date, datetime, timezone
 from pathlib import Path
-from fastapi import FastAPI, Request, HTTPException, Depends
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+import logging
+from fastapi import FastAPI, Request, HTTPException, Depends, UploadFile, File
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import List, Optional
 
 from database import init_database, get_connection, hash_password
-from prescription import generate_prescription_pdf, generate_and_open_prescription
+from database import add_test_data
+from prescription import generate_prescription_form_pdf, generate_patient_history_pdf
 
 # Initialize FastAPI app
 app = FastAPI(title="DrKhan Clinic", version="1.0.0")
@@ -32,10 +36,13 @@ STATIC_DIR = BASE_DIR / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # Templates
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 # Simple session storage (in-memory for single user)
 session = {"logged_in": False, "user": None}
+
+# Configure simple logging for debugging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s')
 
 
 # ============ Pydantic Models ============
@@ -55,10 +62,11 @@ class PatientCreate(BaseModel):
 
 
 class MedicineItem(BaseModel):
-    inventory_id: int
-    quantity: int
+    inventory_id: Optional[int] = None
+    medicine_name: Optional[str] = None
+    quantity: int = 1
     dosage: Optional[str] = None
-    price: float
+    price: float = 0.0
 
 
 class VisitCreate(BaseModel):
@@ -79,6 +87,46 @@ class VisitCreate(BaseModel):
     treatment_plan: Optional[str] = None
     consultation_fee: float = 0
     medicines: List[MedicineItem] = []
+    lab_report_path: Optional[str] = None
+
+
+class VisitUpdate(BaseModel):
+    vitals_bp: Optional[str] = None
+    vitals_weight: Optional[float] = None
+    vitals_temp: Optional[float] = None
+    vitals_bsr: Optional[str] = None
+    vitals_spo2: Optional[str] = None
+    vitals_heart_rate: Optional[str] = None
+    presenting_complaint: Optional[str] = None
+    signs_symptoms: Optional[str] = None
+    history_presenting_illness: Optional[str] = None
+    past_medical_hx: Optional[str] = None
+    family_history: Optional[str] = None
+    examination: Optional[str] = None
+    differentials: Optional[str] = None
+    treatment_plan: Optional[str] = None
+    lab_report_path: Optional[str] = None
+
+
+class PrescriptionPrintRequest(BaseModel):
+    pt_name: str
+    age: str
+    sex: Optional[str] = None
+    contact: str
+    date: str
+    bp: Optional[str] = None
+    hr: Optional[str] = None
+    so2: Optional[str] = None
+    rr: Optional[str] = None
+    temp: Optional[str] = None
+    ht_wt: Optional[str] = None
+    bmi: Optional[str] = None
+    rbs: Optional[str] = None
+    fbs: Optional[str] = None
+    comorbs: Optional[str] = None
+    pc_dx: Optional[str] = None
+    rx: Optional[str] = None
+    advice: Optional[str] = None
 
 
 # ============ Auth Helpers ============
@@ -104,7 +152,7 @@ async def login_page(request: Request):
     # If already logged in, redirect to dashboard
     if session.get("logged_in"):
         return RedirectResponse(url="/dashboard", status_code=302)
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(request, "login.html", {"request": request})
 
 
 @app.post("/login")
@@ -149,7 +197,7 @@ async def dashboard_page(request: Request):
     """Serve the dashboard page (protected)."""
     if not session.get("logged_in"):
         return RedirectResponse(url="/", status_code=302)
-    return templates.TemplateResponse("dashboard.html", {
+    return templates.TemplateResponse(request, "dashboard.html", {
         "request": request,
         "user": session["user"]
     })
@@ -263,9 +311,17 @@ async def visits_page(request: Request):
     """Serve the visit management page."""
     if not session.get("logged_in"):
         return RedirectResponse(url="/", status_code=302)
-    return templates.TemplateResponse("visits.html", {
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1 FROM visits LIMIT 1")
+    has_visits = cursor.fetchone() is not None
+    conn.close()
+
+    return templates.TemplateResponse(request, "visits.html", {
         "request": request,
-        "user": session["user"]
+        "user": session["user"],
+        "visits": [1] if has_visits else []
     })
 
 
@@ -379,20 +435,22 @@ async def get_visits_stats():
 @app.get("/patients", response_class=HTMLResponse)
 async def patients_page(request: Request):
     """Serve the patients management page."""
-    if not session.get("logged_in"):
-        return RedirectResponse(url="/", status_code=302)
-    return templates.TemplateResponse("patients.html", {
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1 FROM patients LIMIT 1")
+    has_patients = cursor.fetchone() is not None
+    conn.close()
+
+    return templates.TemplateResponse(request, "patients.html", {
         "request": request,
-        "user": session["user"]
+        "user": session["user"],
+        "patients": [1] if has_patients else []
     })
 
 
 @app.get("/api/patients")
 async def get_patients(search: str = ""):
     """Get all patients with optional search."""
-    if not session.get("logged_in"):
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -400,7 +458,9 @@ async def get_patients(search: str = ""):
         cursor.execute("""
             SELECT 
                 p.id, p.name, p.age, p.contact, p.gender, p.address,
-                (SELECT MAX(date) FROM visits WHERE patient_id = p.id) as last_visit
+                (SELECT MAX(date) FROM visits WHERE patient_id = p.id) as last_visit,
+                p.created_at as date_added,
+                p.modified_at as date_modified
             FROM patients p
             WHERE p.name LIKE ? OR p.contact LIKE ? OR CAST(p.id AS TEXT) LIKE ? OR p.address LIKE ?
             ORDER BY p.name
@@ -409,7 +469,9 @@ async def get_patients(search: str = ""):
         cursor.execute("""
             SELECT 
                 p.id, p.name, p.age, p.contact, p.gender, p.address,
-                (SELECT MAX(date) FROM visits WHERE patient_id = p.id) as last_visit
+                (SELECT MAX(date) FROM visits WHERE patient_id = p.id) as last_visit,
+                p.created_at as date_added,
+                p.modified_at as date_modified
             FROM patients p
             ORDER BY p.id DESC
         """)
@@ -423,15 +485,12 @@ async def get_patients(search: str = ""):
 @app.post("/api/patients")
 async def create_patient(patient: PatientCreate):
     """Create a new patient."""
-    if not session.get("logged_in"):
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    
     conn = get_connection()
     cursor = conn.cursor()
     
     cursor.execute("""
-        INSERT INTO patients (name, age, contact, gender, occupation, marital_status, address)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO patients (name, age, contact, gender, occupation, marital_status, address, created_at, modified_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
     """, (patient.name, patient.age, patient.contact, patient.gender, patient.occupation, patient.marital_status, patient.address))
     
     patient_id = cursor.lastrowid
@@ -439,6 +498,39 @@ async def create_patient(patient: PatientCreate):
     conn.close()
     
     return {"success": True, "patient_id": patient_id, "message": "Patient created successfully"}
+
+
+@app.post('/api/log_client_error')
+async def log_client_error(request: Request):
+    """Receive client-side error reports for debugging (writes to logs/client_errors.log)."""
+    try:
+        try:
+            payload = await request.json()
+        except Exception:
+            payload = {"raw": (await request.body()).decode('utf-8', errors='replace')}
+
+        os.makedirs('logs', exist_ok=True)
+        with open(os.path.join('logs', 'client_errors.log'), 'a', encoding='utf-8') as f:
+            f.write(f"{datetime.now(timezone.utc).isoformat()} | {request.client.host if request.client else 'unknown'} | {json.dumps(payload, ensure_ascii=False)}\n")
+    except Exception as e:
+        logging.exception('Failed to log client error')
+
+    return JSONResponse({"ok": True})
+
+
+@app.get('/api/debug/patients_count')
+async def debug_patients_count():
+    """Return a quick count of patients for debugging."""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT COUNT(*) FROM patients')
+        cnt = cursor.fetchone()[0]
+        conn.close()
+        return {"count": cnt}
+    except Exception as e:
+        logging.exception('Failed debug count')
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/patients/{patient_id}")
@@ -588,8 +680,8 @@ async def create_visit(visit: VisitCreate):
             INSERT INTO visits (patient_id, date, vitals_bp, vitals_weight, vitals_temp, vitals_bsr, 
                 vitals_spo2, vitals_heart_rate, presenting_complaint, signs_symptoms, 
                 history_presenting_illness, past_medical_hx, family_history, examination, 
-                differentials, treatment_plan)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                differentials, treatment_plan, lab_report_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             visit.patient_id,
             today,
@@ -606,43 +698,48 @@ async def create_visit(visit: VisitCreate):
             visit.family_history,
             visit.examination,
             visit.differentials,
-            visit.treatment_plan
+            visit.treatment_plan,
+            visit.lab_report_path
         ))
         visit_id = cursor.lastrowid
         
         # 2. Process medicines - deduct from inventory and save prescriptions
         medicine_total = 0
         for med in visit.medicines:
-            # Check stock availability
-            cursor.execute("SELECT stock, brand_name FROM inventory WHERE id = ?", (med.inventory_id,))
-            item = cursor.fetchone()
-            
-            if not item:
-                conn.rollback()
-                raise HTTPException(status_code=400, detail=f"Medicine not found: ID {med.inventory_id}")
-            
-            if item["stock"] < med.quantity:
-                conn.rollback()
-                raise HTTPException(
-                    status_code=400, 
-                    detail=f"Insufficient stock for {item['brand_name']}. Available: {item['stock']}"
-                )
-            
-            # Deduct from inventory
-            cursor.execute("""
-                UPDATE inventory SET stock = stock - ? WHERE id = ?
-            """, (med.quantity, med.inventory_id))
-            
+            item = None
+            if med.inventory_id is not None:
+                cursor.execute("SELECT stock, brand_name FROM inventory WHERE id = ?", (med.inventory_id,))
+                item = cursor.fetchone()
+
+                if item:
+                    if item["stock"] < med.quantity:
+                        conn.rollback()
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Insufficient stock for {item['brand_name']}. Available: {item['stock']}"
+                        )
+
+                    cursor.execute("""
+                        UPDATE inventory SET stock = stock - ? WHERE id = ?
+                    """, (med.quantity, med.inventory_id))
+
+            medicine_name = (med.medicine_name or (item["brand_name"] if item else None) or f"Medicine {med.inventory_id or ''}").strip()
+            if not medicine_name:
+                medicine_name = "Medicine"
+
             # Save to prescriptions table
             cursor.execute("""
                 INSERT INTO prescriptions (visit_id, medicine_name, dosage, duration, quantity, price)
                 VALUES (?, ?, ?, ?, ?, ?)
-            """, (visit_id, item["brand_name"], med.dosage or "As directed", "7 days", med.quantity, med.price))
+            """, (visit_id, medicine_name, med.dosage or "As directed", "7 days", med.quantity, med.price))
             
             medicine_total += med.price * med.quantity
         
         # 3. Calculate total bill (for display only, not added to finance)
         total_bill = medicine_total
+
+        # 4. Touch patient modification timestamp for date-modified sorting
+        cursor.execute("UPDATE patients SET modified_at = datetime('now') WHERE id = ?", (visit.patient_id,))
         
         # Note: Medicine costs are NOT added to finance
         # Finance entries should be added manually via the Add Income button
@@ -969,7 +1066,7 @@ async def pharmacy_page(request: Request):
     """Serve the pharmacy/inventory management page."""
     if not session.get("logged_in"):
         return RedirectResponse(url="/", status_code=302)
-    return templates.TemplateResponse("pharmacy.html", {
+    return templates.TemplateResponse(request, "pharmacy.html", {
         "request": request,
         "user": session["user"]
     })
@@ -982,7 +1079,7 @@ async def finance_page(request: Request):
     """Serve the finance management page."""
     if not session.get("logged_in"):
         return RedirectResponse(url="/", status_code=302)
-    return templates.TemplateResponse("finance.html", {
+    return templates.TemplateResponse(request, "finance.html", {
         "request": request,
         "user": session["user"]
     })
@@ -1066,12 +1163,13 @@ async def create_finance_transaction(request: Request):
     
     conn = get_connection()
     cursor = conn.cursor()
+    transaction_date = data.get("date") or date.today().isoformat()
     
     cursor.execute("""
         INSERT INTO finance (date, type, amount, notes)
         VALUES (?, ?, ?, ?)
     """, (
-        data.get("date"),
+        transaction_date,
         transaction_type,
         amount,
         data.get("notes", "")
@@ -1113,7 +1211,7 @@ async def settings_page(request: Request):
     """Serve the settings page."""
     if not session.get("logged_in"):
         return RedirectResponse(url="/", status_code=302)
-    return templates.TemplateResponse("settings.html", {
+    return templates.TemplateResponse(request, "settings.html", {
         "request": request,
         "user": session["user"]
     })
@@ -1267,25 +1365,139 @@ async def restore_backup(request: Request):
 
 # ============ Prescription Routes ============
 
+
+@app.get("/prescription-form", response_class=HTMLResponse)
+async def prescription_form_page(request: Request):
+    """Serve the prescription capture form."""
+    if not session.get("logged_in"):
+        return RedirectResponse(url="/", status_code=302)
+    return templates.TemplateResponse(request, "prescription_form.html", {
+        "request": request,
+        "user": session.get("user")
+    })
+
+
+@app.post("/api/print_prescription")
+async def print_prescription_form(request: Request):
+    """Generate a formatted prescription PDF from captured form data."""
+    try:
+        content_type = request.headers.get("content-type", "")
+        logging.debug(f"/api/print_prescription called. Content-Type: {content_type}")
+
+        if "application/json" in content_type:
+            raw_data = await request.json()
+            logging.debug(f"Received JSON payload: {raw_data}")
+        else:
+            form_data = await request.form()
+            logging.debug(f"Received form payload keys: {list(form_data.keys())}")
+            if "payload" in form_data:
+                try:
+                    raw_data = json.loads(form_data["payload"])
+                except Exception:
+                    raw_data = dict(form_data)
+            else:
+                raw_data = dict(form_data)
+            logging.debug(f"Parsed raw_data: {raw_data}")
+
+        # Validate payload
+        payload = PrescriptionPrintRequest.model_validate(raw_data)
+        logging.info(f"Generating prescription PDF for: {payload.pt_name if hasattr(payload, 'pt_name') else payload}")
+
+        file_path = generate_prescription_form_pdf(payload.model_dump())
+        logging.info(f"Prescription PDF generated at: {file_path}")
+        # If running on Windows locally, try to open the PDF using the default system viewer
+        try:
+            if os.name == 'nt' and Path(file_path).exists():
+                logging.debug(f"Opening PDF with os.startfile: {file_path}")
+                try:
+                    os.startfile(file_path)
+                except Exception as _e:
+                    logging.exception("os.startfile failed to open PDF")
+        except Exception:
+            # Protect against any unexpected errors here
+            logging.exception('Error while attempting to auto-open PDF')
+
+        return FileResponse(file_path, media_type="application/pdf", filename=Path(file_path).name)
+    except Exception as e:
+        logging.exception("Failed to generate prescription PDF")
+        return JSONResponse(status_code=500, content={"success": False, "detail": f"Failed to generate prescription PDF: {str(e)}"})
+
 @app.get("/prescription/{visit_id}/print")
 async def print_prescription(visit_id: int):
-    """Generate and open prescription PDF for printing."""
-    if not session.get("logged_in"):
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    
+    """Generate the prescription form PDF from a visit."""
     try:
-        # Generate and open PDF
-        file_path = generate_and_open_prescription(visit_id)
-        
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT
+                v.id, v.date, v.vitals_bp, v.vitals_weight, v.vitals_temp, v.vitals_bsr,
+                v.vitals_spo2, v.vitals_heart_rate, v.presenting_complaint, v.differentials,
+                v.treatment_plan,
+                p.name as patient_name, p.age, p.contact
+            FROM visits v
+            JOIN patients p ON v.patient_id = p.id
+            WHERE v.id = ?
+        """, (visit_id,))
+        visit = cursor.fetchone()
+
+        if not visit:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Visit not found")
+
+        cursor.execute("""
+            SELECT medicine_name, dosage, duration, quantity, price
+            FROM prescriptions
+            WHERE visit_id = ?
+            ORDER BY id
+        """, (visit_id,))
+        medicines = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+
+        vitals_weight = visit.get("vitals_weight")
+        payload = {
+            "pt_name": visit.get("patient_name", ""),
+            "age": str(visit.get("age", "")),
+            "contact": visit.get("contact", "") or "",
+            "date": str(visit.get("date", "") or ""),
+            "bp": visit.get("vitals_bp", "") or "",
+            "hr": visit.get("vitals_heart_rate", "") or "",
+            "so2": visit.get("vitals_spo2", "") or "",
+            "rr": "",
+            "temp": str(visit.get("vitals_temp", "") or ""),
+            "ht_wt": f"Weight: {vitals_weight} kg" if vitals_weight else "",
+            "bmi": "",
+            "rbs": "",
+            "fbs": "",
+            "comorbs": "",
+            "pc_dx": "\n".join([
+                part for part in [
+                    f"Complaint: {visit.get('presenting_complaint') or ''}".strip(),
+                    f"Diagnosis: {visit.get('differentials') or ''}".strip(),
+                ] if part and not part.endswith(':')
+            ]),
+            "rx": "\n".join(
+                f"{index + 1}. {med.get('medicine_name', '')} - {med.get('dosage', '')} ({med.get('quantity', '')}) {med.get('duration', '')}".strip()
+                for index, med in enumerate(medicines)
+            ),
+            "advice": visit.get("treatment_plan", "") or "",
+        }
+
+        file_path = generate_prescription_form_pdf(payload)
+        if os.name == 'nt' and Path(file_path).exists():
+            try:
+                os.startfile(file_path)
+            except Exception:
+                logging.exception("os.startfile failed to open PDF")
+
         return {
             "success": True,
-            "message": "Prescription opened for printing",
+            "message": "Prescription form opened for printing",
             "file_path": file_path
         }
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate prescription: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate prescription form: {str(e)}")
 
 
 @app.post("/api/send-whatsapp")
@@ -1356,7 +1568,9 @@ async def get_prescription_data(visit_id: int):
     cursor.execute("""
         SELECT 
             v.id, v.date, v.presenting_complaint, v.differentials, 
-            v.vitals_bp, v.vitals_weight,
+            v.vitals_bp, v.vitals_weight, v.vitals_temp, v.vitals_bsr, v.vitals_spo2, v.vitals_heart_rate,
+            v.signs_symptoms, v.history_presenting_illness, v.past_medical_hx, v.family_history,
+            v.examination, v.treatment_plan, v.lab_report_path,
             p.id as patient_id, p.name as patient_name, p.age, p.contact
         FROM visits v
         JOIN patients p ON v.patient_id = p.id
@@ -1372,185 +1586,123 @@ async def get_prescription_data(visit_id: int):
     return dict(visit)
 
 
+@app.put("/api/visits/{visit_id}")
+async def update_visit(visit_id: int, visit: VisitUpdate):
+    """Update a visit, allowed only for today's visits."""
+    if not session.get("logged_in"):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id, patient_id, date FROM visits WHERE id = ?", (visit_id,))
+    existing = cursor.fetchone()
+    if not existing:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Visit not found")
+
+    if (existing["date"] or "") != date.today().isoformat():
+        conn.close()
+        raise HTTPException(status_code=400, detail="Only today's visits can be edited")
+
+    try:
+        cursor.execute("""
+            UPDATE visits
+            SET vitals_bp = ?, vitals_weight = ?, vitals_temp = ?, vitals_bsr = ?,
+                vitals_spo2 = ?, vitals_heart_rate = ?, presenting_complaint = ?, signs_symptoms = ?,
+                history_presenting_illness = ?, past_medical_hx = ?, family_history = ?, examination = ?,
+                differentials = ?, treatment_plan = ?, lab_report_path = ?
+            WHERE id = ?
+        """, (
+            visit.vitals_bp,
+            visit.vitals_weight,
+            visit.vitals_temp,
+            visit.vitals_bsr,
+            visit.vitals_spo2,
+            visit.vitals_heart_rate,
+            visit.presenting_complaint,
+            visit.signs_symptoms,
+            visit.history_presenting_illness,
+            visit.past_medical_hx,
+            visit.family_history,
+            visit.examination,
+            visit.differentials,
+            visit.treatment_plan,
+            visit.lab_report_path,
+            visit_id,
+        ))
+
+        cursor.execute("UPDATE patients SET modified_at = datetime('now') WHERE id = ?", (existing["patient_id"],))
+        conn.commit()
+        return {"success": True, "message": "Visit updated successfully"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
+@app.post("/api/visits/{visit_id}/lab-report")
+async def upload_visit_lab_report(visit_id: int, file: UploadFile = File(...)):
+    """Upload lab report image for a visit. Useful during registration and editing."""
+    if not session.get("logged_in"):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, date FROM visits WHERE id = ?", (visit_id,))
+    existing = cursor.fetchone()
+    if not existing:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Visit not found")
+
+    allowed_ext = {".png", ".jpg", ".jpeg", ".webp"}
+    original_name = file.filename or "lab_report"
+    ext = Path(original_name).suffix.lower()
+    if ext not in allowed_ext:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Only PNG/JPG/JPEG/WEBP files are allowed")
+
+    upload_dir = STATIC_DIR / "uploads" / "lab_reports"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    safe_name = f"visit_{visit_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
+    target = upload_dir / safe_name
+
+    try:
+        content = await file.read()
+        with open(target, "wb") as out:
+            out.write(content)
+
+        relative_path = f"/static/uploads/lab_reports/{safe_name}"
+        cursor.execute("UPDATE visits SET lab_report_path = ? WHERE id = ?", (relative_path, visit_id))
+        conn.commit()
+
+        return {"success": True, "path": relative_path}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to upload report: {str(e)}")
+    finally:
+        conn.close()
+
+
 @app.get("/api/patients/{patient_id}/pdf")
 async def generate_patient_record_pdf(patient_id: int):
-    """Generate and open complete patient record PDF."""
+    """Generate and open complete patient history PDF."""
     if not session.get("logged_in"):
         raise HTTPException(status_code=401, detail="Not authenticated")
     
     try:
-        from fpdf import FPDF
-        import subprocess
-        import platform
-        
-        conn = get_connection()
-        cursor = conn.cursor()
-        
-        # Get patient details
-        cursor.execute("SELECT * FROM patients WHERE id = ?", (patient_id,))
-        patient = cursor.fetchone()
-        
-        if not patient:
-            conn.close()
-            raise HTTPException(status_code=404, detail="Patient not found")
-        
-        patient = dict(patient)
-        
-        # Get all visits with prescriptions
-        cursor.execute("""
-            SELECT id, date, vitals_bp, vitals_weight, vitals_temp, vitals_bsr,
-                vitals_spo2, vitals_heart_rate, presenting_complaint, signs_symptoms,
-                history_presenting_illness, past_medical_hx, family_history,
-                examination, differentials, treatment_plan
-            FROM visits
-            WHERE patient_id = ?
-            ORDER BY date DESC
-        """, (patient_id,))
-        
-        visits = []
-        for visit_row in cursor.fetchall():
-            visit = dict(visit_row)
-            cursor.execute("""
-                SELECT medicine_name, dosage, duration, quantity
-                FROM prescriptions
-                WHERE visit_id = ?
-            """, (visit['id'],))
-            visit['prescriptions'] = [dict(p) for p in cursor.fetchall()]
-            visits.append(visit)
-        
-        conn.close()
-        
-        # Create PDF
-        pdf = FPDF()
-        pdf.set_auto_page_break(auto=True, margin=15)
-        pdf.add_page()
-        
-        # Header
-        pdf.set_font('Helvetica', 'B', 20)
-        pdf.set_text_color(0, 31, 63)
-        pdf.cell(0, 12, 'DrKhan Clinic', new_x='LMARGIN', new_y='NEXT', align='C')
-        pdf.set_font('Helvetica', '', 10)
-        pdf.set_text_color(100, 100, 100)
-        pdf.cell(0, 6, 'Complete Patient Record', new_x='LMARGIN', new_y='NEXT', align='C')
-        pdf.ln(5)
-        
-        # Patient Information Section
-        pdf.set_fill_color(0, 31, 63)
-        pdf.set_text_color(255, 255, 255)
-        pdf.set_font('Helvetica', 'B', 12)
-        pdf.cell(0, 10, ' Patient Information', new_x='LMARGIN', new_y='NEXT', align='L', fill=True)
-        
-        pdf.set_text_color(0, 0, 0)
-        pdf.set_font('Helvetica', '', 11)
-        pdf.ln(3)
-        
-        info_items = [
-            f"Patient ID: #{patient['id']}",
-            f"Name: {patient['name']}",
-            f"Age: {patient.get('age', 'N/A')} years",
-            f"Gender: {patient.get('gender', 'N/A')}",
-            f"Contact: {patient.get('contact', 'N/A')}",
-            f"Occupation: {patient.get('occupation', 'N/A')}",
-            f"Marital Status: {patient.get('marital_status', 'N/A')}",
-            f"Address: {patient.get('address', 'N/A')}"
-        ]
-        
-        for item in info_items:
-            pdf.cell(0, 7, item, new_x='LMARGIN', new_y='NEXT')
-        
-        pdf.ln(5)
-        
-        # Medical Records Section
-        pdf.set_fill_color(0, 31, 63)
-        pdf.set_text_color(255, 255, 255)
-        pdf.set_font('Helvetica', 'B', 12)
-        pdf.cell(0, 10, f' Medical Records ({len(visits)} visits)', new_x='LMARGIN', new_y='NEXT', align='L', fill=True)
-        pdf.set_text_color(0, 0, 0)
-        pdf.ln(3)
-        
-        for i, visit in enumerate(visits):
-            # Check if we need a new page
-            if pdf.get_y() > 230:
-                pdf.add_page()
-            
-            pdf.set_font('Helvetica', 'B', 11)
-            pdf.set_text_color(0, 31, 63)
-            pdf.cell(0, 8, f"Visit {len(visits) - i}: {visit['date']}", new_x='LMARGIN', new_y='NEXT')
-            
-            pdf.set_font('Helvetica', '', 10)
-            pdf.set_text_color(0, 0, 0)
-            
-            # Vitals
-            vitals = []
-            if visit.get('vitals_bp'): vitals.append(f"BP: {visit['vitals_bp']}")
-            if visit.get('vitals_weight'): vitals.append(f"Weight: {visit['vitals_weight']}kg")
-            if visit.get('vitals_temp'): vitals.append(f"Temp: {visit['vitals_temp']}F")
-            if visit.get('vitals_bsr'): vitals.append(f"BSR: {visit['vitals_bsr']}")
-            if visit.get('vitals_spo2'): vitals.append(f"SPO2: {visit['vitals_spo2']}")
-            if visit.get('vitals_heart_rate'): vitals.append(f"HR: {visit['vitals_heart_rate']}")
-            
-            if vitals:
-                vitals_text = "Vitals: " + " | ".join(vitals)
-                pdf.multi_cell(0, 6, vitals_text)
-            
-            complaint = visit.get('presenting_complaint')
-            if complaint:
-                pdf.set_x(10)
-                pdf.multi_cell(0, 5, f"Complaint: {str(complaint)[:200]}")
-            
-            symptoms = visit.get('signs_symptoms')
-            if symptoms:
-                pdf.set_x(10)
-                pdf.multi_cell(0, 5, f"Signs & Symptoms: {str(symptoms)[:200]}")
-            
-            differentials = visit.get('differentials')
-            if differentials:
-                pdf.set_x(10)
-                pdf.multi_cell(0, 5, f"Differential Diagnosis: {str(differentials)[:200]}")
-            
-            treatment = visit.get('treatment_plan')
-            if treatment:
-                pdf.set_x(10)
-                pdf.multi_cell(0, 5, f"Treatment Plan: {str(treatment)[:200]}")
-            
-            # Prescriptions
-            if visit.get('prescriptions'):
-                pdf.set_font('Helvetica', 'I', 10)
-                pdf.set_x(10)
-                pdf.multi_cell(0, 6, "Prescription:")
-                for rx in visit['prescriptions']:
-                    med_name = str(rx.get('medicine_name', '') or '')[:40]
-                    qty = str(rx.get('quantity', '') or '')
-                    dosage = str(rx.get('dosage', '') or '')[:25]
-                    duration = str(rx.get('duration', '') or '')[:20]
-                    rx_text = f"  - {med_name} (Qty: {qty}) {dosage} {duration}"
-                    pdf.set_x(10)
-                    pdf.multi_cell(0, 5, rx_text)
-                pdf.set_font('Helvetica', '', 10)
-            
-            pdf.ln(3)
-            pdf.set_draw_color(200, 200, 200)
-            pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-            pdf.ln(3)
-        
-        # Save PDF
-        output_dir = Path("output")
-        output_dir.mkdir(exist_ok=True)
-        filename = f"patient_{patient_id}_record_{date.today().isoformat()}.pdf"
-        file_path = output_dir / filename
-        pdf.output(str(file_path))
-        
-        # Open PDF
-        if platform.system() == 'Darwin':
-            subprocess.run(['open', str(file_path)])
-        elif platform.system() == 'Windows':
-            os.startfile(str(file_path))
-        else:
-            subprocess.run(['xdg-open', str(file_path)])
-        
+        file_path = generate_patient_history_pdf(patient_id)
+
+        if os.name == 'nt' and Path(file_path).exists():
+            try:
+                os.startfile(file_path)
+            except Exception:
+                logging.exception("os.startfile failed to open patient history PDF")
+
         return {
             "success": True,
-            "message": "Patient record PDF opened",
+            "message": "Patient history PDF opened",
             "file_path": str(file_path)
         }
         
@@ -1560,29 +1712,108 @@ async def generate_patient_record_pdf(patient_id: int):
 
 # ============ PyWebView Desktop Launcher ============
 
-def start_server():
+
+def get_free_port() -> int:
+    """Ask the OS for a free localhost port."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
+
+def start_server(port: int):
     """Start the FastAPI server."""
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="warning")
+    uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
+
+
+def wait_for_server(url: str, timeout_seconds: float = 10.0) -> None:
+    """Wait until the HTTP server responds or time out."""
+    from urllib.request import urlopen
+    from urllib.error import URLError
+
+    deadline = datetime.now().timestamp() + timeout_seconds
+    while datetime.now().timestamp() < deadline:
+        try:
+            with urlopen(url, timeout=1):
+                return
+        except URLError:
+            pass
+        except Exception:
+            pass
+
+    raise RuntimeError(f"Server did not become ready at {url}")
 
 
 if __name__ == "__main__":
     # Initialize database
     init_database()
+
+    port = get_free_port()
+    server_url = f"http://127.0.0.1:{port}"
+    # Write the chosen port to a file so external helpers can locate the server
+    try:
+        with open('server_port.txt', 'w', encoding='utf-8') as pf:
+            pf.write(str(port))
+    except Exception:
+        pass
     
     # Start FastAPI server in a background thread
-    server_thread = threading.Thread(target=start_server, daemon=True)
+    server_thread = threading.Thread(target=start_server, args=(port,), daemon=True)
     server_thread.start()
     
-    # Give the server a moment to start
-    import time
-    time.sleep(1)
+    # Wait until the server is actually reachable before opening the desktop window
+    wait_for_server(server_url)
     
-    # Create and start PyWebView window in fullscreen
-    webview.create_window(
+    # Create and start PyWebView window with native OS controls
+    window = webview.create_window(
         title="DrKhan System",
-        url="http://127.0.0.1:8000",
-        fullscreen=True,
+        url=server_url,
+        background_color="#121212",
+        fullscreen=False,
+        frameless=False,
         resizable=True,
-        min_size=(800, 600)
+        min_size=(1100, 720)
     )
-    webview.start()
+
+    def focus_window():
+        try:
+            # Some pywebview builds expose focus as a boolean/property instead of a callable.
+            # Guard the call and fallback to bring_to_front on the first window if available.
+            focus_fn = getattr(window, 'focus', None)
+            if callable(focus_fn):
+                focus_fn()
+                return
+
+            # Fallback: try bring_to_front on webview.windows[0]
+            try:
+                w0 = None
+                if hasattr(webview, 'windows') and webview.windows:
+                    w0 = webview.windows[0]
+                elif hasattr(webview, 'get_windows'):
+                    wlist = webview.get_windows()
+                    if wlist:
+                        w0 = wlist[0]
+
+                if w0:
+                    b = getattr(w0, 'bring_to_front', None)
+                    if callable(b):
+                        b()
+            except Exception:
+                # swallow fallback errors
+                pass
+
+        except Exception:
+            logging.exception("Failed to focus PyWebView window")
+
+    webview.start(focus_window)
+
+
+@app.post("/api/dev/add-test-data")
+async def api_add_test_data():
+    """Developer-only endpoint to populate random test data. Requires login."""
+    if not session.get("logged_in"):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        add_test_data()
+        return {"success": True, "message": "Test data added (or already exists)."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

@@ -9,14 +9,14 @@
     <style>
         /* Dashboard Specific Styles */
         .welcome-header {
-            color: var(--primary-blue);
+            color: var(--accent);
             font-size: 2.2rem;
             font-weight: 700;
             margin-bottom: 30px;
         }
 
         .welcome-header span {
-            color: #666;
+            color: var(--text-secondary);
             font-size: 1rem;
             font-weight: 400;
             display: block;
@@ -32,7 +32,7 @@
         }
 
         .stat-card {
-            background: var(--accent-white);
+            background: var(--bg-surface);
             border-radius: var(--border-radius);
             padding: 30px;
             text-align: center;
@@ -48,18 +48,18 @@
         .stat-card .stat-icon {
             font-size: 2.5rem;
             margin-bottom: 15px;
-            color: var(--primary-blue);
+            color: var(--accent);
         }
 
         .stat-card .stat-number {
             font-size: 3rem;
             font-weight: 700;
-            color: var(--primary-blue);
+            color: var(--accent);
         }
 
         .stat-card .stat-label {
             font-size: 1.1rem;
-            color: #666;
+            color: var(--text-secondary);
             margin-top: 10px;
         }
 
@@ -85,8 +85,8 @@
             justify-content: center;
             gap: 15px;
             padding: 35px 30px;
-            background: var(--primary-blue);
-            color: var(--accent-white);
+            background: var(--accent);
+            color: var(--text-primary);
             border: none;
             border-radius: var(--border-radius);
             font-size: 1.5rem;
@@ -97,7 +97,7 @@
         }
 
         .action-btn:hover {
-            background: #003366;
+            background: var(--accent-hover);
             transform: translateY(-3px);
             box-shadow: 0 8px 25px rgba(0, 31, 63, 0.4);
         }
@@ -115,7 +115,7 @@
         }
 
         .section-header h2 {
-            color: var(--primary-blue);
+            color: var(--accent);
             font-size: 1.5rem;
             font-weight: 600;
         }
@@ -123,15 +123,15 @@
         .visits-table {
             width: 100%;
             border-collapse: collapse;
-            background: var(--accent-white);
+            background: var(--bg-surface);
             border-radius: var(--border-radius);
             overflow: hidden;
             box-shadow: var(--shadow-soft);
         }
 
         .visits-table thead {
-            background: var(--primary-blue);
-            color: var(--accent-white);
+            background: var(--accent);
+            color: var(--text-primary);
         }
 
         .visits-table th,
@@ -142,12 +142,12 @@
         }
 
         .visits-table tbody tr {
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-color);
             transition: var(--transition-smooth);
         }
 
         .visits-table tbody tr:hover {
-            background: #f8f9fa;
+            background: var(--bg-surface-2);
         }
 
         .visits-table tbody tr:last-child {
@@ -156,23 +156,12 @@
 
         .btn-print {
             padding: 10px 20px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: var(--transition-smooth);
-        }
-
-        .btn-print:hover {
-            background: #218838;
         }
 
         .btn-view {
             padding: 10px 20px;
-            background: var(--primary-blue);
-            color: white;
+            background: var(--accent);
+            color: var(--text-primary);
             border: none;
             border-radius: 50px;
             font-size: 1rem;
@@ -182,13 +171,13 @@
         }
 
         .btn-view:hover {
-            background: #003366;
+            background: var(--accent-hover);
         }
 
         .empty-state {
             text-align: center;
             padding: 50px;
-            color: #999;
+            color: var(--text-secondary);
         }
 
         .empty-state i {
@@ -215,7 +204,7 @@
             width: 100%;
             padding: 15px;
             background: #28a745;
-            color: var(--accent-white);
+            color: var(--text-primary);
             border: none;
             border-radius: 10px;
             font-size: 1.1rem;
@@ -236,7 +225,7 @@
             width: 100%;
             padding: 15px;
             background: rgba(255, 255, 255, 0.1);
-            color: var(--accent-white);
+            color: var(--text-primary);
             border: none;
             border-radius: 10px;
             font-size: 1.1rem;
@@ -267,7 +256,7 @@
         }
 
         .modal {
-            background: var(--accent-white);
+            background: var(--bg-surface);
             border-radius: var(--border-radius);
             width: 90%;
             max-width: 700px;
@@ -282,8 +271,8 @@
         }
 
         .modal-header {
-            background: var(--primary-blue);
-            color: var(--accent-white);
+            background: var(--accent);
+            color: var(--text-primary);
             padding: 20px 25px;
             display: flex;
             justify-content: space-between;
@@ -298,7 +287,7 @@
         .modal-close {
             background: none;
             border: none;
-            color: white;
+            color: var(--text-primary);
             font-size: 1.8rem;
             cursor: pointer;
             padding: 0;
@@ -315,7 +304,7 @@
 
         .form-group label {
             display: block;
-            color: var(--primary-blue);
+            color: var(--accent);
             font-weight: 600;
             margin-bottom: 8px;
             font-size: 1.1rem;
@@ -325,7 +314,7 @@
             width: 100%;
             padding: 14px 18px;
             font-size: 1.1rem;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--border-color);
             border-radius: 12px;
             outline: none;
             transition: var(--transition-smooth);
@@ -333,12 +322,12 @@
         }
 
         .form-group input:focus {
-            border-color: var(--primary-blue);
+            border-color: var(--accent);
         }
 
         .modal-footer {
             padding: 20px 25px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: flex-end;
             gap: 15px;
@@ -359,7 +348,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-brand" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 10px;">
-            <img src="/static/logo.png" alt="DrKhan Logo" style="width: 90px; height: 90px; border-radius: 15px; margin-bottom: 10px; border: 3px solid white;">
+            <img src="/static/logo.png" alt="DrKhan Logo" style="width: 90px; height: 90px; border-radius: 15px; margin-bottom: 10px; border: 3px solid var(--border-color);">
             <span style="font-size: 1.1rem; font-weight: 700; white-space: nowrap;">DrKhan Clinic</span>
         </div>
         <ul class="sidebar-nav">
@@ -493,7 +482,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('incomeModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="background: #28a745;">
+                    <button type="submit" class="btn btn-success" >
                         <i class="fas fa-plus"></i> Add Income
                     </button>
                 </div>
@@ -581,7 +570,7 @@
                             <i class="fas fa-eye"></i> View
                         </button>
                         <button class="btn-print" onclick="printPrescription(${visit.id})">
-                            <i class="fas fa-print"></i> Print
+                            <i class="fas fa-print"></i> Prescription Form
                         </button>
                     </td>
                 </tr>
@@ -606,7 +595,7 @@
                 }
                 
                 document.getElementById('visitDetailContent').innerHTML = `
-                    <div style="background: var(--primary-blue); color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <div style="background: var(--accent); color: var(--text-primary); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
                         <h4 style="margin: 0 0 10px;">${visit.patient_name}</h4>
                         <div style="display: flex; gap: 20px; font-size: 14px;">
                             <span><i class="fas fa-birthday-cake"></i> Age: ${visit.age || 'N/A'}</span>
@@ -617,16 +606,16 @@
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div>
-                            <strong style="color: var(--primary-blue);">Vitals:</strong>
-                            <div style="padding: 10px; background: #f8f9fa; border-radius: 8px; margin-top: 5px;">
+                            <strong style="color: var(--accent);">Vitals:</strong>
+                            <div style="padding: 10px; background: var(--bg-surface-2); border-radius: 8px; margin-top: 5px;">
                                 ${visit.vitals_bp ? `<div>BP: ${visit.vitals_bp}</div>` : ''}
                                 ${visit.vitals_weight ? `<div>Weight: ${visit.vitals_weight} kg</div>` : ''}
-                                ${!visit.vitals_bp && !visit.vitals_weight ? '<div style="color: #999;">Not recorded</div>' : ''}
+                                ${!visit.vitals_bp && !visit.vitals_weight ? '<div style="color: var(--text-secondary);">Not recorded</div>' : ''}
                             </div>
                         </div>
                         <div>
-                            <strong style="color: var(--primary-blue);">Complaint:</strong>
-                            <div style="padding: 10px; background: #f8f9fa; border-radius: 8px; margin-top: 5px;">
+                            <strong style="color: var(--accent);">Complaint:</strong>
+                            <div style="padding: 10px; background: var(--bg-surface-2); border-radius: 8px; margin-top: 5px;">
                                 ${visit.presenting_complaint || 'Not specified'}
                             </div>
                         </div>
@@ -634,8 +623,8 @@
                     
                     ${visit.differentials ? `
                         <div style="margin-top: 15px;">
-                            <strong style="color: var(--primary-blue);">Differentials:</strong>
-                            <div style="padding: 10px; background: #f8f9fa; border-radius: 8px; margin-top: 5px;">
+                            <strong style="color: var(--accent);">Differentials:</strong>
+                            <div style="padding: 10px; background: var(--bg-surface-2); border-radius: 8px; margin-top: 5px;">
                                 ${visit.differentials}
                             </div>
                         </div>
@@ -643,10 +632,10 @@
                     
                     ${prescriptions.length > 0 ? `
                         <div style="margin-top: 15px;">
-                            <strong style="color: var(--primary-blue);"><i class="fas fa-pills"></i> Prescribed Medicines:</strong>
+                            <strong style="color: var(--accent);"><i class="fas fa-pills"></i> Prescribed Medicines:</strong>
                             <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
                                 <thead>
-                                    <tr style="background: var(--primary-blue); color: white;">
+                                    <tr style="background: var(--accent); color: var(--text-primary);">
                                         <th style="padding: 8px; text-align: left; border-radius: 5px 0 0 0;">Medicine</th>
                                         <th style="padding: 8px; text-align: left;">Dosage</th>
                                         <th style="padding: 8px; text-align: center;">Qty</th>
@@ -655,7 +644,7 @@
                                 </thead>
                                 <tbody>
                                     ${prescriptions.map(p => `
-                                        <tr style="background: #f8f9fa; border-bottom: 1px solid #eee;">
+                                        <tr style="background: var(--bg-surface-2); border-bottom: 1px solid var(--border-color);">
                                             <td style="padding: 8px;">${p.medicine_name}</td>
                                             <td style="padding: 8px;">${p.dosage}</td>
                                             <td style="padding: 8px; text-align: center;">${p.quantity}</td>
@@ -670,7 +659,7 @@
             } catch (error) {
                 console.error('Error loading visit:', error);
                 document.getElementById('visitDetailContent').innerHTML = `
-                    <div style="text-align: center; color: #dc3545; padding: 30px;">
+                    <div style="text-align: center; color: var(--text-secondary); padding: 30px;">
                         <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 15px;"></i>
                         <p>Error loading visit details</p>
                     </div>
@@ -683,13 +672,13 @@
                 const response = await fetch(`/prescription/${visitId}/print`);
                 const data = await response.json();
                 if (data.success) {
-                    alert('Prescription opened for printing!');
+                    showToast('Prescription form opened!', 'success');
                 } else {
-                    alert('Failed to print prescription');
+                    showToast('Failed to open prescription form', 'error');
                 }
             } catch (error) {
                 console.error('Print error:', error);
-                alert('Error printing prescription');
+                showToast('Error opening prescription form', 'error');
             }
         }
 
@@ -734,15 +723,15 @@
 
                 if (response.ok) {
                     closeModal('incomeModal');
-                    alert('Income added successfully!');
+                    showToast('Income added successfully!', 'success');
                     loadDashboardData();
                 } else {
                     const error = await response.json();
-                    alert('Error: ' + error.detail);
+                    showToast('Error: ' + error.detail, 'error');
                 }
             } catch (error) {
                 console.error('Error saving income:', error);
-                alert('Failed to save income');
+                showToast('Failed to save income', 'error');
             }
         }
 
@@ -770,5 +759,6 @@
         // Refresh data every 30 seconds
         setInterval(loadDashboardData, 30000);
     </script>
+    <script src="/static/app.js"></script>
 </body>
 </html>

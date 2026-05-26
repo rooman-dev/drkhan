@@ -16,7 +16,7 @@
         }
 
         .page-title {
-            color: var(--primary-blue);
+            color: var(--accent);
             font-size: 2rem;
             font-weight: 700;
         }
@@ -43,7 +43,7 @@
         }
 
         .finance-card {
-            background: var(--accent-white);
+            background: var(--bg-surface);
             border-radius: var(--border-radius);
             padding: 35px 30px;
             text-align: center;
@@ -66,7 +66,7 @@
         }
 
         .finance-card.profit {
-            border-top-color: var(--primary-blue);
+            border-top-color: var(--accent);
         }
 
         .finance-card .card-icon {
@@ -83,7 +83,7 @@
         }
 
         .finance-card.profit .card-icon {
-            color: var(--primary-blue);
+            color: var(--accent);
         }
 
         .finance-card .card-amount {
@@ -101,12 +101,12 @@
         }
 
         .finance-card.profit .card-amount {
-            color: var(--primary-blue);
+            color: var(--accent);
         }
 
         .finance-card .card-label {
             font-size: 1.2rem;
-            color: #666;
+            color: var(--text-secondary);
         }
 
         /* Filter Section */
@@ -122,7 +122,7 @@
         .filter-section input {
             padding: 12px 18px;
             font-size: 1.1rem;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--border-color);
             border-radius: 12px;
             outline: none;
             transition: var(--transition-smooth);
@@ -130,12 +130,12 @@
 
         .filter-section select:focus,
         .filter-section input:focus {
-            border-color: var(--primary-blue);
+            border-color: var(--accent);
         }
 
         .filter-section label {
             font-weight: 600;
-            color: var(--primary-blue);
+            color: var(--accent);
             margin-right: 8px;
         }
 
@@ -149,15 +149,15 @@
         .transaction-table {
             width: 100%;
             border-collapse: collapse;
-            background: var(--accent-white);
+            background: var(--bg-surface);
             border-radius: var(--border-radius);
             overflow: hidden;
             box-shadow: var(--shadow-soft);
         }
 
         .transaction-table thead {
-            background: var(--primary-blue);
-            color: var(--accent-white);
+            background: var(--accent);
+            color: var(--text-primary);
         }
 
         .transaction-table th,
@@ -168,12 +168,12 @@
         }
 
         .transaction-table tbody tr {
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-color);
             transition: var(--transition-smooth);
         }
 
         .transaction-table tbody tr:hover {
-            background: #f8f9fa;
+            background: var(--bg-surface-2);
         }
 
         .type-badge {
@@ -184,12 +184,12 @@
         }
 
         .type-income {
-            background: #d4edda;
-            color: #155724;
+            background: rgba(40,167,69,0.08);
+            color: #28a745;
         }
 
         .type-expense {
-            background: #f8d7da;
+            background: rgba(220,53,69,0.06);
             color: #721c24;
         }
 
@@ -206,7 +206,7 @@
         .btn-delete {
             padding: 8px 14px;
             background: #dc3545;
-            color: white;
+            color: var(--text-primary);
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -236,7 +236,7 @@
         }
 
         .modal {
-            background: var(--accent-white);
+            background: var(--bg-surface);
             border-radius: var(--border-radius);
             width: 90%;
             max-width: 550px;
@@ -246,8 +246,8 @@
         }
 
         .modal-header {
-            background: var(--primary-blue);
-            color: var(--accent-white);
+            background: var(--accent);
+            color: var(--text-primary);
             padding: 20px 25px;
             display: flex;
             justify-content: space-between;
@@ -262,7 +262,7 @@
         .modal-close {
             background: none;
             border: none;
-            color: white;
+            color: var(--text-primary);
             font-size: 1.8rem;
             cursor: pointer;
             padding: 0;
@@ -279,7 +279,7 @@
 
         .form-group label {
             display: block;
-            color: var(--primary-blue);
+            color: var(--accent);
             font-weight: 600;
             margin-bottom: 8px;
             font-size: 1.1rem;
@@ -291,7 +291,7 @@
             width: 100%;
             padding: 14px 18px;
             font-size: 1.1rem;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--border-color);
             border-radius: 12px;
             outline: none;
             transition: var(--transition-smooth);
@@ -301,7 +301,7 @@
         .form-group input:focus,
         .form-group textarea:focus,
         .form-group select:focus {
-            border-color: var(--primary-blue);
+            border-color: var(--accent);
         }
 
         .form-group textarea {
@@ -311,7 +311,7 @@
 
         .modal-footer {
             padding: 20px 25px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: flex-end;
             gap: 15px;
@@ -327,7 +327,7 @@
 
         .type-option {
             padding: 20px;
-            border: 3px solid #e0e0e0;
+            border: 3px solid var(--border-color);
             border-radius: 12px;
             text-align: center;
             cursor: pointer;
@@ -335,7 +335,7 @@
         }
 
         .type-option:hover {
-            border-color: #999;
+            border-color: var(--text-secondary);
         }
 
         .type-option.selected {
@@ -344,12 +344,12 @@
 
         .type-option.income.selected {
             border-color: #28a745;
-            background: #f0fff4;
+            background: rgba(40,167,69,0.03);
         }
 
         .type-option.expense.selected {
             border-color: #dc3545;
-            background: #fff5f5;
+            background: rgba(220,53,69,0.03);
         }
 
         .type-option i {
@@ -375,7 +375,7 @@
         .empty-state {
             text-align: center;
             padding: 50px;
-            color: #999;
+            color: var(--text-secondary);
         }
 
         .empty-state i {
@@ -402,7 +402,7 @@
             width: 100%;
             padding: 15px;
             background: #28a745;
-            color: var(--accent-white);
+            color: var(--text-primary);
             border: none;
             border-radius: 10px;
             font-size: 1.1rem;
@@ -423,7 +423,7 @@
             width: 100%;
             padding: 15px;
             background: rgba(255, 255, 255, 0.1);
-            color: var(--accent-white);
+            color: var(--text-primary);
             border: none;
             border-radius: 10px;
             font-size: 1.1rem;
@@ -450,7 +450,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-brand" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 10px;">
-            <img src="/static/logo.png" alt="DrKhan Logo" style="width: 90px; height: 90px; border-radius: 15px; margin-bottom: 10px; border: 3px solid white;">
+            <img src="/static/logo.png" alt="DrKhan Logo" style="width: 90px; height: 90px; border-radius: 15px; margin-bottom: 10px; border: 3px solid var(--border-color);">
             <span style="font-size: 1.1rem; font-weight: 700; white-space: nowrap;">DrKhan Clinic</span>
         </div>
         <ul class="sidebar-nav">
@@ -564,13 +564,13 @@
 
         <!-- Transactions Table -->
         <div class="card">
-            <table class="transaction-table">
+            <table id="transactionTable" class="transaction-table">
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Amount</th>
-                        <th>Description</th>
+                        <th onclick="sortTable('transactionTable', 0, 'date')" style="cursor: pointer">Date</th>
+                        <th onclick="sortTable('transactionTable', 1, 'text')" style="cursor: pointer">Type</th>
+                        <th onclick="sortTable('transactionTable', 2, 'number')" style="cursor: pointer">Amount</th>
+                        <th onclick="sortTable('transactionTable', 3, 'text')" style="cursor: pointer">Description</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -601,7 +601,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('incomeModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="background: #28a745;">
+                    <button type="submit" class="btn btn-success">
                         <i class="fas fa-plus"></i> Add Income
                     </button>
                 </div>
@@ -804,24 +804,24 @@
                     body: JSON.stringify(data)
                 });
 
-                if (response.ok) {
-                    closeModal('transactionModal');
-                    loadTransactions();
-                    loadSummary();
-                    alert('Transaction saved successfully!');
+                    if (response.ok) {
+                        closeModal('transactionModal');
+                        loadTransactions();
+                        loadSummary();
+                        showToast('Transaction saved successfully!', 'success');
                 } else {
                     const error = await response.json();
-                    alert('Error: ' + error.detail);
+                        showToast('Error: ' + error.detail, 'error');
                 }
             } catch (error) {
                 console.error('Error saving transaction:', error);
-                alert('Failed to save transaction');
+                    showToast('Failed to save transaction', 'error');
             }
         }
 
         // Delete transaction
         async function deleteTransaction(id) {
-            if (!confirm('Are you sure you want to delete this transaction?')) {
+            if (!(await showConfirm('Are you sure you want to delete this transaction?'))) {
                 return;
             }
 
@@ -830,17 +830,17 @@
                     method: 'DELETE'
                 });
 
-                if (response.ok) {
-                    loadTransactions();
-                    loadSummary();
-                    alert('Transaction deleted successfully!');
+                    if (response.ok) {
+                        loadTransactions();
+                        loadSummary();
+                        showToast('Transaction deleted successfully!', 'success');
                 } else {
                     const error = await response.json();
-                    alert('Error: ' + error.detail);
+                        showToast('Error: ' + error.detail, 'error');
                 }
             } catch (error) {
                 console.error('Error deleting transaction:', error);
-                alert('Failed to delete transaction');
+                    showToast('Failed to delete transaction', 'error');
             }
         }
 
@@ -875,17 +875,17 @@
                     body: JSON.stringify(data)
                 });
 
-                if (response.ok) {
-                    closeModal('incomeModal');
-                    alert('Income added successfully!');
-                    loadFinanceData();
+                    if (response.ok) {
+                        closeModal('incomeModal');
+                        showToast('Income added successfully!', 'success');
+                        loadFinanceData();
                 } else {
                     const error = await response.json();
-                    alert('Error: ' + error.detail);
+                        showToast('Error: ' + error.detail, 'error');
                 }
             } catch (error) {
                 console.error('Error saving income:', error);
-                alert('Failed to save income');
+                    showToast('Failed to save income', 'error');
             }
         }
 
@@ -907,5 +907,6 @@
             });
         });
     </script>
+        <script src="/static/app.js"></script>
 </body>
 </html>

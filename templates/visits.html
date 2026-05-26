@@ -16,7 +16,7 @@
         }
 
         .page-title {
-            color: var(--primary-blue);
+            color: var(--accent);
             font-size: 2rem;
             font-weight: 700;
         }
@@ -45,44 +45,45 @@
             flex: 1;
             padding: 15px 20px;
             font-size: 1.1rem;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--border-color);
             border-radius: 15px;
             outline: none;
             transition: var(--transition-smooth);
         }
 
         .search-bar input:focus {
-            border-color: var(--primary-blue);
+            border-color: var(--accent);
         }
 
         .search-bar select {
             padding: 15px 20px;
             font-size: 1.1rem;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--border-color);
             border-radius: 15px;
             outline: none;
             min-width: 180px;
-            background: white;
+            background: var(--bg-surface-2);
             cursor: pointer;
         }
 
         .search-bar select:focus {
-            border-color: var(--primary-blue);
+            border-color: var(--accent);
         }
 
         /* Visits Table */
         .visits-table {
             width: 100%;
             border-collapse: collapse;
-            background: var(--accent-white);
+            background: var(--bg-surface);
             border-radius: var(--border-radius);
             overflow: hidden;
             box-shadow: var(--shadow-soft);
         }
 
         .visits-table thead {
-            background: var(--primary-blue);
-            color: var(--accent-white);
+            background: #1E1E1E;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
         }
 
         .visits-table th,
@@ -93,12 +94,12 @@
         }
 
         .visits-table tbody tr {
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-color);
             transition: var(--transition-smooth);
         }
 
         .visits-table tbody tr:hover {
-            background: #f8f9fa;
+            background: var(--bg-surface-2);
         }
 
         .btn-action {
@@ -112,27 +113,31 @@
         }
 
         .btn-view {
-            background: var(--primary-blue);
-            color: white;
+            background: var(--accent);
+            color: var(--text-primary);
         }
 
         .btn-view:hover {
-            background: #003366;
+            background: var(--accent-hover);
         }
 
         .btn-print {
-            background: #17a2b8;
-            color: white;
+            background: var(--accent);
+            color: var(--text-primary);
         }
 
         .btn-print:hover {
-            background: #138496;
+            background: var(--accent-hover);
         }
 
         /* Date Badge */
-        .date-badge {
-            background: #e3f2fd;
-            color: var(--primary-blue);
+            background: #9B3F4A;
+            background: rgba(76,139,245,0.08);
+            color: var(--accent);
+
+        .btn-delete:hover {
+            background: #822F39;
+        }
             padding: 5px 12px;
             border-radius: 20px;
             font-size: 0.9rem;
@@ -153,7 +158,7 @@
         }
 
         .stat-item {
-            background: var(--accent-white);
+            background: var(--bg-surface);
             padding: 20px;
             border-radius: var(--border-radius);
             text-align: center;
@@ -163,12 +168,12 @@
         .stat-item .number {
             font-size: 2rem;
             font-weight: 700;
-            color: var(--primary-blue);
+            color: var(--accent);
         }
 
         .stat-item .label {
             font-size: 1rem;
-            color: #666;
+            color: var(--text-secondary);
             margin-top: 5px;
         }
 
@@ -176,7 +181,7 @@
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #999;
+            color: var(--text-secondary);
         }
 
         .empty-state i {
@@ -203,7 +208,7 @@
         }
 
         .modal {
-            background: var(--accent-white);
+            background: var(--bg-surface);
             border-radius: var(--border-radius);
             width: 90%;
             max-width: 700px;
@@ -224,8 +229,8 @@
         }
 
         .modal-header {
-            background: var(--primary-blue);
-            color: var(--accent-white);
+            background: var(--accent);
+            color: var(--text-primary);
             padding: 20px 25px;
             display: flex;
             justify-content: space-between;
@@ -240,7 +245,7 @@
         .modal-close {
             background: none;
             border: none;
-            color: white;
+            color: var(--text-primary);
             font-size: 1.8rem;
             cursor: pointer;
             opacity: 0.8;
@@ -257,7 +262,7 @@
 
         .modal-footer {
             padding: 15px 25px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: flex-end;
             gap: 10px;
@@ -273,9 +278,9 @@
 
         .pagination button {
             padding: 10px 20px;
-            border: 2px solid var(--primary-blue);
-            background: white;
-            color: var(--primary-blue);
+            border: 2px solid var(--accent);
+            background: var(--bg-surface);
+            color: var(--accent);
             border-radius: 10px;
             cursor: pointer;
             font-size: 1rem;
@@ -283,8 +288,8 @@
         }
 
         .pagination button:hover:not(:disabled) {
-            background: var(--primary-blue);
-            color: white;
+            background: var(--accent);
+            color: var(--text-primary);
         }
 
         .pagination button:disabled {
@@ -297,7 +302,7 @@
             align-items: center;
             padding: 0 20px;
             font-size: 1rem;
-            color: #666;
+            color: var(--text-secondary);
         }
 
         /* Sidebar Footer Buttons */
@@ -318,7 +323,7 @@
             width: 100%;
             padding: 15px;
             background: #28a745;
-            color: var(--accent-white);
+            color: var(--text-primary);
             border: none;
             border-radius: 10px;
             font-size: 1.1rem;
@@ -339,7 +344,7 @@
             width: 100%;
             padding: 15px;
             background: rgba(255, 255, 255, 0.1);
-            color: var(--accent-white);
+            color: var(--text-primary);
             border: none;
             border-radius: 10px;
             font-size: 1.1rem;
@@ -356,7 +361,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-brand" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 10px;">
-            <img src="/static/logo.png" alt="DrKhan Logo" style="width: 90px; height: 90px; border-radius: 15px; margin-bottom: 10px; border: 3px solid white;">
+            <img src="/static/logo.png" alt="DrKhan Logo" style="width: 90px; height: 90px; border-radius: 15px; margin-bottom: 10px; border: 3px solid var(--border-color);">
             <span style="font-size: 1.1rem; font-weight: 700; white-space: nowrap;">DrKhan Clinic</span>
         </div>
         <ul class="sidebar-nav">
@@ -451,13 +456,13 @@
 
         <!-- Visits Table -->
         <div class="card">
-            <table class="visits-table">
+            <table id="visitsTable" class="visits-table">
                 <thead>
                     <tr>
-                        <th>Visit #</th>
-                        <th>Date</th>
-                        <th>Patient Name</th>
-                        <th>Complaint</th>
+                        <th onclick="sortTable('visitsTable', 0, 'number')" style="cursor: pointer">Visit #</th>
+                        <th onclick="sortTable('visitsTable', 1, 'date')" style="cursor: pointer">Date</th>
+                        <th onclick="sortTable('visitsTable', 2, 'text')" style="cursor: pointer">Patient Name</th>
+                        <th onclick="sortTable('visitsTable', 3, 'text')" style="cursor: pointer">Complaint</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -465,10 +470,23 @@
                     <!-- Visits will be loaded here -->
                 </tbody>
             </table>
+            {% if not visits %}
+            <div class="empty-state" id="emptyState">
+                <i class="fas fa-clipboard-list"></i>
+                <p>No records found</p>
+                <button type="button" class="btn btn-primary mt-2" onclick="window.location.href='/visits/new'">
+                    <i class="fas fa-plus"></i> Add New Visit
+                </button>
+            </div>
+            {% else %}
             <div class="empty-state" id="emptyState" style="display: none;">
                 <i class="fas fa-clipboard-list"></i>
-                <p>No visits found</p>
+                <p>No records found</p>
+                <button type="button" class="btn btn-primary mt-2" onclick="window.location.href='/visits/new'">
+                    <i class="fas fa-plus"></i> Add New Visit
+                </button>
             </div>
+            {% endif %}
 
             <!-- Pagination -->
             <div class="pagination" id="pagination">
@@ -496,12 +514,12 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="incomeAmount">Amount (Cash) *</label>
-                        <input type="number" id="incomeAmount" name="amount" required min="1" step="0.01" placeholder="Enter amount" style="font-size: 1.5rem; text-align: center; width: 100%; padding: 15px; border: 2px solid #e0e0e0; border-radius: 12px;">
+                        <input type="number" id="incomeAmount" name="amount" required min="1" step="0.01" placeholder="Enter amount" style="font-size: 1.5rem; text-align: center; width: 100%; padding: 15px; border: 2px solid var(--border-color); border-radius: 12px;">
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('incomeModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="background: #28a745;">
+                    <button type="submit" class="btn btn-success">
                         <i class="fas fa-plus"></i> Add Income
                     </button>
                 </div>
@@ -521,10 +539,31 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('visitDetailModal')">Close</button>
-                <button class="btn btn-primary" id="printFromModal" style="background: #17a2b8;">
+                <button class="btn btn-primary" id="printFromModal">
                     <i class="fas fa-print"></i> Print Prescription
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Edit Visit Modal (Today's Visits Only) -->
+    <div class="modal-overlay" id="editVisitModal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> Edit Visit</h2>
+                <button class="modal-close" onclick="closeModal('editVisitModal')">&times;</button>
+            </div>
+            <form id="editVisitForm" onsubmit="saveEditVisit(event)">
+                <div class="modal-body" id="editVisitContent">
+                    <!-- Edit form will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editVisitModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -609,8 +648,9 @@
                                     <i class="fas fa-eye"></i> View
                                 </button>
                                 <button class="btn-action btn-print" onclick="printPrescription(${visit.id})">
-                                    <i class="fas fa-print"></i> Print
+                                    <i class="fas fa-print"></i> Prescription Form
                                 </button>
+                                ${visit.date === today ? `<button class="btn-action btn-edit" onclick="editVisit(${visit.id})" style="background: #17a2b8; margin-right: 8px;"><i class="fas fa-edit"></i> Edit</button>` : ''}
                             </td>
                         </tr>
                     `).join('');
@@ -679,7 +719,7 @@
                 }
                 
                 document.getElementById('visitDetailContent').innerHTML = `
-                    <div style="background: var(--primary-blue); color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <div style="background: var(--accent); color: var(--text-primary); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
                         <h4 style="margin: 0 0 10px;">${visit.patient_name}</h4>
                         <div style="display: flex; gap: 20px; font-size: 14px;">
                             <span><i class="fas fa-birthday-cake"></i> Age: ${visit.age || 'N/A'}</span>
@@ -690,16 +730,16 @@
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div>
-                            <strong style="color: var(--primary-blue);">Vitals:</strong>
-                            <div style="padding: 10px; background: #f8f9fa; border-radius: 8px; margin-top: 5px;">
+                            <strong style="color: var(--accent);">Vitals:</strong>
+                            <div style="padding: 10px; background: var(--bg-surface); border-radius: 8px; margin-top: 5px;">
                                 ${visit.vitals_bp ? `<div>BP: ${visit.vitals_bp}</div>` : ''}
                                 ${visit.vitals_weight ? `<div>Weight: ${visit.vitals_weight} kg</div>` : ''}
-                                ${!visit.vitals_bp && !visit.vitals_weight ? '<div style="color: #999;">Not recorded</div>' : ''}
+                                ${!visit.vitals_bp && !visit.vitals_weight ? '<div style="color: var(--text-secondary);">Not recorded</div>' : ''}
                             </div>
                         </div>
                         <div>
-                            <strong style="color: var(--primary-blue);">Complaint:</strong>
-                            <div style="padding: 10px; background: #f8f9fa; border-radius: 8px; margin-top: 5px;">
+                            <strong style="color: var(--accent);">Complaint:</strong>
+                            <div style="padding: 10px; background: var(--bg-surface); border-radius: 8px; margin-top: 5px;">
                                 ${visit.presenting_complaint || 'Not specified'}
                             </div>
                         </div>
@@ -707,8 +747,8 @@
                     
                     ${visit.differentials ? `
                         <div style="margin-top: 15px;">
-                            <strong style="color: var(--primary-blue);">Differentials:</strong>
-                            <div style="padding: 10px; background: #f8f9fa; border-radius: 8px; margin-top: 5px;">
+                            <strong style="color: var(--accent);">Differentials:</strong>
+                            <div style="padding: 10px; background: var(--bg-surface); border-radius: 8px; margin-top: 5px;">
                                 ${visit.differentials}
                             </div>
                         </div>
@@ -716,10 +756,10 @@
                     
                     ${prescriptions.length > 0 ? `
                         <div style="margin-top: 15px;">
-                            <strong style="color: var(--primary-blue);"><i class="fas fa-pills"></i> Prescribed Medicines:</strong>
+                            <strong style="color: var(--accent);"><i class="fas fa-pills"></i> Prescribed Medicines:</strong>
                             <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
                                 <thead>
-                                    <tr style="background: var(--primary-blue); color: white;">
+                                    <tr style="background: var(--accent); color: var(--text-primary);">
                                         <th style="padding: 8px; text-align: left; border-radius: 5px 0 0 0;">Medicine</th>
                                         <th style="padding: 8px; text-align: left;">Dosage</th>
                                         <th style="padding: 8px; text-align: center;">Qty</th>
@@ -728,7 +768,7 @@
                                 </thead>
                                 <tbody>
                                     ${prescriptions.map(p => `
-                                        <tr style="background: #f8f9fa; border-bottom: 1px solid #eee;">
+                                        <tr style="background: var(--bg-surface); border-bottom: 1px solid var(--border-color);">
                                             <td style="padding: 8px;">${p.medicine_name}</td>
                                             <td style="padding: 8px;">${p.dosage}</td>
                                             <td style="padding: 8px; text-align: center;">${p.quantity}</td>
@@ -743,7 +783,7 @@
             } catch (error) {
                 console.error('Error loading visit:', error);
                 document.getElementById('visitDetailContent').innerHTML = `
-                    <div style="text-align: center; color: #dc3545; padding: 30px;">
+                    <div style="text-align: center; color: var(--text-secondary); padding: 30px;">
                         <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 15px;"></i>
                         <p>Error loading visit details</p>
                     </div>
@@ -756,14 +796,134 @@
                 const response = await fetch(`/prescription/${visitId}/print`);
                 const data = await response.json();
                 if (data.success) {
-                    // Close modal if open
                     closeModal('visitDetailModal');
+                    showToast('Prescription form opened!', 'success');
                 } else {
-                    alert('Failed to print prescription');
+                    showToast('Failed to open prescription form', 'error');
                 }
             } catch (error) {
                 console.error('Print error:', error);
-                alert('Error printing prescription');
+                showToast('Error opening prescription form', 'error');
+            }
+        }
+
+        async function editVisit(visitId) {
+            document.getElementById('editVisitContent').innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Loading...</p></div>';
+            document.getElementById('editVisitModal').style.display = 'flex';
+            document.getElementById('editVisitForm').onsubmit = (e) => saveEditVisit(e, visitId);
+            
+            try {
+                const response = await fetch(`/api/prescription/${visitId}`);
+                if (!response.ok) throw new Error('Visit not found');
+                const visit = await response.json();
+                
+                const today = new Date().toISOString().split('T')[0];
+                if (visit.date !== today) {
+                    showToast('Only today\'s visits can be edited', 'error');
+                    closeModal('editVisitModal');
+                    return;
+                }
+                
+                const prescResponse = await fetch(`/api/visits/${visitId}/prescriptions`);
+                let prescriptions = [];
+                if (prescResponse.ok) {
+                    prescriptions = await prescResponse.json();
+                }
+                
+                document.getElementById('editVisitContent').innerHTML = `
+                    <div style="background: var(--accent); color: var(--text-primary); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 10px;">${visit.patient_name}</h4>
+                        <div style="display: flex; gap: 20px; font-size: 14px;">
+                            <span><i class="fas fa-birthday-cake"></i> Age: ${visit.age || 'N/A'}</span>
+                            <span><i class="fas fa-phone"></i> ${visit.contact || 'N/A'}</span>
+                            <span><i class="fas fa-calendar"></i> ${visit.date}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editBP">Blood Pressure</label>
+                        <input type="text" id="editBP" name="vitals_bp" value="${visit.vitals_bp || ''}" placeholder="e.g., 120/80">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editWeight">Weight (kg)</label>
+                        <input type="text" id="editWeight" name="vitals_weight" value="${visit.vitals_weight || ''}" placeholder="e.g., 70">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editComplaint">Presenting Complaint</label>
+                        <textarea id="editComplaint" name="presenting_complaint" rows="3">${visit.presenting_complaint || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editDifferentials">Differentials/PC/DX</label>
+                        <textarea id="editDifferentials" name="differentials" rows="3">${visit.differentials || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editLabReport">Lab Report Image (Optional)</label>
+                        <input type="file" id="editLabReport" name="lab_report" accept="image/*">
+                        ${visit.lab_report_path ? `<div style="margin-top: 10px; padding: 10px; background: var(--bg-surface); border-radius: 8px;"><i class="fas fa-check-circle" style="color: #28a745;"></i> Lab report already uploaded</div>` : ''}
+                    </div>
+                    
+                    <input type="hidden" id="editVisitId" value="${visitId}">
+                `;
+            } catch (error) {
+                console.error('Error loading visit for edit:', error);
+                document.getElementById('editVisitContent').innerHTML = `
+                    <div style="text-align: center; color: var(--text-secondary); padding: 30px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 15px;"></i>
+                        <p>Error loading visit details</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function saveEditVisit(event, visitId) {
+            event.preventDefault();
+            const form = event.target;
+            const vId = document.getElementById('editVisitId').value || visitId;
+            
+            const payload = {
+                vitals_bp: document.getElementById('editBP')?.value || null,
+                vitals_weight: document.getElementById('editWeight')?.value || null,
+                presenting_complaint: document.getElementById('editComplaint')?.value || null,
+                differentials: document.getElementById('editDifferentials')?.value || null
+            };
+            
+            try {
+                const response = await fetch(`/api/visits/${vId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    showToast('Error: ' + error.detail, 'error');
+                    return;
+                }
+                
+                // Upload lab report if selected
+                const labFile = document.getElementById('editLabReport')?.files?.[0];
+                if (labFile && vId) {
+                    const formData = new FormData();
+                    formData.append('file', labFile);
+                    const uploadResp = await fetch(`/api/visits/${vId}/lab-report`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (!uploadResp.ok) {
+                        console.error('Lab report upload failed');
+                    }
+                }
+                
+                closeModal('editVisitModal');
+                showToast('Visit updated successfully!', 'success');
+                loadVisits();
+            } catch (error) {
+                console.error('Error saving visit:', error);
+                showToast('Failed to save visit changes', 'error');
             }
         }
 
@@ -796,14 +956,14 @@
 
                 if (response.ok) {
                     closeModal('incomeModal');
-                    alert('Income added successfully!');
+                    showToast('Income added successfully!', 'success');
                 } else {
                     const error = await response.json();
-                    alert('Error: ' + error.detail);
+                    showToast('Error: ' + error.detail, 'error');
                 }
             } catch (error) {
                 console.error('Error saving income:', error);
-                alert('Failed to save income');
+                showToast('Failed to save income', 'error');
             }
         }
 
@@ -834,5 +994,6 @@
                 });
         }
     </script>
+    <script src="/static/app.js"></script>
 </body>
 </html>

@@ -16,7 +16,7 @@
         }
 
         .page-title {
-            color: var(--primary-blue);
+            color: var(--accent);
             font-size: 2rem;
             font-weight: 700;
         }
@@ -29,14 +29,14 @@
         }
 
         .settings-card {
-            background: var(--accent-white);
+            background: var(--bg-surface);
             border-radius: var(--border-radius);
             padding: 30px;
             box-shadow: var(--shadow-soft);
         }
 
         .settings-card h3 {
-            color: var(--primary-blue);
+            color: var(--accent);
             font-size: 1.4rem;
             margin-bottom: 20px;
             display: flex;
@@ -49,7 +49,7 @@
         }
 
         .settings-card p {
-            color: #666;
+            color: var(--text-secondary);
             margin-bottom: 20px;
             font-size: 1.1rem;
             line-height: 1.6;
@@ -59,11 +59,11 @@
         .backup-section {
             grid-column: 1 / -1;
             background: linear-gradient(135deg, #001f3f 0%, #003366 100%);
-            color: white;
+            color: var(--text-primary);
         }
 
         .backup-section h3 {
-            color: white;
+            color: var(--text-primary);
         }
 
         .backup-section p {
@@ -75,8 +75,8 @@
             align-items: center;
             gap: 15px;
             padding: 20px 40px;
-            background: white;
-            color: var(--primary-blue);
+            background: var(--accent);
+            color: var(--text-primary);
             border: none;
             border-radius: 50px;
             font-size: 1.3rem;
@@ -110,16 +110,16 @@
 
         .backup-status.success {
             display: block;
-            background: rgba(40, 167, 69, 0.2);
+            background: rgba(40, 167, 69, 0.12);
             color: #90EE90;
-            border: 1px solid rgba(40, 167, 69, 0.5);
+            border: 1px solid rgba(40, 167, 69, 0.2);
         }
 
         .backup-status.error {
             display: block;
-            background: rgba(220, 53, 69, 0.2);
+            background: rgba(220, 53, 69, 0.12);
             color: #ffcccc;
-            border: 1px solid rgba(220, 53, 69, 0.5);
+            border: 1px solid rgba(220, 53, 69, 0.2);
         }
 
         .last-backup {
@@ -133,7 +133,7 @@
             display: flex;
             justify-content: space-between;
             padding: 15px 0;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .info-item:last-child {
@@ -141,29 +141,29 @@
         }
 
         .info-item .label {
-            color: #666;
+            color: var(--text-secondary);
             font-weight: 500;
         }
 
         .info-item .value {
-            color: var(--primary-blue);
+            color: var(--accent);
             font-weight: 600;
         }
 
         /* About Section */
         .about-logo {
             font-size: 4rem;
-            color: var(--primary-blue);
+            color: var(--accent);
             margin-bottom: 15px;
         }
 
         .version-badge {
             display: inline-block;
             padding: 5px 15px;
-            background: #e9ecef;
+            background: var(--bg-surface-2);
             border-radius: 20px;
             font-size: 0.95rem;
-            color: #666;
+            color: var(--text-secondary);
             margin-bottom: 15px;
         }
 
@@ -185,7 +185,7 @@
             width: 100%;
             padding: 15px;
             background: #28a745;
-            color: var(--accent-white);
+            color: var(--text-primary);
             border: none;
             border-radius: 10px;
             font-size: 1.1rem;
@@ -206,7 +206,7 @@
             width: 100%;
             padding: 15px;
             background: rgba(255, 255, 255, 0.1);
-            color: var(--accent-white);
+            color: var(--text-primary);
             border: none;
             border-radius: 10px;
             font-size: 1.1rem;
@@ -237,7 +237,7 @@
         }
 
         .modal {
-            background: var(--accent-white);
+            background: var(--bg-surface);
             border-radius: var(--border-radius);
             width: 90%;
             max-width: 700px;
@@ -252,8 +252,8 @@
         }
 
         .modal-header {
-            background: var(--primary-blue);
-            color: var(--accent-white);
+            background: var(--accent);
+            color: var(--text-primary);
             padding: 20px 25px;
             display: flex;
             justify-content: space-between;
@@ -268,7 +268,7 @@
         .modal-close {
             background: none;
             border: none;
-            color: white;
+            color: var(--text-primary);
             font-size: 1.8rem;
             cursor: pointer;
             padding: 0;
@@ -285,7 +285,7 @@
 
         .form-group label {
             display: block;
-            color: var(--primary-blue);
+            color: var(--accent);
             font-weight: 600;
             margin-bottom: 8px;
             font-size: 1.1rem;
@@ -295,7 +295,7 @@
             width: 100%;
             padding: 14px 18px;
             font-size: 1.1rem;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--border-color);
             border-radius: 12px;
             outline: none;
             transition: var(--transition-smooth);
@@ -303,12 +303,12 @@
         }
 
         .form-group input:focus {
-            border-color: var(--primary-blue);
+            border-color: var(--accent);
         }
 
         .modal-footer {
             padding: 20px 25px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: flex-end;
             gap: 15px;
@@ -328,7 +328,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-brand" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 10px;">
-            <img src="/static/logo.png" alt="DrKhan Logo" style="width: 90px; height: 90px; border-radius: 15px; margin-bottom: 10px; border: 3px solid white;">
+            <img src="/static/logo.png" alt="DrKhan Logo" style="width: 90px; height: 90px; border-radius: 15px; margin-bottom: 10px; border: 3px solid var(--border-color);">
             <span style="font-size: 1.1rem; font-weight: 700; white-space: nowrap;">DrKhan Clinic</span>
         </div>
         <ul class="sidebar-nav">
@@ -401,7 +401,7 @@
                         <i class="fas fa-download"></i>
                         One-Click Backup
                     </button>
-                    <button class="backup-btn" onclick="openRestoreModal()" style="background: #ffc107; color: #333;">
+                    <button class="backup-btn" onclick="openRestoreModal()" style="background: var(--accent); color: var(--text-primary);">
                         <i class="fas fa-upload"></i>
                         Restore Backup
                     </button>
@@ -446,7 +446,7 @@
                     Hospital Management System<br>
                     Built with ❤️ for efficient clinic operations
                 </p>
-                <p style="font-size: 0.9rem; color: #999; margin-top: 15px;">
+                <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 15px;">
                     © 2025 DrKhan Clinic. All rights reserved.
                 </p>
             </div>
@@ -469,7 +469,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('incomeModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="background: #28a745;">
+                    <button type="submit" class="btn btn-success">
                         <i class="fas fa-plus"></i> Add Income
                     </button>
                 </div>
@@ -480,15 +480,15 @@
     <!-- Restore Backup Modal -->
     <div class="modal-overlay" id="restoreModal" style="display: none;">
         <div class="modal" style="max-width: 600px;">
-            <div class="modal-header" style="background: #ffc107;">
-                <h2 style="color: #333;"><i class="fas fa-upload"></i> Restore Backup</h2>
-                <button class="modal-close" onclick="closeModal('restoreModal')" style="color: #333;">&times;</button>
+            <div class="modal-header" style="background: var(--accent);">
+                <h2 style="color: var(--text-primary);"><i class="fas fa-upload"></i> Restore Backup</h2>
+                <button class="modal-close" onclick="closeModal('restoreModal')" style="color: var(--text-primary);">&times;</button>
             </div>
             <div class="modal-body">
-                <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                    <strong><i class="fas fa-exclamation-triangle"></i> Warning:</strong> Restoring a backup will replace ALL current data. A safety backup will be created automatically.
+                <div style="background: var(--bg-surface-2); border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                    <strong style="color: var(--accent);"><i class="fas fa-exclamation-triangle"></i> Warning:</strong> Restoring a backup will replace ALL current data. A safety backup will be created automatically.
                 </div>
-                <h4 style="margin-bottom: 15px; color: var(--primary-blue);">Available Backups:</h4>
+                <h4 style="margin-bottom: 15px; color: var(--accent);">Available Backups:</h4>
                 <div id="backupList" style="max-height: 300px; overflow-y: auto;">
                     <div class="spinner"></div>
                 </div>
@@ -596,14 +596,14 @@
 
                 if (response.ok) {
                     closeModal('incomeModal');
-                    alert('Income added successfully!');
+                    showToast('Income added successfully!', 'success');
                 } else {
                     const error = await response.json();
-                    alert('Error: ' + error.detail);
+                    showToast('Error: ' + error.detail, 'error');
                 }
             } catch (error) {
                 console.error('Error saving income:', error);
-                alert('Failed to save income');
+                showToast('Failed to save income', 'error');
             }
         }
 
@@ -641,30 +641,30 @@
                 const backups = await response.json();
                 
                 if (backups.length === 0) {
-                    container.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">No backups found. Create a backup first!</p>';
+                    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No backups found. Create a backup first!</p>';
                     return;
                 }
                 
                 container.innerHTML = backups.map(backup => `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid var(--border-color); border-radius: 10px; margin-bottom: 10px;">
                         <div>
-                            <strong style="color: var(--primary-blue);">${backup.filename}</strong><br>
-                            <small style="color: #666;">${backup.date} | ${backup.size}</small>
+                            <strong style="color: var(--accent);">${backup.filename}</strong><br>
+                            <small style="color: var(--text-secondary);">${backup.date} | ${backup.size}</small>
                         </div>
-                        <button class="btn btn-primary" onclick="restoreBackup('${backup.path.replace(/\\/g, '\\\\')}')" style="background: #dc3545;">
+                        <button class="btn btn-danger" onclick="restoreBackup('${backup.path.replace(/\\/g, '\\\\')}')">
                             <i class="fas fa-undo"></i> Restore
                         </button>
                     </div>
                 `).join('');
             } catch (error) {
                 console.error('Error loading backups:', error);
-                container.innerHTML = '<p style="color: red; text-align: center;">Failed to load backups</p>';
+                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">Failed to load backups</p>';
             }
         }
 
         // Restore a backup
         async function restoreBackup(backupPath) {
-            if (!confirm('Are you sure you want to restore this backup? This will replace ALL current data!')) {
+            if (!(await showConfirm('Are you sure you want to restore this backup? This will replace ALL current data!'))) {
                 return;
             }
             
@@ -678,18 +678,19 @@
                 const result = await response.json();
                 
                 if (response.ok && result.success) {
-                    alert(result.message);
+                    showToast(result.message, 'success');
                     closeModal('restoreModal');
                     // Reload page to refresh data
                     window.location.reload();
                 } else {
-                    alert('Restore failed: ' + (result.detail || 'Unknown error'));
+                    showToast('Restore failed: ' + (result.detail || 'Unknown error'), 'error');
                 }
             } catch (error) {
                 console.error('Restore error:', error);
-                alert('Failed to restore backup');
+                showToast('Failed to restore backup', 'error');
             }
         }
     </script>
+    <script src="/static/app.js"></script>
 </body>
 </html>

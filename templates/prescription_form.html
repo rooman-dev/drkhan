@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DrKhan Clinic - Prescription Form</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: transparent;
+            color: var(--text-primary);
+        }
+
+        .page-shell {
+            min-height: 100vh;
+            padding: 28px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--accent) 0%, #003366 100%);
+            color: var(--text-primary);
+            border-radius: 24px;
+            padding: 28px 32px;
+            box-shadow: var(--shadow-soft);
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, transparent 35%, rgba(255,255,255,0.04) 50%, transparent 65%);
+            transform: translateX(-20%);
+        }
+
+        .hero-inner {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            gap: 24px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(2rem, 3vw, 3rem);
+            letter-spacing: 0.2px;
+        }
+
+        .hero p {
+            margin: 8px 0 0;
+            opacity: 0.9;
+        }
+
+        .hero .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            border: 1px solid var(--border-color);
+            font-weight: 600;
+        }
+
+        .prescription-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-soft);
+            border-radius: 24px;
+            padding: 24px;
+            backdrop-filter: blur(6px);
+        }
+
+        .section-title {
+            margin: 0 0 18px;
+            color: var(--accent);
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .grid.cols-5 {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        .grid.cols-4 {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .grid.cols-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .field label {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 0.95rem;
+        }
+
+        .field input,
+        .field textarea,
+        .field select {
+            width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 13px 14px;
+            font-size: 1rem;
+            outline: none;
+            background: var(--bg-surface-2);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .field input:focus,
+        .field textarea:focus,
+        .field select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-soft);
+        }
+
+        .field textarea {
+            min-height: 112px;
+            resize: vertical;
+        }
+
+        .panel {
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 18px;
+            background: var(--bg-surface);
+        }
+
+        .split {
+            display: grid;
+            gap: 18px;
+        }
+
+        .split.two {
+            grid-template-columns: 1.1fr 0.9fr;
+        }
+
+        .split.clinical {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .actions {
+            display: flex;
+            gap: 14px;
+            justify-content: flex-end;
+            margin-top: 22px;
+            flex-wrap: wrap;
+        }
+
+        .actions .btn {
+            min-width: 160px;
+            justify-content: center;
+            border-radius: 999px;
+            font-weight: 700;
+            padding: 14px 20px;
+        }
+
+        .helper {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 1100px) {
+            .grid.cols-5,
+            .grid.cols-4,
+            .split.two,
+            .split.clinical {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .page-shell { padding: 16px; }
+            .grid.cols-5,
+            .grid.cols-4,
+            .grid.cols-3,
+            .split.two,
+            .split.clinical {
+                grid-template-columns: 1fr;
+            }
+            .actions { justify-content: stretch; }
+            .actions .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-shell">
+        <section class="hero">
+            <div class="hero-inner">
+                <div>
+                    <span class="badge">Prescription Capture</span>
+                    <h1>Patient Intake and PDF Print</h1>
+                    <p>Capture the patient record and generate the formatted prescription PDF in one step.</p>
+                </div>
+                <div class="badge">FastAPI + Vanilla JS + fpdf2</div>
+            </div>
+        </section>
+
+        <section class="prescription-card">
+            <form id="prescriptionForm">
+                <div class="panel">
+                    <h2 class="section-title">Patient Info</h2>
+                    <div class="grid cols-5">
+                        <div class="field">
+                            <label for="pt_name">Pt. Name</label>
+                            <input id="pt_name" name="pt_name" type="text" placeholder="Patient name" required>
+                        </div>
+                        <div class="field">
+                            <label for="age">Age</label>
+                            <input id="age" name="age" type="text" placeholder="Age" required>
+                        </div>
+                        <div class="field">
+                            <label for="sex">Sex</label>
+                            <select id="sex" name="sex" required>
+                                <option value="">Select</option>
+                                <option>Male</option>
+                                <option>Female</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="contact">Contact</label>
+                            <input id="contact" name="contact" type="text" placeholder="Contact number">
+                        </div>
+                        <div class="field">
+                            <label for="date">Date</label>
+                            <input id="date" name="date" type="date" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel" style="margin-top: 18px;">
+                    <h2 class="section-title">Vitals</h2>
+                    <div class="split two">
+                        <div>
+                            <div class="grid cols-5">
+                                <div class="field"><label for="bp">BP</label><input id="bp" name="bp" type="text" placeholder="120/80"></div>
+                                <div class="field"><label for="hr">HR</label><input id="hr" name="hr" type="text" placeholder="72"></div>
+                                <div class="field"><label for="so2">So2</label><input id="so2" name="so2" type="text" placeholder="98%"></div>
+                                <div class="field"><label for="rr">RR</label><input id="rr" name="rr" type="text" placeholder="18"></div>
+                                <div class="field"><label for="temp">Temp</label><input id="temp" name="temp" type="text" placeholder="98.6"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="grid cols-4">
+                                <div class="field"><label for="height_cm">Height (cm)</label><input id="height_cm" name="height_cm" type="number" step="0.1" min="0" placeholder="170"></div>
+                                <div class="field"><label for="weight_kg">Weight (kg)</label><input id="weight_kg" name="weight_kg" type="number" step="0.1" min="0" placeholder="70"></div>
+                                <div class="field"><label for="bmi">BMI</label><input id="bmi" name="bmi" type="text" placeholder="24.2" readonly></div>
+                                <div class="field"><label for="rbs">RBS</label><input id="rbs" name="rbs" type="text" placeholder="140"></div>
+                            </div>
+                            <div class="grid cols-4" style="margin-top: 16px;">
+                                <div class="field"><label for="fbs">FBS</label><input id="fbs" name="fbs" type="text" placeholder="96"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel" style="margin-top: 18px;">
+                    <h2 class="section-title">Clinical</h2>
+                    <div class="field" style="margin-bottom: 16px;">
+                        <label for="comorbs">CoMorbs</label>
+                        <input id="comorbs" name="comorbs" type="text" placeholder="Diabetes, HTN, etc.">
+                    </div>
+                    <div class="split clinical">
+                        <div class="field">
+                            <label for="pc_dx">PC / DX</label>
+                            <textarea id="pc_dx" name="pc_dx" placeholder="Presenting complaint, working diagnosis..."></textarea>
+                        </div>
+                        <div class="field">
+                            <label for="rx">RX</label>
+                            <textarea id="rx" name="rx" placeholder="Prescription details..."></textarea>
+                        </div>
+                        <div class="field">
+                            <label for="advice">Advice</label>
+                            <textarea id="advice" name="advice" placeholder="Advice, precautions, follow-up..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button type="button" class="btn btn-secondary" onclick="savePatient()">Add Patient</button>
+                    <button type="button" class="btn btn-success" onclick="printPdf()">Print PDF</button>
+                </div>
+                <div class="helper" id="statusMsg"></div>
+            </form>
+        </section>
+    </div>
+
+    <script>
+        const dateInput = document.getElementById('date');
+        dateInput.value = new Date().toISOString().slice(0, 10);
+
+        function getFormData() {
+            const form = document.getElementById('prescriptionForm');
+            const data = new FormData(form);
+            return Object.fromEntries(data.entries());
+        }
+
+        function calculateBmi() {
+            const heightInput = document.getElementById('height_cm');
+            const weightInput = document.getElementById('weight_kg');
+            const bmiInput = document.getElementById('bmi');
+            const heightCm = parseFloat(heightInput.value);
+            const weightKg = parseFloat(weightInput.value);
+
+            if (!heightCm || !weightKg || heightCm <= 0 || weightKg <= 0) {
+                bmiInput.value = '';
+                return;
+            }
+
+            const heightM = heightCm / 100;
+            bmiInput.value = (weightKg / (heightM * heightM)).toFixed(1);
+        }
+
+        function savePatient() {
+            document.getElementById('statusMsg').textContent = 'Add Patient logic is intentionally left as a placeholder.';
+        }
+
+        async function printPdf() {
+            const statusMsg = document.getElementById('statusMsg');
+            statusMsg.textContent = 'Generating PDF...';
+
+            try {
+                calculateBmi();
+                const formData = getFormData();
+                const payload = {
+                    ...formData,
+                    ht_wt: formData.height_cm || formData.weight_kg ? `${formData.height_cm || '-'} cm / ${formData.weight_kg || '-'} kg` : '',
+                    bmi: formData.bmi || ''
+                };
+                const response = await fetch('/api/print_prescription', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.detail || 'Failed to generate PDF');
+                }
+
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const anchor = document.createElement('a');
+                anchor.href = downloadUrl;
+                anchor.download = `prescription_${payload.pt_name || 'patient'}.pdf`;
+                document.body.appendChild(anchor);
+                anchor.click();
+                anchor.remove();
+                window.URL.revokeObjectURL(downloadUrl);
+
+                statusMsg.textContent = 'PDF ready and downloaded.';
+            } catch (error) {
+                console.error(error);
+                statusMsg.textContent = error.message;
+            }
+        }
+
+        document.getElementById('height_cm').addEventListener('input', calculateBmi);
+        document.getElementById('weight_kg').addEventListener('input', calculateBmi);
+    </script>
+    <script src="/static/app.js"></script>
+</body>
+</html>

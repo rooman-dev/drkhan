@@ -16,7 +16,7 @@
         }
 
         .page-title {
-            color: var(--primary-blue);
+            color: var(--accent);
             font-size: 2rem;
             font-weight: 700;
         }
@@ -51,29 +51,29 @@
             flex: 1;
             padding: 15px 20px;
             font-size: 1.1rem;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--border-color);
             border-radius: 15px;
             outline: none;
             transition: var(--transition-smooth);
         }
 
         .search-bar input:focus {
-            border-color: var(--primary-blue);
+            border-color: var(--accent);
         }
 
         /* Inventory Table */
         .inventory-table {
             width: 100%;
             border-collapse: collapse;
-            background: var(--accent-white);
+            background: var(--bg-surface);
             border-radius: var(--border-radius);
             overflow: hidden;
             box-shadow: var(--shadow-soft);
         }
 
         .inventory-table thead {
-            background: var(--primary-blue);
-            color: var(--accent-white);
+            background: var(--accent);
+            color: var(--text-primary);
         }
 
         .inventory-table th,
@@ -84,24 +84,24 @@
         }
 
         .inventory-table tbody tr {
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-color);
             transition: var(--transition-smooth);
         }
 
         .inventory-table tbody tr:hover {
-            background: #f8f9fa;
+            background: var(--bg-surface-2);
         }
 
         .inventory-table tbody tr.low-stock {
-            background: #fff5f5;
+            background: rgba(220,53,69,0.03);
         }
 
         .inventory-table tbody tr.low-stock:hover {
-            background: #ffe5e5;
+            background: rgba(220,53,69,0.04);
         }
 
         .inventory-table tbody tr.out-of-stock {
-            background: #ffebeb;
+            background: rgba(220,53,69,0.04);
         }
 
         .stock-badge {
@@ -112,17 +112,17 @@
         }
 
         .stock-ok {
-            background: #d4edda;
+            background: rgba(40,167,69,0.06);
             color: #155724;
         }
 
         .stock-low {
-            background: #fff3cd;
+            background: rgba(255,193,7,0.06);
             color: #856404;
         }
 
         .stock-out {
-            background: #f8d7da;
+            background: rgba(220,53,69,0.06);
             color: #721c24;
         }
 
@@ -137,35 +137,35 @@
         }
 
         .btn-edit {
-            background: var(--primary-blue);
-            color: white;
+            background: var(--accent);
+            color: var(--text-primary);
         }
 
         .btn-edit:hover {
-            background: #003366;
+            background: var(--accent-hover);
         }
 
         .btn-stock {
-            background: #28a745;
-            color: white;
+            background: var(--accent);
+            color: var(--text-primary);
         }
 
         .btn-stock:hover {
-            background: #218838;
+            background: var(--accent-hover);
         }
 
         .btn-stock-out {
-            background: #ffc107;
-            color: #212529;
+            background: var(--accent);
+            color: var(--text-primary);
         }
 
         .btn-stock-out:hover {
-            background: #e0a800;
+            background: var(--accent-hover);
         }
 
         .btn-delete {
             background: #dc3545;
-            color: white;
+            color: var(--text-primary);
         }
 
         .btn-delete:hover {
@@ -173,12 +173,12 @@
         }
 
         .btn-find-alt {
-            background: #17a2b8;
-            color: white;
+            background: var(--accent);
+            color: var(--text-primary);
         }
 
         .btn-find-alt:hover {
-            background: #138496;
+            background: var(--accent-hover);
         }
 
         /* Modal Styles */
@@ -200,7 +200,7 @@
         }
 
         .modal {
-            background: var(--accent-white);
+            background: var(--bg-surface);
             border-radius: var(--border-radius);
             width: 90%;
             max-width: 600px;
@@ -210,8 +210,8 @@
         }
 
         .modal-header {
-            background: var(--primary-blue);
-            color: var(--accent-white);
+            background: var(--accent);
+            color: var(--text-primary);
             padding: 20px 25px;
             display: flex;
             justify-content: space-between;
@@ -226,7 +226,7 @@
         .modal-close {
             background: none;
             border: none;
-            color: white;
+            color: var(--text-primary);
             font-size: 1.8rem;
             cursor: pointer;
             padding: 0;
@@ -243,7 +243,7 @@
 
         .form-group label {
             display: block;
-            color: var(--primary-blue);
+            color: var(--accent);
             font-weight: 600;
             margin-bottom: 8px;
             font-size: 1.1rem;
@@ -255,7 +255,7 @@
             width: 100%;
             padding: 14px 18px;
             font-size: 1.1rem;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--border-color);
             border-radius: 12px;
             outline: none;
             transition: var(--transition-smooth);
@@ -265,7 +265,7 @@
         .form-group input:focus,
         .form-group textarea:focus,
         .form-group select:focus {
-            border-color: var(--primary-blue);
+            border-color: var(--accent);
         }
 
         .form-row {
@@ -276,7 +276,7 @@
 
         .modal-footer {
             padding: 20px 25px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: flex-end;
             gap: 15px;
@@ -284,7 +284,7 @@
 
         /* Alternatives Section */
         .alternatives-section {
-            background: #e7f5ff;
+            background: rgba(76,139,245,0.04);
             border-radius: 12px;
             padding: 20px;
             margin-top: 15px;
@@ -295,7 +295,7 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 15px;
-            color: #0066cc;
+            color: var(--accent);
             font-weight: 600;
         }
 
@@ -303,11 +303,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: white;
+            background: var(--bg-surface-2);
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 10px;
-            border: 1px solid #d0e8ff;
+            border: 1px solid rgba(76,139,245,0.06);
         }
 
         .alternative-item .info {
@@ -316,12 +316,12 @@
 
         .alternative-item .name {
             font-weight: 600;
-            color: var(--primary-blue);
+            color: var(--accent);
         }
 
         .alternative-item .formula {
             font-size: 0.95rem;
-            color: #666;
+            color: var(--text-secondary);
         }
 
         .alternative-item .stock-info {
@@ -332,7 +332,7 @@
         .empty-state {
             text-align: center;
             padding: 50px;
-            color: #999;
+            color: var(--text-secondary);
         }
 
         .empty-state i {
@@ -350,7 +350,7 @@
         }
 
         .stat-card {
-            background: var(--accent-white);
+            background: var(--bg-surface);
             border-radius: var(--border-radius);
             padding: 25px;
             text-align: center;
@@ -360,12 +360,12 @@
         .stat-card .stat-number {
             font-size: 2.5rem;
             font-weight: 700;
-            color: var(--primary-blue);
+            color: var(--accent);
         }
 
         .stat-card .stat-label {
             font-size: 1rem;
-            color: #666;
+            color: var(--text-secondary);
             margin-top: 5px;
         }
 
@@ -391,7 +391,7 @@
             width: 100%;
             padding: 15px;
             background: #28a745;
-            color: var(--accent-white);
+            color: var(--text-primary);
             border: none;
             border-radius: 10px;
             font-size: 1.1rem;
@@ -412,7 +412,7 @@
             width: 100%;
             padding: 15px;
             background: rgba(255, 255, 255, 0.1);
-            color: var(--accent-white);
+            color: var(--text-primary);
             border: none;
             border-radius: 10px;
             font-size: 1.1rem;
@@ -435,7 +435,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-brand" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 10px;">
-            <img src="/static/logo.png" alt="DrKhan Logo" style="width: 90px; height: 90px; border-radius: 15px; margin-bottom: 10px; border: 3px solid white;">
+            <img src="/static/logo.png" alt="DrKhan Logo" style="width: 90px; height: 90px; border-radius: 15px; margin-bottom: 10px; border: 3px solid var(--border-color);">
             <span style="font-size: 1.1rem; font-weight: 700; white-space: nowrap;">DrKhan Clinic</span>
         </div>
         <ul class="sidebar-nav">
@@ -534,7 +534,7 @@
 
         <!-- Inventory Table -->
         <div class="card">
-            <table class="inventory-table">
+            <table id="inventoryTable" class="inventory-table">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -575,7 +575,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('incomeModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="background: #28a745;">
+                    <button type="submit" class="btn btn-success">
                         <i class="fas fa-plus"></i> Add Income
                     </button>
                 </div>
@@ -620,7 +620,6 @@
             </form>
         </div>
     </div>
-
     <!-- Stock In Modal -->
     <div class="modal-overlay" id="stockInModal">
         <div class="modal">
@@ -633,7 +632,7 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label>Current Stock</label>
-                        <input type="text" id="currentStock" readonly style="background: #f8f9fa;">
+                        <input type="text" id="currentStock" readonly style="background: var(--bg-surface-2);">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -663,16 +662,16 @@
     <!-- Stock Out Modal -->
     <div class="modal-overlay" id="stockOutModal">
         <div class="modal">
-            <div class="modal-header" style="background: #ffc107;">
-                <h2 style="color: #212529;"><i class="fas fa-minus-circle"></i> Subtract Stock - <span id="stockOutMedicineName"></span></h2>
-                <button class="modal-close" style="color: #212529;" onclick="closeModal('stockOutModal')">&times;</button>
+            <div class="modal-header" style="background: var(--accent);">
+                <h2 style="color: var(--text-primary);"><i class="fas fa-minus-circle"></i> Subtract Stock - <span id="stockOutMedicineName"></span></h2>
+                <button class="modal-close" style="color: var(--text-primary);" onclick="closeModal('stockOutModal')">&times;</button>
             </div>
             <form id="stockOutForm" onsubmit="subtractStock(event)">
                 <input type="hidden" id="stockOutMedicineId">
                 <div class="modal-body">
                     <div class="form-group">
                         <label>Current Stock</label>
-                        <input type="text" id="stockOutCurrentStock" readonly style="background: #f8f9fa;">
+                        <input type="text" id="stockOutCurrentStock" readonly style="background: var(--bg-surface-2);">
                     </div>
                     <div class="form-group">
                         <label for="subtractQuantity">Quantity to Subtract *</label>
@@ -685,7 +684,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('stockOutModal')">Cancel</button>
-                    <button type="submit" class="btn" style="background: #ffc107; color: #212529;">
+                    <button type="submit" class="btn" style="background: var(--accent); color: var(--text-primary);">
                         <i class="fas fa-minus"></i> Subtract Stock
                     </button>
                 </div>
@@ -918,14 +917,14 @@
                 if (response.ok) {
                     closeModal('addMedicineModal');
                     loadInventory();
-                    alert('Medicine added successfully!');
+                    showToast('Medicine added successfully!', 'success');
                 } else {
                     const error = await response.json();
-                    alert('Error: ' + error.detail);
+                    showToast('Error: ' + error.detail, 'error');
                 }
             } catch (error) {
                 console.error('Error saving medicine:', error);
-                alert('Failed to save medicine');
+                showToast('Failed to save medicine', 'error');
             }
         }
 
@@ -949,14 +948,14 @@
                 if (response.ok) {
                     closeModal('stockInModal');
                     loadInventory();
-                    alert('Stock added successfully!');
+                    showToast('Stock added successfully!', 'success');
                 } else {
                     const error = await response.json();
-                    alert('Error: ' + error.detail);
+                    showToast('Error: ' + error.detail, 'error');
                 }
             } catch (error) {
                 console.error('Error adding stock:', error);
-                alert('Failed to add stock');
+                showToast('Failed to add stock', 'error');
             }
         }
 
@@ -979,7 +978,7 @@
             const currentStock = parseInt(document.getElementById('stockOutCurrentStock').value);
             
             if (quantity > currentStock) {
-                alert('Cannot subtract more than current stock!');
+                showToast('Cannot subtract more than current stock!', 'error');
                 return;
             }
             
@@ -998,20 +997,20 @@
                 if (response.ok) {
                     closeModal('stockOutModal');
                     loadInventory();
-                    alert('Stock subtracted successfully!');
+                    showToast('Stock subtracted successfully!', 'success');
                 } else {
                     const error = await response.json();
-                    alert('Error: ' + error.detail);
+                    showToast('Error: ' + error.detail, 'error');
                 }
             } catch (error) {
                 console.error('Error subtracting stock:', error);
-                alert('Failed to subtract stock');
+                showToast('Failed to subtract stock', 'error');
             }
         }
 
         // Delete medicine
         async function deleteMedicine(id, name) {
-            if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
+            if (!(await showConfirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`))) {
                 return;
             }
 
@@ -1022,14 +1021,14 @@
 
                 if (response.ok) {
                     loadInventory();
-                    alert('Medicine deleted successfully!');
+                    showToast('Medicine deleted successfully!', 'success');
                 } else {
                     const error = await response.json();
-                    alert('Error: ' + error.detail);
+                    showToast('Error: ' + error.detail, 'error');
                 }
             } catch (error) {
                 console.error('Error deleting medicine:', error);
-                alert('Failed to delete medicine');
+                showToast('Failed to delete medicine', 'error');
             }
         }
 
@@ -1053,14 +1052,14 @@
                 if (response.ok) {
                     closeModal('editMedicineModal');
                     loadInventory();
-                    alert('Medicine updated successfully!');
+                    showToast('Medicine updated successfully!', 'success');
                 } else {
                     const error = await response.json();
-                    alert('Error: ' + error.detail);
+                    showToast('Error: ' + error.detail, 'error');
                 }
             } catch (error) {
                 console.error('Error updating medicine:', error);
-                alert('Failed to update medicine');
+                showToast('Failed to update medicine', 'error');
             }
         }
 
@@ -1068,7 +1067,7 @@
         async function findAlternatives() {
             const query = document.getElementById('altSearchInput').value.trim();
             if (!query) {
-                alert('Please enter a medicine name');
+                showToast('Please enter a medicine name', 'error');
                 return;
             }
 
@@ -1079,7 +1078,7 @@
                 renderAlternativeResults(result);
             } catch (error) {
                 console.error('Error finding alternatives:', error);
-                alert('Failed to search for alternatives');
+                showToast('Failed to search for alternatives', 'error');
             }
         }
 
@@ -1110,8 +1109,8 @@
                 const stockClass = med.stock === 0 ? 'stock-out' : (med.stock < 10 ? 'stock-low' : 'stock-ok');
                 html += `
                     <div style="margin-bottom: 20px;">
-                        <h4 style="color: var(--primary-blue); margin-bottom: 10px;">Searched Medicine:</h4>
-                        <div class="alternative-item" style="border-color: var(--primary-blue);">
+                        <h4 style="color: var(--accent); margin-bottom: 10px;">Searched Medicine:</h4>
+                        <div class="alternative-item" style="border-color: var(--accent);">
                             <div class="info">
                                 <div class="name">${med.brand_name}</div>
                                 <div class="formula">${med.formula || 'No formula specified'}</div>
@@ -1149,8 +1148,8 @@
                 `;
             } else if (result.searched_medicine && result.searched_medicine.stock === 0) {
                 html += `
-                    <div class="alternatives-section" style="background: #fff3cd;">
-                        <div class="alternatives-header" style="color: #856404;">
+                    <div class="alternatives-section" style="background: var(--bg-surface-2);">
+                        <div class="alternatives-header" style="color: var(--accent);">
                             <i class="fas fa-exclamation-triangle"></i>
                             No alternatives available with the same formula
                         </div>
@@ -1194,14 +1193,14 @@
 
                 if (response.ok) {
                     closeModal('incomeModal');
-                    alert('Income added successfully!');
+                    showToast('Income added successfully!', 'success');
                 } else {
                     const error = await response.json();
-                    alert('Error: ' + error.detail);
+                    showToast('Error: ' + error.detail, 'error');
                 }
             } catch (error) {
                 console.error('Error saving income:', error);
-                alert('Failed to save income');
+                showToast('Failed to save income', 'error');
             }
         }
 
@@ -1232,5 +1231,6 @@
             if (e.key === 'Enter') findAlternatives();
         });
     </script>
+    <script src="/static/app.js"></script>
 </body>
 </html>
