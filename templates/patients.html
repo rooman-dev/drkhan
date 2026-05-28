@@ -1343,6 +1343,11 @@
                                             </ul>
                                         </div>
                                     ` : ''}
+                                        ${visit.lab_report_path ? `
+                                            <div style="margin-top:8px;">
+                                                <a href="${visit.lab_report_path}" target="_blank" style="color: var(--accent); font-weight:600;">View Lab Report</a>
+                                            </div>
+                                        ` : ''}
                                 </div>
                             </details>
                         `;
@@ -1649,12 +1654,20 @@
                         const times = freqTimes ? freqTimes.value : '1';
                         const days = freqDays ? freqDays.value : '3';
                         const dosage = `${times}×${days} daily`;
-                        
+                        const timesInt = parseInt(times) || 1;
+                        const daysInt = parseInt(days) || 1;
+                        const baseQty = parseInt(quantity.value) || 1;
+                        const finalQty = timesInt * daysInt * baseQty;
+
                         medicines.push({
                             inventory_id: parseInt(hiddenInput.value),
-                            quantity: parseInt(quantity.value),
+                            quantity: finalQty,
+                            base_quantity: baseQty,
                             dosage: dosage,
-                            price: item.price
+                            price: item.price,
+                            freq_times: timesInt,
+                            freq_days: daysInt,
+                            duration: `${daysInt} days`
                         });
                     }
                 }

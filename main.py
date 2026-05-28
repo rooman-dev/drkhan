@@ -106,6 +106,7 @@ class VisitUpdate(BaseModel):
     differentials: Optional[str] = None
     treatment_plan: Optional[str] = None
     lab_report_path: Optional[str] = None
+    medicines: List[MedicineItem] = []
 
 
 class PrescriptionPrintRequest(BaseModel):
@@ -636,7 +637,7 @@ async def get_patient_full_record(patient_id: int):
         SELECT id, date, vitals_bp, vitals_weight, vitals_temp, vitals_bsr,
             vitals_spo2, vitals_heart_rate, presenting_complaint, signs_symptoms,
             history_presenting_illness, past_medical_hx, family_history,
-            examination, differentials, treatment_plan
+            examination, differentials, treatment_plan, lab_report_path
         FROM visits
         WHERE patient_id = ?
         ORDER BY date DESC
@@ -728,10 +729,22 @@ async def create_visit(visit: VisitCreate):
                 medicine_name = "Medicine"
 
             # Save to prescriptions table
+            duration_val = None
+            # Accept either numeric days or a duration string sent by client
+            if getattr(med, 'duration', None):
+                duration_val = med.duration
+            elif getattr(med, 'freq_days', None):
+                try:
+                    duration_val = f"{int(med.freq_days)} days"
+                except Exception:
+                    duration_val = str(med.freq_days)
+            else:
+                duration_val = "7 days"
+
             cursor.execute("""
                 INSERT INTO prescriptions (visit_id, medicine_name, dosage, duration, quantity, price)
                 VALUES (?, ?, ?, ?, ?, ?)
-            """, (visit_id, medicine_name, med.dosage or "As directed", "7 days", med.quantity, med.price))
+            """, (visit_id, medicine_name, med.dosage or "As directed", duration_val, med.quantity, med.price))
             
             medicine_total += med.price * med.quantity
         
@@ -1633,6 +1646,28 @@ async def update_visit(visit_id: int, visit: VisitUpdate):
         ))
 
         cursor.execute("UPDATE patients SET modified_at = datetime('now') WHERE id = ?", (existing["patient_id"],))
+        # If medicines provided in update, replace prescriptions for this visit
+        if getattr(visit, 'medicines', None):
+            try:
+                # Remove old prescriptions
+                cursor.execute("DELETE FROM prescriptions WHERE visit_id = ?", (visit_id,))
+                # Insert new prescriptions without touching inventory (safe replacement)
+                for med in visit.medicines:
+                    med_name = (med.medicine_name or f"Medicine {med.inventory_id or ''}").strip() or 'Medicine'
+                    dosage = med.dosage or 'As directed'
+                    qty = med.quantity or 1
+                    price = med.price or 0.0
+                    # prefer explicit duration, then freq_days, else fallback
+                    duration_val = getattr(med, 'duration', None) or (f"{getattr(med, 'freq_days', '')} days" if getattr(med, 'freq_days', None) else '7 days')
+                    cursor.execute("""
+                        INSERT INTO prescriptions (visit_id, medicine_name, dosage, duration, quantity, price)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    """, (visit_id, med_name, dosage, duration_val, qty, price))
+            except Exception:
+                # If prescription replacement fails, rollback and raise
+                conn.rollback()
+                raise
+
         conn.commit()
         return {"success": True, "message": "Visit updated successfully"}
     except Exception as e:

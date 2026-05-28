@@ -207,6 +207,10 @@
             z-index: 2000;
         }
 
+        .modal-overlay.active {
+            display: flex;
+        }
+
         .modal {
             background: var(--bg-surface);
             border-radius: var(--border-radius);
@@ -703,7 +707,7 @@
 
         async function viewVisit(visitId) {
             document.getElementById('visitDetailContent').innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Loading...</p></div>';
-            document.getElementById('visitDetailModal').style.display = 'flex';
+            document.getElementById('visitDetailModal').classList.add('active');
             document.getElementById('printFromModal').onclick = () => printPrescription(visitId);
             
             try {
@@ -779,6 +783,13 @@
                             </table>
                         </div>
                     ` : ''}
+
+                    ${visit.lab_report_path ? `
+                        <div style="margin-top:12px;">
+                            <strong style="color: var(--accent);">Lab Report:</strong>
+                            <div style="margin-top:6px;"><a href="${visit.lab_report_path}" target="_blank" style="color: var(--accent); font-weight:600;">Open Lab Report</a></div>
+                        </div>
+                    ` : ''}
                 `;
             } catch (error) {
                 console.error('Error loading visit:', error);
@@ -809,7 +820,7 @@
 
         async function editVisit(visitId) {
             document.getElementById('editVisitContent').innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Loading...</p></div>';
-            document.getElementById('editVisitModal').style.display = 'flex';
+            document.getElementById('editVisitModal').classList.add('active');
             document.getElementById('editVisitForm').onsubmit = (e) => saveEditVisit(e, visitId);
             
             try {
@@ -866,6 +877,24 @@
                         ${visit.lab_report_path ? `<div style="margin-top: 10px; padding: 10px; background: var(--bg-surface); border-radius: 8px;"><i class="fas fa-check-circle" style="color: #28a745;"></i> Lab report already uploaded</div>` : ''}
                     </div>
                     
+                    <div class="form-group">
+                        <label>Prescribed Medicines (Pharmacy)</label>
+                        <div id="medList" style="margin-bottom:10px;">
+                            ${prescriptions.length > 0 ? prescriptions.map((p, idx) => `
+                                <div class="med-row" data-index="${idx}" style="display:flex; gap:8px; margin-bottom:6px;">
+                                    <input class="med-name" placeholder="Medicine name" value="${p.medicine_name}" style="flex:1; padding:8px;">
+                                    <input class="med-dosage" placeholder="Dosage" value="${p.dosage}" style="width:140px; padding:8px;">
+                                    <input class="med-qty" type="number" min="1" value="${p.quantity}" style="width:80px; padding:8px;">
+                                    <button type="button" class="btn btn-secondary" onclick="removeMedicineRow(this)"><i class="fas fa-trash"></i></button>
+                                </div>
+                            `).join('') : ''}
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button type="button" class="btn btn-primary" onclick="addMedicineRow()"><i class="fas fa-plus"></i> Add Medicine</button>
+                            <small style="align-self:center; color:var(--text-secondary);">Changes here will update visit prescriptions (does not adjust inventory automatically).</small>
+                        </div>
+                    </div>
+                    
                     <input type="hidden" id="editVisitId" value="${visitId}">
                 `;
             } catch (error) {
@@ -890,6 +919,23 @@
                 presenting_complaint: document.getElementById('editComplaint')?.value || null,
                 differentials: document.getElementById('editDifferentials')?.value || null
             };
+            
+                // Collect medicines from medList
+                try {
+                    const medRows = Array.from(document.querySelectorAll('#medList .med-row'));
+                    const meds = medRows.map(row => {
+                        return {
+                            medicine_name: row.querySelector('.med-name')?.value || null,
+                            dosage: row.querySelector('.med-dosage')?.value || null,
+                            quantity: parseInt(row.querySelector('.med-qty')?.value || 1) || 1,
+                            price: 0
+                        };
+                    }).filter(m => m.medicine_name);
+
+                    if (meds.length) payload.medicines = meds;
+                } catch (e) {
+                    console.error('Error collecting medicines', e);
+                }
             
             try {
                 const response = await fetch(`/api/visits/${vId}`, {
@@ -927,8 +973,32 @@
             }
         }
 
+        function addMedicineRow() {
+            const container = document.getElementById('medList');
+            const idx = container.children.length;
+            const div = document.createElement('div');
+            div.className = 'med-row';
+            div.dataset.index = idx;
+            div.style = 'display:flex; gap:8px; margin-bottom:6px;';
+            div.innerHTML = `
+                <input class="med-name" placeholder="Medicine name" style="flex:1; padding:8px;">
+                <input class="med-dosage" placeholder="Dosage" style="width:140px; padding:8px;">
+                <input class="med-qty" type="number" min="1" value="1" style="width:80px; padding:8px;">
+                <button type="button" class="btn btn-secondary" onclick="removeMedicineRow(this)"><i class="fas fa-trash"></i></button>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeMedicineRow(btn) {
+            const row = btn && btn.closest && btn.closest('.med-row');
+            if (row) row.remove();
+        }
+
         function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
+            const el = document.getElementById(modalId);
+            if (!el) return;
+            el.classList.remove('active');
+            try { el.style.display = 'none'; } catch(e) {}
         }
 
         function openIncomeModal() {
@@ -967,11 +1037,11 @@
             }
         }
 
-        // Close modal on overlay click
+        // Close modal on overlay click — use active class for consistency
         document.querySelectorAll('.modal-overlay').forEach(overlay => {
             overlay.addEventListener('click', (e) => {
                 if (e.target === overlay) {
-                    overlay.style.display = 'none';
+                    overlay.classList.remove('active');
                 }
             });
         });
@@ -979,7 +1049,7 @@
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+                document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
             }
         });
 
