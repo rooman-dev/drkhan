@@ -708,7 +708,17 @@
         async function viewVisit(visitId) {
             document.getElementById('visitDetailContent').innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Loading...</p></div>';
             document.getElementById('visitDetailModal').classList.add('active');
-            document.getElementById('printFromModal').onclick = () => printVisit(visitId);
+            // Ensure we attach a fresh click listener each time (avoid stale handlers)
+            try {
+                const oldBtn = document.getElementById('printFromModal');
+                const newBtn = oldBtn.cloneNode(true);
+                oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+                newBtn.addEventListener('click', () => printVisit(visitId));
+            } catch (e) {
+                // Fallback: set onclick directly
+                const btn = document.getElementById('printFromModal');
+                if (btn) btn.onclick = () => printVisit(visitId);
+            }
             
             try {
                 const response = await fetch(`/api/prescription/${visitId}`);

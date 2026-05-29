@@ -1501,6 +1501,8 @@ async def print_prescription(visit_id: int):
                 for index, med in enumerate(medicines)
             ),
             "advice": visit.get("treatment_plan", "") or "",
+            # Ensure clinical sections (PC/DX, RX, Advice) are included in the generated PDF
+            "include_clinical_sections": True,
         }
 
         file_path = generate_prescription_form_pdf(payload)
