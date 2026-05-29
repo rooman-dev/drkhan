@@ -67,6 +67,11 @@ class MedicineItem(BaseModel):
     quantity: int = 1
     dosage: Optional[str] = None
     price: float = 0.0
+    # Extended fields to carry prescription metadata from client
+    freq_times: Optional[int] = None
+    freq_days: Optional[int] = None
+    duration: Optional[str] = None
+    base_quantity: Optional[int] = None
 
 
 class VisitCreate(BaseModel):
@@ -1456,6 +1461,9 @@ async def print_prescription(visit_id: int):
         if not visit:
             conn.close()
             raise HTTPException(status_code=404, detail="Visit not found")
+
+        # Convert sqlite Row to dict for .get() access
+        visit = dict(visit)
 
         cursor.execute("""
             SELECT medicine_name, dosage, duration, quantity, price
