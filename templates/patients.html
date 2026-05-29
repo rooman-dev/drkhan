@@ -908,8 +908,11 @@
                         <button type="button" class="btn btn-primary" onclick="printVisitPrescriptionForm()">
                             <i class="fas fa-file-pdf"></i> Prescription Form
                         </button>
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save"></i> Save Visit & Generate Bill
+                            <button type="button" class="btn btn-info" onclick="sendWhatsAppFromNewVisit()">
+                                <i class="fab fa-whatsapp"></i> Send WhatsApp
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Save Visit
                         </button>
                     </div>
                     </form>
@@ -1553,12 +1556,10 @@
                     <input type="hidden" name="medicine_id" id="selectedMedicine-${medicineCounter}">
                     <small id="stockInfo-${medicineCounter}" style="color: var(--text-secondary); font-size: 11px;"></small>
                 </div>
-                <input type="number" name="quantity" min="1" value="1" placeholder="Qty" onchange="updateMedicineTotal()" style="width: 70px;">
-                <div style="flex: 1;"></div>
+               
                 <input type="number" name="freq_times" min="1" max="9" value="1" style="width: 60px; text-align: center;" title="Times per day">
                 <span class="freq-label">×</span>
                 <input type="number" name="freq_days" min="1" max="99" value="3" style="width: 60px; text-align: center;" title="Number of days">
-                <input type="hidden" name="dosage" id="dosage-${medicineCounter}">
                 <button type="button" class="btn-remove-medicine" onclick="removeMedicineRow(${medicineCounter})">
                     <i class="fas fa-trash"></i>
                 </button>
@@ -1721,12 +1722,6 @@
                     closeModal('newVisitModal');
                     loadPatients();
                     loadInventory(); // Refresh inventory after deduction
-                    
-                    // Send WhatsApp message to patient with selected template
-                    const templateType = document.getElementById('messageTemplate').value;
-                    if (currentPatientContact && templateType !== 'none') {
-                        sendWhatsAppMessage(currentPatientName, currentPatientContact, templateType);
-                    }
                     
                     showToast('Visit saved successfully!', 'success');
                 } else {
