@@ -544,7 +544,7 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('visitDetailModal')">Close</button>
                 <button class="btn btn-primary" id="printFromModal">
-                    <i class="fas fa-print"></i> Print Prescription
+                    <i class="fas fa-print"></i> Print Visit
                 </button>
             </div>
         </div>
@@ -651,8 +651,8 @@
                                 <button class="btn-action btn-view" onclick="viewVisit(${visit.id})">
                                     <i class="fas fa-eye"></i> View
                                 </button>
-                                <button class="btn-action btn-print" onclick="printPrescription(${visit.id})">
-                                    <i class="fas fa-print"></i> Prescription Form
+                                <button class="btn-action btn-print" onclick="printVisit(${visit.id})">
+                                    <i class="fas fa-print"></i> Print Visit
                                 </button>
                                 ${visit.date === today ? `<button class="btn-action btn-edit" onclick="editVisit(${visit.id})" style="background: #17a2b8; margin-right: 8px;"><i class="fas fa-edit"></i> Edit</button>` : ''}
                             </td>
@@ -708,7 +708,7 @@
         async function viewVisit(visitId) {
             document.getElementById('visitDetailContent').innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Loading...</p></div>';
             document.getElementById('visitDetailModal').classList.add('active');
-            document.getElementById('printFromModal').onclick = () => printPrescription(visitId);
+            document.getElementById('printFromModal').onclick = () => printVisit(visitId);
             
             try {
                 const response = await fetch(`/api/prescription/${visitId}`);
@@ -802,19 +802,19 @@
             }
         }
 
-        async function printPrescription(visitId) {
+        async function printVisit(visitId) {
             try {
                 const response = await fetch(`/prescription/${visitId}/print`);
                 const data = await response.json();
                 if (data.success) {
                     closeModal('visitDetailModal');
-                    showToast('Prescription form opened!', 'success');
+                    showToast('Visit PDF opened for printing', 'success');
                 } else {
-                    showToast('Failed to open prescription form', 'error');
+                    showToast('Failed to open visit PDF', 'error');
                 }
             } catch (error) {
                 console.error('Print error:', error);
-                showToast('Error opening prescription form', 'error');
+                showToast('Error opening visit PDF', 'error');
             }
         }
 
