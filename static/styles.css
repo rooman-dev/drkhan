@@ -316,6 +316,80 @@ html {
     border-color: var(--border-color);
 }
 
+/* Modal specific adjustments for better contrast and spacing */
+.modal {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    min-width: 360px;
+}
+
+.modal-header {
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: 20px 22px;
+}
+
+.modal-footer {
+    padding: 14px 20px;
+}
+
+/* Ensure form inputs in modals are readable and full-width */
+.modal .form-group input,
+.modal .form-group textarea,
+.modal .form-group select,
+.modal .form-control {
+    padding: 10px 12px;
+    font-size: 1rem;
+    background: var(--bg-surface-2);
+    border: 1px solid rgba(255,255,255,0.06);
+    color: var(--text-primary);
+    border-radius: 10px;
+}
+
+.modal .form-group label {
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Improve select contrast and button spacing for inventory add */
+.modal select {
+    background: var(--bg-surface-2);
+    color: var(--text-primary);
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+.med-row {
+    align-items: center;
+}
+
+.med-row .med-name {
+    min-width: 0;
+    flex: 1;
+}
+
+.med-row input[type="number"] {
+    width: 80px;
+}
+
+/* Make primary modal actions more prominent */
+.modal .btn-primary {
+    padding: 10px 18px;
+    border-radius: 12px;
+}
+
 .modal-header,
 .modal-footer {
     border-color: var(--border-color);

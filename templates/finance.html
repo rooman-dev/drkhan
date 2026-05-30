@@ -688,9 +688,10 @@
 
         // Load transactions
         async function loadTransactions() {
-            const type = document.getElementById('filterType').value;
-            const date = document.getElementById('filterDate').value;
-            const month = document.getElementById('filterMonth').value;
+            const type = (document.getElementById('filterType') || {}).value || '';
+            const date = (document.getElementById('filterDate') || {}).value || '';
+            const monthEl = document.getElementById('filterMonth');
+            const month = monthEl ? (monthEl.value || '') : '';
 
             let url = '/api/finance?';
             if (type) url += `type=${type}&`;
@@ -873,9 +874,12 @@
                 });
 
                     if (response.ok) {
-                        closeModal('incomeModal');
-                        showToast('Income added successfully!', 'success');
-                        loadFinanceData();
+                    closeModal('incomeModal');
+                    showToast('Income added successfully!', 'success');
+                        // Ensure the newly added income is visible: set filter date to today and reload
+                        document.getElementById('filterDate').value = today;
+                        document.getElementById('filterType').value = '';
+                        loadTransactions();
                 } else {
                     const error = await response.json();
                         showToast('Error: ' + error.detail, 'error');

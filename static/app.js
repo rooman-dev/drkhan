@@ -173,6 +173,19 @@
         }, 50);
     };
 
+    window.refreshPageAfterUiAction = window.refreshPageAfterUiAction || function refreshPageAfterUiAction(delay = 250) {
+        try {
+            window.clearTimeout(window.__uiRefreshTimer);
+        } catch (e) {}
+        window.__uiRefreshTimer = window.setTimeout(() => {
+            try {
+                window.location.reload();
+            } catch (err) {
+                console.error('refreshPageAfterUiAction error', err);
+            }
+        }, delay);
+    };
+
     // Safe global closeModal to ensure modal close buttons always work
     window.closeModal = window.closeModal || function closeModal(modalId) {
         try {
@@ -188,6 +201,9 @@
                 const form = modal.querySelector('form');
                 if (form) form.reset();
             } catch (e) {}
+            if (typeof window.refreshPageAfterUiAction === 'function') {
+                window.refreshPageAfterUiAction();
+            }
         } catch (err) {
             console.error('closeModal error', err);
             try { reportClientError({ phase: 'closeModal', error: String(err && err.stack ? err.stack : err) }); } catch (e) {}
@@ -600,6 +616,9 @@
                         if (modal) modal.classList.remove('active');
                         await loadPatientsFallback(document.getElementById('searchInput')?.value?.trim() || '');
                         showToast('Patient registered successfully!', 'success');
+                        if (typeof window.refreshPageAfterUiAction === 'function') {
+                            window.refreshPageAfterUiAction();
+                        }
                     } catch (error) {
                         console.error('Fallback saveNewPatient failed:', error);
                         showToast(error.message || 'Failed to save patient', 'error');
@@ -669,6 +688,9 @@
                         if (modal) modal.classList.remove('active');
                         await loadPatientsFallback(document.getElementById('searchInput')?.value?.trim() || '');
                         showToast('Patient saved and PDF generated.', 'success');
+                        if (typeof window.refreshPageAfterUiAction === 'function') {
+                            window.refreshPageAfterUiAction();
+                        }
                     } catch (error) {
                         console.error('Fallback printNewPatientPdf failed:', error);
                         showToast(error.message || 'Failed to generate PDF', 'error');

@@ -23,6 +23,7 @@ from typing import List, Optional
 from database import init_database, get_connection, hash_password
 from database import add_test_data
 from prescription import generate_prescription_form_pdf, generate_patient_history_pdf
+from utils import resource_path
 
 # Initialize FastAPI app
 app = FastAPI(title="DrKhan Clinic", version="1.0.0")
@@ -653,7 +654,7 @@ async def get_patient_full_record(patient_id: int):
         visit = dict(visit_row)
         # Get prescriptions for this visit
         cursor.execute("""
-            SELECT medicine_name, dosage, duration, quantity, price
+            SELECT medicine_name, dosage, duration, quantity, price, inventory_id
             FROM prescriptions
             WHERE visit_id = ?
         """, (visit['id'],))
@@ -718,13 +719,6 @@ async def create_visit(visit: VisitCreate):
                 item = cursor.fetchone()
 
                 if item:
-                    if item["stock"] < med.quantity:
-                        conn.rollback()
-                        raise HTTPException(
-                            status_code=400,
-                            detail=f"Insufficient stock for {item['brand_name']}. Available: {item['stock']}"
-                        )
-
                     cursor.execute("""
                         UPDATE inventory SET stock = stock - ? WHERE id = ?
                     """, (med.quantity, med.inventory_id))
@@ -747,9 +741,9 @@ async def create_visit(visit: VisitCreate):
                 duration_val = "7 days"
 
             cursor.execute("""
-                INSERT INTO prescriptions (visit_id, medicine_name, dosage, duration, quantity, price)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (visit_id, medicine_name, med.dosage or "As directed", duration_val, med.quantity, med.price))
+                INSERT INTO prescriptions (visit_id, medicine_name, dosage, duration, quantity, price, inventory_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (visit_id, medicine_name, med.dosage or "As directed", duration_val, med.quantity, med.price, getattr(med, 'inventory_id', None)))
             
             medicine_total += med.price * med.quantity
         
@@ -1170,34 +1164,47 @@ async def create_finance_transaction(request: Request):
         raise HTTPException(status_code=401, detail="Not authenticated")
     
     data = await request.json()
-    
+
     transaction_type = data.get("type")
     if transaction_type not in ["Income", "Expense"]:
         raise HTTPException(status_code=400, detail="Type must be 'Income' or 'Expense'")
-    
-    amount = data.get("amount", 0)
+
+    # Robustly coerce amount to float and validate
+    raw_amount = data.get("amount", 0)
+    try:
+        amount = float(raw_amount)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Amount must be a numeric value")
+
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than 0")
-    
+
     conn = get_connection()
     cursor = conn.cursor()
     transaction_date = data.get("date") or date.today().isoformat()
-    
-    cursor.execute("""
-        INSERT INTO finance (date, type, amount, notes)
-        VALUES (?, ?, ?, ?)
-    """, (
-        transaction_date,
-        transaction_type,
-        amount,
-        data.get("notes", "")
-    ))
-    
-    transaction_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-    
-    return {"success": True, "id": transaction_id, "message": "Transaction added successfully"}
+
+    try:
+        cursor.execute("""
+            INSERT INTO finance (date, type, amount, notes)
+            VALUES (?, ?, ?, ?)
+        """, (
+            transaction_date,
+            transaction_type,
+            amount,
+            data.get("notes", "")
+        ))
+
+        transaction_id = cursor.lastrowid
+        conn.commit()
+        return {"success": True, "id": transaction_id, "message": "Transaction added successfully"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 @app.delete("/api/finance/{transaction_id}")
@@ -1381,6 +1388,32 @@ async def restore_backup(request: Request):
         raise HTTPException(status_code=500, detail=f"Restore failed: {str(e)}")
 
 
+@app.get("/api/settings/restore-prompt")
+async def prompt_restore_dialog():
+    """Open a native file dialog (desktop mode) to pick a backup file and return its path.
+    This is intended for desktop/wrapped deployments (pywebview/tkinter)."""
+    if not session.get("logged_in"):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        # Use tkinter filedialog to prompt user for a file path
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()
+        filetypes = [("Database files", "*.db *.sqlite *.sql"), ("All files", "*")]
+        path = filedialog.askopenfilename(title="Select backup file to restore", filetypes=filetypes)
+        root.destroy()
+
+        if not path:
+            return {"selected": False, "path": ""}
+
+        return {"selected": True, "path": path}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to open file dialog: {str(e)}")
+
+
 # ============ Prescription Routes ============
 
 
@@ -1466,7 +1499,7 @@ async def print_prescription(visit_id: int):
         visit = dict(visit)
 
         cursor.execute("""
-            SELECT medicine_name, dosage, duration, quantity, price
+            SELECT medicine_name, dosage, duration, quantity, price, inventory_id
             FROM prescriptions
             WHERE visit_id = ?
             ORDER BY id
@@ -1568,7 +1601,7 @@ async def get_visit_prescriptions(visit_id: int):
     cursor = conn.cursor()
     
     cursor.execute("""
-        SELECT medicine_name, dosage, duration, quantity, price
+        SELECT medicine_name, dosage, duration, quantity, price, inventory_id
         FROM prescriptions
         WHERE visit_id = ?
     """, (visit_id,))
@@ -1659,22 +1692,43 @@ async def update_visit(visit_id: int, visit: VisitUpdate):
         # If medicines provided in update, replace prescriptions for this visit
         if getattr(visit, 'medicines', None):
             try:
-                # Remove old prescriptions
+                # 1) Restock inventory from previous prescriptions (if any)
+                cursor.execute("SELECT inventory_id, quantity FROM prescriptions WHERE visit_id = ?", (visit_id,))
+                old_pres = cursor.fetchall()
+                for op in old_pres:
+                    inv_id = op["inventory_id"] if "inventory_id" in op.keys() else op[0]
+                    qty = op["quantity"] if "quantity" in op.keys() else op[1]
+                    if inv_id:
+                        cursor.execute("UPDATE inventory SET stock = stock + ? WHERE id = ?", (qty, inv_id))
+
+                # 2) Remove old prescriptions
                 cursor.execute("DELETE FROM prescriptions WHERE visit_id = ?", (visit_id,))
-                # Insert new prescriptions without touching inventory (safe replacement)
+
+                # 3) Insert new prescriptions and deduct inventory where applicable
                 for med in visit.medicines:
-                    med_name = (med.medicine_name or f"Medicine {med.inventory_id or ''}").strip() or 'Medicine'
+                    inv_id = getattr(med, 'inventory_id', None)
+                    item = None
+                    if inv_id is not None:
+                        cursor.execute("SELECT stock, brand_name FROM inventory WHERE id = ?", (inv_id,))
+                        item = cursor.fetchone()
+                        if not item:
+                            conn.rollback()
+                            raise HTTPException(status_code=400, detail=f"Inventory item {inv_id} not found")
+                        cursor.execute("UPDATE inventory SET stock = stock - ? WHERE id = ?", (med.quantity, inv_id))
+
+                    med_name = (med.medicine_name or (item["brand_name"] if item else None) or f"Medicine {inv_id or ''}").strip() or 'Medicine'
                     dosage = med.dosage or 'As directed'
                     qty = med.quantity or 1
                     price = med.price or 0.0
-                    # prefer explicit duration, then freq_days, else fallback
                     duration_val = getattr(med, 'duration', None) or (f"{getattr(med, 'freq_days', '')} days" if getattr(med, 'freq_days', None) else '7 days')
+
                     cursor.execute("""
-                        INSERT INTO prescriptions (visit_id, medicine_name, dosage, duration, quantity, price)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    """, (visit_id, med_name, dosage, duration_val, qty, price))
+                        INSERT INTO prescriptions (visit_id, medicine_name, dosage, duration, quantity, price, inventory_id)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, (visit_id, med_name, dosage, duration_val, qty, price, inv_id))
+            except HTTPException:
+                raise
             except Exception:
-                # If prescription replacement fails, rollback and raise
                 conn.rollback()
                 raise
 
@@ -1806,11 +1860,16 @@ if __name__ == "__main__":
     
     # Wait until the server is actually reachable before opening the desktop window
     wait_for_server(server_url)
+
+    icon_path = resource_path("build/icon.ico")
+    if not Path(icon_path).exists():
+        icon_path = resource_path("static/logo.png")
     
     # Create and start PyWebView window with native OS controls
     window = webview.create_window(
         title="DrKhan System",
         url=server_url,
+        icon=icon_path,
         background_color="#121212",
         fullscreen=False,
         frameless=False,

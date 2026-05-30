@@ -13,6 +13,7 @@ from datetime import datetime
 from fpdf import FPDF
 
 from database import get_connection
+from utils import resource_path
 
 
 def get_output_dir():
@@ -81,13 +82,15 @@ class PrescriptionSheetPDF(FPDF):
 
         # Center clinic logo at top if available.
         try:
-            logo_path = Path(__file__).parent / "logopdf.png"
+            # Prefer the packaged static logo inside the bundle
+            logo_path = Path(resource_path("static/logo.png"))
             if logo_path.exists():
                 logo_w = 18
                 logo_x = (self.w - logo_w) / 2
                 self.image(str(logo_path), x=logo_x, y=8, w=logo_w)
                 top_y = 28
         except Exception:
+            # best-effort: ignore image loading errors so PDF still generates
             pass
 
         self.set_y(top_y)
@@ -505,14 +508,12 @@ class PrescriptionPDF(FPDF):
         self.set_text_color(0, 31, 63)
         # Try to place logo at top-left; ignore if missing
         try:
-            logo_path = Path(__file__).parent / 'logopdf.png'
+            logo_path = Path(resource_path("static/logo.png"))
             if logo_path.exists():
                 # x=10, y=6, width=18mm keeps it small and professional
                 self.image(str(logo_path), x=10, y=6, w=18)
-        except FileNotFoundError:
-            pass
         except Exception:
-            # Ignore any other image loading errors to avoid breaking PDF generation
+            # Ignore any image loading errors so PDF generation continues
             pass
         
         # Clinic name

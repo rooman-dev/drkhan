@@ -495,6 +495,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('restoreModal')">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="promptLocalRestore()">Browse Local File</button>
             </div>
         </div>
     </div>
@@ -688,6 +689,25 @@
             } catch (error) {
                 console.error('Restore error:', error);
                 showToast('Failed to restore backup', 'error');
+            }
+        }
+
+        // Prompt native file dialog on server (desktop mode) and restore selected file
+        async function promptLocalRestore() {
+            try {
+                const resp = await fetch('/api/settings/restore-prompt');
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    return showToast('Failed to open file dialog: ' + (err.detail || ''), 'error');
+                }
+                const result = await resp.json();
+                if (!result.selected) return;
+                // Ask for confirmation then call restore
+                if (!(await showConfirm('Are you sure you want to restore this file? This will replace ALL current data!'))) return;
+                await restoreBackup(result.path);
+            } catch (e) {
+                console.error('Prompt restore failed', e);
+                showToast('Failed to select file', 'error');
             }
         }
     </script>

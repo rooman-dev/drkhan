@@ -160,6 +160,16 @@ def init_database():
         )
     """)
 
+    # Migration: add inventory_id to prescriptions if missing (stores inventory.item id when used)
+    cursor.execute("PRAGMA table_info(prescriptions)")
+    pres_cols = {row[1] for row in cursor.fetchall()}
+    if "inventory_id" not in pres_cols:
+        try:
+            cursor.execute("ALTER TABLE prescriptions ADD COLUMN inventory_id INTEGER")
+        except Exception:
+            # Some older SQLite builds may not allow ALTER; ignore if fails
+            pass
+
     # Create indexes for faster queries
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_patients_name ON patients(name)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_patients_contact ON patients(contact)")
