@@ -21,29 +21,15 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install fastapi uvicorn jinja2 python-multipart pywebview fpdf2 pyinstaller pillow pydantic
-
-    - name: Create build dir and convert PNG to ICO
+        pip install fastapi uvicorn jinja2 python-multipart pywebview fpdf2 pyinstaller pythonnet pydantic
+    
+    - name: Build executable
       run: |
-        mkdir build
-        python - <<'PY'
-from PIL import Image
-Image.open('static/logo.png').save('build/icon.ico', sizes=[(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)])
-print('Wrote build/icon.ico')
-PY
-
-    - name: Build executable with PyInstaller
-      run: |
-        pyinstaller --noconfirm --clean --onefile \
-          --name DrKhanApp \
-          --add-data "static/logo.png;static" \
-          --add-data "build/icon.ico;." \
-          --icon "build/icon.ico" \
-          main.py
-
+        python -m PyInstaller build_windows.spec --clean --noconfirm
+    
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: drkhan-windows-exe
-        path: dist/DrKhanApp.exe
+        name: DrKhan-Windows
+        path: dist/DrKhan.exe
         retention-days: 30
