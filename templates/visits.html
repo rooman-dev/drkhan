@@ -706,7 +706,9 @@
         }
 
         async function viewVisit(visitId) {
+            if (typeof window.resetUiBlockingLayers === 'function') window.resetUiBlockingLayers();
             document.getElementById('visitDetailContent').innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Loading...</p></div>';
+            document.getElementById('visitDetailModal').style.display = 'flex';
             document.getElementById('visitDetailModal').classList.add('active');
             // Ensure we attach a fresh click listener each time (avoid stale handlers)
             try {
@@ -829,7 +831,9 @@
         }
 
         async function editVisit(visitId) {
+            if (typeof window.resetUiBlockingLayers === 'function') window.resetUiBlockingLayers();
             document.getElementById('editVisitContent').innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Loading...</p></div>';
+            document.getElementById('editVisitModal').style.display = 'flex';
             document.getElementById('editVisitModal').classList.add('active');
             document.getElementById('editVisitForm').onsubmit = (e) => saveEditVisit(e, visitId);
             
@@ -1102,7 +1106,7 @@
             el.classList.remove('active');
             try { el.style.display = 'none'; } catch(e) {}
             try { const form = el.querySelector('form'); if (form) form.reset(); } catch(e) {}
-            try { if (typeof window.refreshPageAfterUiAction === 'function') window.refreshPageAfterUiAction(); } catch(e) {}
+            try { if (typeof window.resetUiBlockingLayers === 'function') window.resetUiBlockingLayers(); } catch(e) {}
         }
 
         function openIncomeModal() {

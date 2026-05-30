@@ -700,7 +700,12 @@
         }
 
         function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            modal.classList.remove('active');
+            try { modal.style.display = 'none'; } catch(e) {}
+            try { const form = modal.querySelector('form'); if (form) form.reset(); } catch(e) {}
+            try { if (typeof window.resetUiBlockingLayers === 'function') window.resetUiBlockingLayers(); } catch(e) {}
         }
 
         async function saveIncome(event) {

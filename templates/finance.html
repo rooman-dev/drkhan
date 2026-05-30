@@ -774,14 +774,21 @@
 
         // Modal functions
         function openTransactionModal() {
+            if (typeof window.resetUiBlockingLayers === 'function') window.resetUiBlockingLayers();
             document.getElementById('transactionForm').reset();
             document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
             selectType('Income');
+            document.getElementById('transactionModal').style.display = 'flex';
             document.getElementById('transactionModal').classList.add('active');
         }
 
         function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            modal.classList.remove('active');
+            try { modal.style.display = 'none'; } catch(e) {}
+            try { const form = modal.querySelector('form'); if (form) form.reset(); } catch(e) {}
+            try { if (typeof window.resetUiBlockingLayers === 'function') window.resetUiBlockingLayers(); } catch(e) {}
         }
 
         // Save transaction
@@ -851,7 +858,9 @@
 
         // Quick income modal functions
         function openIncomeModal() {
+            if (typeof window.resetUiBlockingLayers === 'function') window.resetUiBlockingLayers();
             document.getElementById('incomeForm').reset();
+            document.getElementById('incomeModal').style.display = 'flex';
             document.getElementById('incomeModal').classList.add('active');
         }
 

@@ -156,6 +156,9 @@
     };
 
     window.openModal = function openModal(modalId, firstInputId) {
+        if (typeof window.resetUiBlockingLayers === 'function') {
+            window.resetUiBlockingLayers();
+        }
         const modal = document.getElementById(modalId);
         if (!modal) return;
 
@@ -171,6 +174,25 @@
                 }
             }
         }, 50);
+    };
+
+    window.resetUiBlockingLayers = window.resetUiBlockingLayers || function resetUiBlockingLayers() {
+        try {
+            document.querySelectorAll('.modal-overlay.active').forEach((overlay) => {
+                overlay.classList.remove('active');
+                overlay.style.display = 'none';
+            });
+            document.querySelectorAll('.modal-overlay').forEach((overlay) => {
+                if (overlay.style.display === 'flex' || overlay.style.display === 'block') {
+                    overlay.style.display = 'none';
+                }
+            });
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.pointerEvents = '';
+        } catch (err) {
+            console.error('resetUiBlockingLayers error', err);
+        }
     };
 
     window.refreshPageAfterUiAction = window.refreshPageAfterUiAction || function refreshPageAfterUiAction(delay = 250) {
@@ -201,8 +223,8 @@
                 const form = modal.querySelector('form');
                 if (form) form.reset();
             } catch (e) {}
-            if (typeof window.refreshPageAfterUiAction === 'function') {
-                window.refreshPageAfterUiAction();
+            if (typeof window.resetUiBlockingLayers === 'function') {
+                window.resetUiBlockingLayers();
             }
         } catch (err) {
             console.error('closeModal error', err);

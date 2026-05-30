@@ -492,7 +492,7 @@
                 modal.classList.remove('active');
                 setTimeout(() => { try { modal.style.display = 'none'; } catch(e) {} }, 120);
                 try { const form = modal.querySelector('form'); if (form) form.reset(); } catch(e) {}
-                try { if (typeof window.refreshPageAfterUiAction === 'function') window.refreshPageAfterUiAction(); } catch(e) {}
+                try { if (typeof window.resetUiBlockingLayers === 'function') window.resetUiBlockingLayers(); } catch(e) {}
             } catch (err) { console && console.error && console.error('inline closeModal error', err); }
         };
     </script>
@@ -1233,9 +1233,11 @@
 
         // Modal functions
         function openNewPatientModal() {
+            if (typeof window.resetUiBlockingLayers === 'function') window.resetUiBlockingLayers();
             document.getElementById('newPatientForm').reset();
             document.getElementById('patientDate').value = new Date().toISOString().slice(0, 10);
             calculateBmiFromInputs();
+            document.getElementById('newPatientModal').style.display = 'flex';
             document.getElementById('newPatientModal').classList.add('active');
         }
 
@@ -1267,6 +1269,7 @@
         let currentPatientContact = '';
 
         async function openVisitModal(patientId, patientName) {
+            if (typeof window.resetUiBlockingLayers === 'function') window.resetUiBlockingLayers();
             document.getElementById('newVisitForm').reset();
             document.getElementById('visitPatientId').value = patientId;
             document.getElementById('visitPatientName').textContent = patientName;
@@ -1279,6 +1282,7 @@
             // Load patient full record
             document.getElementById('patientDemographics').innerHTML = 'Loading...';
             document.getElementById('previousVisitsList').innerHTML = 'Loading...';
+            document.getElementById('newVisitModal').style.display = 'flex';
             document.getElementById('newVisitModal').classList.add('active');
             
             try {
@@ -1371,7 +1375,7 @@
             modal.classList.remove('active');
             try { modal.style.display = 'none'; } catch(e) {}
             try { const form = modal.querySelector('form'); if (form) form.reset(); } catch(e) {}
-            try { if (typeof window.refreshPageAfterUiAction === 'function') window.refreshPageAfterUiAction(); } catch(e) {}
+            try { if (typeof window.resetUiBlockingLayers === 'function') window.resetUiBlockingLayers(); } catch(e) {}
         }
 
         window.openNewPatientModal = openNewPatientModal;
@@ -1962,10 +1966,12 @@ Take care! 🤲
         
         async function viewPatientRecord(patientId, patientName) {
             currentViewPatientId = patientId;
+            if (typeof window.resetUiBlockingLayers === 'function') window.resetUiBlockingLayers();
             document.getElementById('historyPatientName').textContent = patientName;
             document.getElementById('viewPatientDetails').innerHTML = 'Loading...';
             document.getElementById('viewMedicalRecords').innerHTML = 'Loading...';
             document.getElementById('viewPharmacyRecords').innerHTML = 'Loading...';
+            document.getElementById('historyModal').style.display = 'flex';
             document.getElementById('historyModal').classList.add('active');
             
             try {
@@ -2102,7 +2108,9 @@ Take care! 🤲
 
         // Open income modal
         function openIncomeModal() {
+            if (typeof window.resetUiBlockingLayers === 'function') window.resetUiBlockingLayers();
             document.getElementById('incomeForm').reset();
+            document.getElementById('incomeModal').style.display = 'flex';
             document.getElementById('incomeModal').classList.add('active');
         }
 

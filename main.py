@@ -23,7 +23,7 @@ from typing import List, Optional
 from database import init_database, get_connection, hash_password
 from database import add_test_data
 from prescription import generate_prescription_form_pdf, generate_patient_history_pdf
-from utils import resource_path
+from utils import resource_path, ensure_windows_icon_path
 
 # Initialize FastAPI app
 app = FastAPI(title="DrKhan Clinic", version="1.0.0")
@@ -1861,15 +1861,12 @@ if __name__ == "__main__":
     # Wait until the server is actually reachable before opening the desktop window
     wait_for_server(server_url)
 
-    icon_path = resource_path("build/icon.ico")
-    if not Path(icon_path).exists():
-        icon_path = resource_path("static/logo.png")
+    icon_path = ensure_windows_icon_path()
     
     # Create and start PyWebView window with native OS controls
     window = webview.create_window(
         title="DrKhan System",
         url=server_url,
-        icon=icon_path,
         background_color="#121212",
         fullscreen=False,
         frameless=False,
@@ -1907,7 +1904,10 @@ if __name__ == "__main__":
         except Exception:
             logging.exception("Failed to focus PyWebView window")
 
-    webview.start(focus_window)
+    if icon_path:
+        webview.start(focus_window, icon=icon_path)
+    else:
+        webview.start(focus_window)
 
 
 @app.post("/api/dev/add-test-data")
