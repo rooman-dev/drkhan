@@ -75,6 +75,10 @@ def init_database():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             age INTEGER,
+            height_cm REAL,
+            weight_kg REAL,
+            bmi REAL,
+            bsr TEXT,
             contact TEXT,
             gender TEXT,
             occupation TEXT,
@@ -92,6 +96,27 @@ def init_database():
         cursor.execute("ALTER TABLE patients ADD COLUMN created_at TEXT")
     if "modified_at" not in patient_columns:
         cursor.execute("ALTER TABLE patients ADD COLUMN modified_at TEXT")
+    # Migration-safe add for vitals stored on patient record
+    if "height_cm" not in patient_columns:
+        try:
+            cursor.execute("ALTER TABLE patients ADD COLUMN height_cm REAL")
+        except Exception:
+            pass
+    if "weight_kg" not in patient_columns:
+        try:
+            cursor.execute("ALTER TABLE patients ADD COLUMN weight_kg REAL")
+        except Exception:
+            pass
+    if "bmi" not in patient_columns:
+        try:
+            cursor.execute("ALTER TABLE patients ADD COLUMN bmi REAL")
+        except Exception:
+            pass
+    if "bsr" not in patient_columns:
+        try:
+            cursor.execute("ALTER TABLE patients ADD COLUMN bsr TEXT")
+        except Exception:
+            pass
 
     # Create visits table
     cursor.execute("""

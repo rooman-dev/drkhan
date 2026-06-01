@@ -635,13 +635,11 @@
                     emptyState.style.display = 'none';
                     document.getElementById('pagination').style.display = 'flex';
                     
-                    const today = new Date().toISOString().split('T')[0];
-                    
                     tbody.innerHTML = visits.map(visit => `
                         <tr>
                             <td><strong>#${visit.id}</strong></td>
                             <td>
-                                <span class="date-badge ${visit.date === today ? 'today' : ''}">
+                                <span class="date-badge">
                                     ${formatDate(visit.date)}
                                 </span>
                             </td>
@@ -654,7 +652,7 @@
                                 <button class="btn-action btn-print" onclick="printVisit(${visit.id})">
                                     <i class="fas fa-print"></i> Print Visit
                                 </button>
-                                ${visit.date === today ? `<button class="btn-action btn-edit" onclick="editVisit(${visit.id})" style="background: #17a2b8; margin-right: 8px;"><i class="fas fa-edit"></i> Edit</button>` : ''}
+                                <button class="btn-action btn-edit" onclick="editVisit(${visit.id})" style="background: #17a2b8; margin-right: 8px;"><i class="fas fa-edit"></i> Edit</button>
                             </td>
                         </tr>
                     `).join('');
@@ -842,13 +840,6 @@
                 if (!response.ok) throw new Error('Visit not found');
                 const visit = await response.json();
                 
-                const today = new Date().toISOString().split('T')[0];
-                if (visit.date !== today) {
-                    showToast('Only today\'s visits can be edited', 'error');
-                    closeModal('editVisitModal');
-                    return;
-                }
-                
                 const prescResponse = await fetch(`/api/visits/${visitId}/prescriptions`);
                 let prescriptions = [];
                 if (prescResponse.ok) {
@@ -864,42 +855,80 @@
                             <span><i class="fas fa-calendar"></i> ${visit.date}</span>
                         </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="editBP">Blood Pressure</label>
-                        <input type="text" id="editBP" name="vitals_bp" value="${visit.vitals_bp || ''}" placeholder="e.g., 120/80">
+
+                    <h4 style="color: var(--accent); margin-bottom: 12px;">Vitals</h4>
+                    <div class="form-row" style="grid-template-columns: repeat(8, 1fr);">
+                        <div class="form-group">
+                            <label for="editHeight">Height (cm)</label>
+                            <input class="numeric-only unit-field" data-unit="cm" type="text" inputmode="decimal" id="editHeight" name="vitals_height_cm" value="${visit.height_cm || ''}" placeholder="170">
+                        </div>
+                        <div class="form-group">
+                            <label for="editBmi">BMI</label>
+                            <input type="text" id="editBmi" name="vitals_bmi" value="${visit.patient_bmi || ''}" placeholder="BMI" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="editBP">BP (mmHg)</label>
+                            <input class="bp-input" type="text" id="editBP" name="vitals_bp" value="${visit.vitals_bp || ''}" placeholder="120/80">
+                        </div>
+                        <div class="form-group">
+                            <label for="editWeight">Weight (kg)</label>
+                            <input class="numeric-only unit-field" data-unit="kg" type="text" inputmode="decimal" id="editWeight" name="vitals_weight" value="${visit.vitals_weight || ''}" placeholder="70.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="editTemp">Temp (F)</label>
+                            <input class="numeric-only unit-field" data-unit="F" type="text" inputmode="decimal" id="editTemp" name="vitals_temp" value="${visit.vitals_temp || ''}" placeholder="98.6">
+                        </div>
+                        <div class="form-group">
+                            <label for="editBSR">BSR (mg/dL)</label>
+                            <input class="numeric-only unit-field" data-unit="mg/dL" type="text" inputmode="decimal" id="editBSR" name="vitals_bsr" value="${visit.vitals_bsr || ''}" placeholder="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="editSPO2">SPO2 (%)</label>
+                            <input class="numeric-only unit-field" data-unit="%" type="text" inputmode="decimal" id="editSPO2" name="vitals_spo2" value="${visit.vitals_spo2 || ''}" placeholder="98">
+                        </div>
+                        <div class="form-group">
+                            <label for="editHeartRate">Heart Rate (bpm)</label>
+                            <input class="numeric-only unit-field" data-unit="bpm" type="text" inputmode="decimal" id="editHeartRate" name="vitals_heart_rate" value="${visit.vitals_heart_rate || ''}" placeholder="72">
+                        </div>
                     </div>
-                    
+
+                    <h4 style="color: var(--accent); margin: 18px 0 12px;">Clinical Details</h4>
                     <div class="form-group">
-                        <label for="editWeight">Weight (kg)</label>
-                        <input type="text" id="editWeight" name="vitals_weight" value="${visit.vitals_weight || ''}" placeholder="e.g., 70">
+                        <label for="editComplaint">Presenting Complaints</label>
+                        <textarea id="editComplaint" name="presenting_complaint" placeholder="Chief complaint..." style="min-height: 80px;">${visit.presenting_complaint || ''}</textarea>
                     </div>
-                    
                     <div class="form-group">
-                        <label for="editComplaint">Presenting Complaint</label>
-                        <textarea id="editComplaint" name="presenting_complaint" rows="3">${visit.presenting_complaint || ''}</textarea>
+                        <label for="editExamination">Medical Examination</label>
+                        <textarea id="editExamination" name="examination" placeholder="Physical examination findings..." style="min-height: 120px;">${visit.examination || ''}</textarea>
                     </div>
-                    
                     <div class="form-group">
-                        <label for="editDifferentials">Differentials/PC/DX</label>
-                        <textarea id="editDifferentials" name="differentials" rows="3">${visit.differentials || ''}</textarea>
+                        <label for="editInvestigation">Investigation Advised</label>
+                        <textarea id="editInvestigation" name="treatment_plan" placeholder="Labs, imaging or tests advised..." style="min-height: 80px;">${visit.treatment_plan || ''}</textarea>
                     </div>
-                    
+                    <div class="form-group">
+                        <label for="editProvisional">Provisional Diagnosis</label>
+                        <textarea id="editProvisional" name="differentials" placeholder="Provisional / working diagnosis..." style="min-height: 80px;">${visit.differentials || ''}</textarea>
+                    </div>
+
                     <div class="form-group">
                         <label for="editLabReport">Lab Report Image (Optional)</label>
                         <input type="file" id="editLabReport" name="lab_report" accept="image/*">
                         ${visit.lab_report_path ? `<div style="margin-top: 10px; padding: 10px; background: var(--bg-surface); border-radius: 8px;"><i class="fas fa-check-circle" style="color: #28a745;"></i> Lab report already uploaded</div>` : ''}
                     </div>
-                    
-                    <div class="form-group">
-                        <label>Prescribed Medicines (Pharmacy)</label>
-                        <div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
-                            <select id="inventorySelect" style="padding:8px; min-width:240px;">
-                                <option value="">-- Select medicine from inventory --</option>
-                            </select>
-                            <button type="button" class="btn btn-outline" onclick="addSelectedInventory()">Add from Inventory</button>
+
+                        <div class="prescription-section">
+                        <div class="prescription-header">
+                            <h4><i class="fas fa-pills"></i> Prescription</h4>
+                            <div style="display:flex; gap:8px; align-items:center;">
+                                <select id="inventorySelect" style="padding:8px; min-width:240px;">
+                                    <option value="">-- Select medicine from inventory --</option>
+                                </select>
+                                <button type="button" class="btn-add-medicine" onclick="addSelectedInventory()">
+                                    <i class="fas fa-plus"></i> Add from Inventory
+                                </button>
+                            </div>
                         </div>
-                        <div id="medList" style="margin-bottom:10px;">
+                        <div id="medList">
                             ${prescriptions.length > 0 ? prescriptions.map((p, idx) => `
                                 <div class="med-row" data-index="${idx}" data-inventory-id="${p.inventory_id || ''}" style="display:flex; gap:8px; margin-bottom:6px;">
                                     <input class="med-name" placeholder="Medicine name" value="${p.medicine_name}" style="flex:1; padding:8px;">
@@ -913,17 +942,69 @@
                                 </div>
                             `).join('') : ''}
                         </div>
-                        <div style="display:flex; gap:8px;">
+                        <div style="display:flex; gap:8px; margin-top:8px;">
                             <button type="button" class="btn btn-primary" onclick="addMedicineRow()"><i class="fas fa-plus"></i> Add Medicine</button>
                             <small style="align-self:center; color:var(--text-secondary);">Changes here will update visit prescriptions (does not adjust inventory automatically).</small>
                         </div>
                     </div>
-                    
+
                     <input type="hidden" id="editVisitId" value="${visitId}">
                 `;
                 // Populate inventory select
                 loadInventory();
                 syncAllEditMedicineQuantities();
+                // Wire BMI calculation for edit modal
+                try {
+                    const hEl = document.getElementById('editHeight');
+                    const wEl = document.getElementById('editWeight');
+                    const bmiEl = document.getElementById('editBmi');
+                    function computeEditBmi() {
+                        const h = parseFloat(hEl?.value || '') || 0;
+                        const w = parseFloat(wEl?.value || '') || 0;
+                        if (h > 0 && w > 0) {
+                            const m = h / 100;
+                            const b = w / (m * m);
+                            bmiEl.value = b.toFixed(1);
+                        } else {
+                            bmiEl.value = '';
+                        }
+                    }
+                    if (hEl && wEl && bmiEl) {
+                        hEl.addEventListener('input', computeEditBmi);
+                        wEl.addEventListener('input', computeEditBmi);
+                        // initial compute
+                        computeEditBmi();
+                    }
+                } catch (e) {
+                    console.error('BMI wiring failed in edit modal', e);
+                }
+                // Numeric-only enforcement and BP formatting for edit modal
+                try {
+                    document.querySelectorAll('#editVisitContent .numeric-only').forEach(el => {
+                        el.addEventListener('input', () => { el.value = (el.value || '').toString().replace(/[^0-9.]/g, ''); });
+                    });
+                    const bpEl = document.querySelector('#editVisitContent .bp-input') || document.getElementById('editBP');
+                    if (bpEl) {
+                        bpEl.addEventListener('blur', () => {
+                            let v = (bpEl.value || '').toString();
+                            if (v.includes('/')) return;
+                            const digits = v.replace(/[^0-9]/g, '');
+                            if (digits.length >= 4) {
+                                const first = digits.slice(0,3);
+                                const second = digits.slice(3);
+                                bpEl.value = `${first}/${second}`;
+                            }
+                        });
+                        bpEl.addEventListener('keydown', (e) => {
+                            const allowed = ['Backspace','Tab','ArrowLeft','ArrowRight','Delete'];
+                            if (allowed.includes(e.key)) return;
+                            if (/^[0-9]$/.test(e.key) || e.key === '/') return;
+                            e.preventDefault();
+                        });
+                    }
+                } catch (e) {
+                    console.error('Edit modal numeric/BP wiring failed', e);
+                }
             } catch (error) {
                 console.error('Error loading visit for edit:', error);
                 document.getElementById('editVisitContent').innerHTML = `
@@ -942,9 +1023,17 @@
             
             const payload = {
                 vitals_bp: document.getElementById('editBP')?.value || null,
-                vitals_weight: document.getElementById('editWeight')?.value || null,
+                vitals_height_cm: document.getElementById('editHeight')?.value ? parseFloat(document.getElementById('editHeight').value) : null,
+                vitals_bmi: document.getElementById('editBmi')?.value ? parseFloat(document.getElementById('editBmi').value) : null,
+                vitals_weight: parseFloat(document.getElementById('editWeight')?.value) || null,
+                vitals_temp: parseFloat(document.getElementById('editTemp')?.value) || null,
+                vitals_bsr: document.getElementById('editBSR')?.value || null,
+                vitals_spo2: document.getElementById('editSPO2')?.value || null,
+                vitals_heart_rate: document.getElementById('editHeartRate')?.value || null,
                 presenting_complaint: document.getElementById('editComplaint')?.value || null,
-                differentials: document.getElementById('editDifferentials')?.value || null
+                examination: document.getElementById('editExamination')?.value || null,
+                treatment_plan: document.getElementById('editInvestigation')?.value || null,
+                differentials: document.getElementById('editProvisional')?.value || null
             };
             
                 // Collect medicines from medList

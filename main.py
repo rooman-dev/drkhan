@@ -57,9 +57,13 @@ class PatientCreate(BaseModel):
     age: int
     contact: Optional[str] = None
     gender: Optional[str] = None
-    occupation: Optional[str] = None
-    marital_status: Optional[str] = None
-    address: Optional[str] = None
+    bsr: Optional[str] = None
+    height_cm: Optional[float] = None
+    weight_kg: Optional[float] = None
+    bmi: Optional[float] = None
+    # If provided, backend will create an initial visit for this patient
+    create_visit: Optional[bool] = False
+    initial_visit: Optional[dict] = None
 
 
 class MedicineItem(BaseModel):
@@ -103,6 +107,8 @@ class VisitUpdate(BaseModel):
     vitals_bsr: Optional[str] = None
     vitals_spo2: Optional[str] = None
     vitals_heart_rate: Optional[str] = None
+    vitals_height_cm: Optional[float] = None
+    vitals_bmi: Optional[float] = None
     presenting_complaint: Optional[str] = None
     signs_symptoms: Optional[str] = None
     history_presenting_illness: Optional[str] = None
@@ -116,6 +122,7 @@ class VisitUpdate(BaseModel):
 
 
 class PrescriptionPrintRequest(BaseModel):
+    patient_id: Optional[int] = None
     pt_name: str
     age: str
     sex: Optional[str] = None
@@ -126,14 +133,21 @@ class PrescriptionPrintRequest(BaseModel):
     so2: Optional[str] = None
     rr: Optional[str] = None
     temp: Optional[str] = None
+    height_cm: Optional[str] = None
+    weight_kg: Optional[str] = None
     ht_wt: Optional[str] = None
     bmi: Optional[str] = None
     rbs: Optional[str] = None
-    fbs: Optional[str] = None
     comorbs: Optional[str] = None
+    presenting_complaint: Optional[str] = None
+    medical_examination: Optional[str] = None
+    investigation_advised: Optional[str] = None
+    provisional_diagnosis: Optional[str] = None
+    special_note: Optional[str] = None
     pc_dx: Optional[str] = None
     rx: Optional[str] = None
     advice: Optional[str] = None
+    medicines: List[MedicineItem] = []
 
 
 # ============ Auth Helpers ============
@@ -496,15 +510,94 @@ async def create_patient(patient: PatientCreate):
     cursor = conn.cursor()
     
     cursor.execute("""
-        INSERT INTO patients (name, age, contact, gender, occupation, marital_status, address, created_at, modified_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-    """, (patient.name, patient.age, patient.contact, patient.gender, patient.occupation, patient.marital_status, patient.address))
+        INSERT INTO patients (name, age, height_cm, weight_kg, bmi, bsr, contact, gender, created_at, modified_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+    """, (
+        patient.name,
+        patient.age,
+        getattr(patient, 'height_cm', None),
+        getattr(patient, 'weight_kg', None),
+        getattr(patient, 'bmi', None),
+        getattr(patient, 'bsr', None),
+        patient.contact,
+        patient.gender
+    ))
     
     patient_id = cursor.lastrowid
-    conn.commit()
+    visit_id = None
+
+    try:
+        # If client requested an initial visit, create it atomically
+        if getattr(patient, 'create_visit', False) or getattr(patient, 'initial_visit', None):
+            from datetime import date
+            today = date.today().isoformat()
+            iv = patient.initial_visit or {}
+
+            cursor.execute("""
+                INSERT INTO visits (patient_id, date, vitals_bp, vitals_weight, vitals_temp, vitals_bsr, 
+                    vitals_spo2, vitals_heart_rate, presenting_complaint, signs_symptoms, 
+                    history_presenting_illness, past_medical_hx, family_history, examination, 
+                    differentials, treatment_plan, lab_report_path)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                patient_id,
+                today,
+                iv.get('vitals_bp'),
+                iv.get('vitals_weight'),
+                iv.get('vitals_temp'),
+                iv.get('vitals_bsr'),
+                iv.get('vitals_spo2'),
+                iv.get('vitals_heart_rate'),
+                iv.get('presenting_complaint'),
+                iv.get('signs_symptoms'),
+                iv.get('history_presenting_illness'),
+                iv.get('past_medical_hx'),
+                iv.get('family_history'),
+                iv.get('examination'),
+                iv.get('differentials'),
+                iv.get('treatment_plan'),
+                iv.get('lab_report_path')
+            ))
+
+            visit_id = cursor.lastrowid
+
+            # Process medicines if any were provided
+            meds = iv.get('medicines') or []
+            for med in meds:
+                item = None
+                if med.get('inventory_id') is not None:
+                    cursor.execute("SELECT stock, brand_name FROM inventory WHERE id = ?", (med.get('inventory_id'),))
+                    item = cursor.fetchone()
+                    if item:
+                        cursor.execute("UPDATE inventory SET stock = stock - ? WHERE id = ?", (med.get('quantity', 0), med.get('inventory_id')))
+
+                medicine_name = (med.get('medicine_name') or (item['brand_name'] if item else None) or f"Medicine {med.get('inventory_id') or ''}").strip()
+                if not medicine_name:
+                    medicine_name = 'Medicine'
+
+                duration_val = med.get('duration') or (f"{int(med.get('freq_days'))} days" if med.get('freq_days') else '7 days')
+
+                cursor.execute("""
+                    INSERT INTO prescriptions (visit_id, medicine_name, dosage, duration, quantity, price, inventory_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (visit_id, med.get('dosage') or 'As directed', med.get('dosage') or 'As directed', duration_val, med.get('quantity', 1), med.get('price', 0), med.get('inventory_id')))
+
+            # Update patient's modified timestamp
+            cursor.execute("UPDATE patients SET modified_at = datetime('now') WHERE id = ?", (patient_id,))
+
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        conn.close()
+        raise
+
     conn.close()
-    
-    return {"success": True, "patient_id": patient_id, "message": "Patient created successfully"}
+
+    resp = {"success": True, "patient_id": patient_id, "message": "Patient created successfully"}
+    if visit_id:
+        resp['visit_id'] = visit_id
+
+    return resp
 
 
 @app.post('/api/log_client_error')
@@ -751,7 +844,31 @@ async def create_visit(visit: VisitCreate):
         total_bill = medicine_total
 
         # 4. Touch patient modification timestamp for date-modified sorting
-        cursor.execute("UPDATE patients SET modified_at = datetime('now') WHERE id = ?", (visit.patient_id,))
+        # If weight or bsr provided on visit, update patient's vitals
+        try:
+            if visit.vitals_weight is not None or visit.vitals_bsr is not None:
+                # Fetch current patient height to compute BMI if possible
+                cursor.execute("SELECT height_cm FROM patients WHERE id = ?", (visit.patient_id,))
+                row = cursor.fetchone()
+                height_cm = row['height_cm'] if row else None
+                new_bmi = None
+                if visit.vitals_weight is not None and height_cm:
+                    try:
+                        h_m = float(height_cm) / 100.0
+                        if h_m > 0:
+                            new_bmi = round(float(visit.vitals_weight) / (h_m * h_m), 2)
+                    except Exception:
+                        new_bmi = None
+
+                cursor.execute(
+                    "UPDATE patients SET weight_kg = COALESCE(?, weight_kg), bmi = COALESCE(?, bmi), bsr = COALESCE(?, bsr), modified_at = datetime('now') WHERE id = ?",
+                    (visit.vitals_weight, new_bmi, visit.vitals_bsr, visit.patient_id)
+                )
+            else:
+                cursor.execute("UPDATE patients SET modified_at = datetime('now') WHERE id = ?", (visit.patient_id,))
+        except Exception:
+            # ensure timestamp is touched even if vitals update fails
+            cursor.execute("UPDATE patients SET modified_at = datetime('now') WHERE id = ?", (visit.patient_id,))
         
         # Note: Medicine costs are NOT added to finance
         # Finance entries should be added manually via the Add Income button
@@ -1484,7 +1601,7 @@ async def print_prescription(visit_id: int):
                 v.id, v.date, v.vitals_bp, v.vitals_weight, v.vitals_temp, v.vitals_bsr,
                 v.vitals_spo2, v.vitals_heart_rate, v.presenting_complaint, v.differentials,
                 v.treatment_plan,
-                p.name as patient_name, p.age, p.contact
+                p.id as patient_id, p.name as patient_name, p.age, p.gender, p.contact, p.height_cm, p.weight_kg, p.bmi
             FROM visits v
             JOIN patients p ON v.patient_id = p.id
             WHERE v.id = ?
@@ -1508,9 +1625,35 @@ async def print_prescription(visit_id: int):
         conn.close()
 
         vitals_weight = visit.get("vitals_weight")
+        patient_height = visit.get("height_cm")
+        patient_weight = visit.get("weight_kg")
+        patient_bmi = visit.get("bmi")
+
+        # Build ht/wt string preferring visit vitals, then patient defaults
+        if vitals_weight:
+            ht_wt_str = f"Weight: {vitals_weight} kg"
+        elif patient_height or patient_weight:
+            ht_wt_str = f"{patient_height or '-'} cm / {patient_weight or '-'} kg"
+        else:
+            ht_wt_str = ""
+
+        # Determine BMI: prefer patient stored BMI; if missing compute from patient height/weight when possible
+        bmi_str = ""
+        try:
+            if patient_bmi:
+                bmi_str = str(patient_bmi)
+            elif patient_height and patient_weight:
+                h_m = float(patient_height) / 100.0
+                bmi_calc = float(patient_weight) / (h_m * h_m) if h_m > 0 else None
+                bmi_str = f"{bmi_calc:.1f}" if bmi_calc else ""
+        except Exception:
+            bmi_str = ""
+
         payload = {
+            "patient_id": visit.get("patient_id", None),
             "pt_name": visit.get("patient_name", ""),
             "age": str(visit.get("age", "")),
+            "sex": visit.get("gender", "") or "",
             "contact": visit.get("contact", "") or "",
             "date": str(visit.get("date", "") or ""),
             "bp": visit.get("vitals_bp", "") or "",
@@ -1518,23 +1661,23 @@ async def print_prescription(visit_id: int):
             "so2": visit.get("vitals_spo2", "") or "",
             "rr": "",
             "temp": str(visit.get("vitals_temp", "") or ""),
-            "ht_wt": f"Weight: {vitals_weight} kg" if vitals_weight else "",
-            "bmi": "",
-            "rbs": "",
-            "fbs": "",
-            "comorbs": "",
-            "pc_dx": "\n".join([
-                part for part in [
-                    f"Complaint: {visit.get('presenting_complaint') or ''}".strip(),
-                    f"Diagnosis: {visit.get('differentials') or ''}".strip(),
-                ] if part and not part.endswith(':')
-            ]),
+            "height_cm": str(patient_height or "") if patient_height else "",
+            "weight_kg": str(vitals_weight or patient_weight or "") if (vitals_weight or patient_weight) else "",
+            "ht_wt": ht_wt_str,
+            "bmi": bmi_str,
+            "rbs": visit.get("vitals_bsr", "") or "",
+            "comorbs": visit.get("past_medical_hx", "") or "",
+            "presenting_complaint": visit.get("presenting_complaint", "") or "",
+            "medical_examination": visit.get("examination", "") or "",
+            "investigation_advised": visit.get("treatment_plan", "") or "",
+            "provisional_diagnosis": visit.get("differentials", "") or "",
+            "special_note": "",
+            "medicines": medicines,
             "rx": "\n".join(
                 f"{index + 1}. {med.get('medicine_name', '')} - {med.get('dosage', '')} ({med.get('quantity', '')}) {med.get('duration', '')}".strip()
                 for index, med in enumerate(medicines)
             ),
             "advice": visit.get("treatment_plan", "") or "",
-            # Ensure clinical sections (PC/DX, RX, Advice) are included in the generated PDF
             "include_clinical_sections": True,
         }
 
@@ -1627,7 +1770,8 @@ async def get_prescription_data(visit_id: int):
             v.vitals_bp, v.vitals_weight, v.vitals_temp, v.vitals_bsr, v.vitals_spo2, v.vitals_heart_rate,
             v.signs_symptoms, v.history_presenting_illness, v.past_medical_hx, v.family_history,
             v.examination, v.treatment_plan, v.lab_report_path,
-            p.id as patient_id, p.name as patient_name, p.age, p.contact
+            p.id as patient_id, p.name as patient_name, p.age, p.contact,
+            p.height_cm as height_cm, p.weight_kg as patient_weight_kg, p.bmi as patient_bmi
         FROM visits v
         JOIN patients p ON v.patient_id = p.id
         WHERE v.id = ?
@@ -1644,7 +1788,7 @@ async def get_prescription_data(visit_id: int):
 
 @app.put("/api/visits/{visit_id}")
 async def update_visit(visit_id: int, visit: VisitUpdate):
-    """Update a visit, allowed only for today's visits."""
+    """Update an existing visit."""
     if not session.get("logged_in"):
         raise HTTPException(status_code=401, detail="Not authenticated")
 
@@ -1656,10 +1800,6 @@ async def update_visit(visit_id: int, visit: VisitUpdate):
     if not existing:
         conn.close()
         raise HTTPException(status_code=404, detail="Visit not found")
-
-    if (existing["date"] or "") != date.today().isoformat():
-        conn.close()
-        raise HTTPException(status_code=400, detail="Only today's visits can be edited")
 
     try:
         cursor.execute("""
@@ -1688,7 +1828,20 @@ async def update_visit(visit_id: int, visit: VisitUpdate):
             visit_id,
         ))
 
-        cursor.execute("UPDATE patients SET modified_at = datetime('now') WHERE id = ?", (existing["patient_id"],))
+        # If weight/bsr/height/bmi provided on edit, update patient's stored vitals as well
+        try:
+            if visit.vitals_weight is not None or visit.vitals_bsr is not None or getattr(visit, 'vitals_height_cm', None) is not None or getattr(visit, 'vitals_bmi', None) is not None:
+                cursor.execute("SELECT height_cm FROM patients WHERE id = ?", (existing["patient_id"],))
+                row = cursor.fetchone()
+                # Use COALESCE to preserve existing values when None is provided
+                cursor.execute(
+                    "UPDATE patients SET height_cm = COALESCE(?, height_cm), weight_kg = COALESCE(?, weight_kg), bmi = COALESCE(?, bmi), bsr = COALESCE(?, bsr), modified_at = datetime('now') WHERE id = ?",
+                    (getattr(visit, 'vitals_height_cm', None), visit.vitals_weight, getattr(visit, 'vitals_bmi', None), visit.vitals_bsr, existing["patient_id"])
+                )
+            else:
+                cursor.execute("UPDATE patients SET modified_at = datetime('now') WHERE id = ?", (existing["patient_id"],))
+        except Exception:
+            cursor.execute("UPDATE patients SET modified_at = datetime('now') WHERE id = ?", (existing["patient_id"],))
         # If medicines provided in update, replace prescriptions for this visit
         if getattr(visit, 'medicines', None):
             try:

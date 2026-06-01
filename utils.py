@@ -27,7 +27,7 @@ def ensure_windows_icon_path() -> str | None:
     if bundled_ico.exists():
         return str(bundled_ico)
 
-    logo_png = Path(resource_path("static/logo.png"))
+    logo_png = Path(resource_path("static/logopdf.png"))
     if not logo_png.exists():
         return None
 

@@ -9,6 +9,68 @@
         return container;
     }
 
+    // Global helpers for numeric-only and BP auto-formatting (fallback script)
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            const unitSuffixMap = {
+                cm: ' cm',
+                kg: ' kg',
+                F: ' F',
+                '%': ' %',
+                bpm: ' bpm',
+                'mg/dL': ' mg/dL'
+            };
+
+            const stripUnit = (value) => String(value ?? '').replace(/\s*(cm|kg|F|%|bpm|mg\/dL)\s*$/i, '').trim();
+            const cleanNumeric = (value) => stripUnit(value).replace(/[^0-9.]/g, '');
+
+            window.stripUnitValue = window.stripUnitValue || stripUnit;
+            window.cleanNumericValue = window.cleanNumericValue || cleanNumeric;
+
+            document.querySelectorAll('.numeric-only').forEach(el => {
+                el.addEventListener('input', () => { el.value = cleanNumeric(el.value); });
+            });
+            document.querySelectorAll('.bp-input').forEach(bp => {
+                bp.addEventListener('blur', () => {
+                    let v = (bp.value || '').toString();
+                    if (v.includes('/')) return;
+                    const digits = v.replace(/[^0-9]/g, '');
+                    if (digits.length >= 4) {
+                        const first = digits.slice(0,3);
+                        const second = digits.slice(3);
+                        bp.value = `${first}/${second}`;
+                    }
+                });
+                bp.addEventListener('keydown', (e) => {
+                    const allowed = ['Backspace','Tab','ArrowLeft','ArrowRight','Delete'];
+                    if (allowed.includes(e.key)) return;
+                    if (/^[0-9]$/.test(e.key) || e.key === '/') return;
+                    e.preventDefault();
+                });
+            });
+
+            const formatUnitField = (el) => {
+                if (!el) return;
+                const unit = el.dataset.unit || '';
+                const numeric = cleanNumeric(el.value);
+                if (!numeric) return;
+                el.value = unit ? `${numeric}${unitSuffixMap[unit] || ` ${unit}`}` : numeric;
+            };
+
+            const focusUnitField = (el) => {
+                if (!el) return;
+                el.value = cleanNumeric(el.value);
+            };
+
+            document.querySelectorAll('.unit-field').forEach(el => {
+                el.addEventListener('focus', () => focusUnitField(el));
+                el.addEventListener('blur', () => formatUnitField(el));
+            });
+        } catch (e) {
+            console.error('Numeric/BP global wiring failed', e);
+        }
+    });
+
     window.showToast = function showToast(message, type = 'success') {
         const container = ensureToastContainer();
         const toast = document.createElement('div');
@@ -378,9 +440,10 @@
                     <div><strong>Age:</strong> ${patient.age || 'N/A'} years</div>
                     <div><strong>Gender:</strong> ${patient.gender || 'N/A'}</div>
                     <div><strong>Contact:</strong> ${patient.contact || 'N/A'}</div>
-                    <div><strong>Occupation:</strong> ${patient.occupation || 'N/A'}</div>
-                    <div><strong>Marital Status:</strong> ${patient.marital_status || 'N/A'}</div>
-                    ${patient.address ? `<div><strong>Address:</strong> ${patient.address}</div>` : ''}
+                    ${patient.height_cm ? `<div><strong>Height:</strong> ${patient.height_cm} cm</div>` : ''}
+                    ${patient.weight_kg ? `<div><strong>Weight:</strong> ${patient.weight_kg} kg</div>` : ''}
+                    ${patient.bmi ? `<div><strong>BMI:</strong> ${patient.bmi}</div>` : ''}
+                    ${patient.bsr ? `<div><strong>BSR:</strong> ${patient.bsr}</div>` : ''}
                 `);
 
                 if (!visits.length) {
@@ -413,6 +476,26 @@
                             </details>
                         `;
                     }).join(''));
+                        }
+
+                        // Prefill visit form vitals from latest visit or patient record
+                        try {
+                            const formEl = document.getElementById('newVisitForm');
+                            if (formEl) {
+                                const latest = visits && visits.length ? visits[0] : null;
+                                const weightVal = (latest && latest.vitals_weight) ? latest.vitals_weight : (patient.weight_kg || '');
+                                const bsrVal = (latest && latest.vitals_bsr) ? latest.vitals_bsr : (patient.bsr || '');
+                                const bpVal = (latest && latest.vitals_bp) ? latest.vitals_bp : '';
+                                const tempVal = (latest && latest.vitals_temp) ? latest.vitals_temp : '';
+
+                                const wEl = document.getElementById('vitalsWeight'); if (wEl) wEl.value = weightVal;
+                                const bsrEl = document.getElementById('vitalsBSR'); if (bsrEl) bsrEl.value = bsrVal;
+                                const bpEl = document.getElementById('vitalsBP'); if (bpEl) bpEl.value = bpVal;
+                                const tEl = document.getElementById('vitalsTemp'); if (tEl) tEl.value = tempVal;
+                            }
+                        } catch (e) {
+                            // ignore prefill failures
+                        }
                 }
             } catch (err) {
                 console.error('openVisitModal fallback error', err);
@@ -444,9 +527,10 @@
                     <div><strong>Age:</strong> ${patient.age || 'N/A'} years</div>
                     <div><strong>Gender:</strong> ${patient.gender || 'N/A'}</div>
                     <div><strong>Contact:</strong> ${patient.contact || 'N/A'}</div>
-                    <div><strong>Occupation:</strong> ${patient.occupation || 'N/A'}</div>
-                    <div><strong>Marital Status:</strong> ${patient.marital_status || 'N/A'}</div>
-                    <div style="grid-column: span 2;"><strong>Address:</strong> ${patient.address || 'N/A'}</div>
+                    ${patient.height_cm ? `<div><strong>Height:</strong> ${patient.height_cm} cm</div>` : ''}
+                    ${patient.weight_kg ? `<div><strong>Weight:</strong> ${patient.weight_kg} kg</div>` : ''}
+                    ${patient.bmi ? `<div><strong>BMI:</strong> ${patient.bmi}</div>` : ''}
+                    ${patient.bsr ? `<div><strong>BSR:</strong> ${patient.bsr}</div>` : ''}
                 `);
 
                 safeSet('viewMedicalRecords', visits.length ? visits.map(v => `
@@ -600,8 +684,7 @@
                     const form = document.getElementById('newPatientForm');
                     const modal = document.getElementById('newPatientModal');
                     if (form) form.reset();
-                    const patientDate = document.getElementById('patientDate');
-                    if (patientDate) patientDate.value = new Date().toISOString().slice(0, 10);
+                    // Date field removed from form; date will be set automatically on server/PDF generation
                     const bmi = document.getElementById('patientBmi');
                     if (bmi) bmi.value = '';
                     if (modal) modal.classList.add('active');
@@ -617,9 +700,10 @@
                         age: parseInt(form.age.value, 10),
                         contact: form.contact.value,
                         gender: form.gender.value || null,
-                        occupation: form.occupation.value || null,
-                        marital_status: form.marital_status.value || null,
-                        address: form.address.value || null
+                        height_cm: parseFloat(form.height_cm?.value) || null,
+                        weight_kg: parseFloat(form.weight_kg?.value) || null,
+                        bmi: form.bmi?.value ? parseFloat(form.bmi.value) : null,
+                        bsr: form.bsr ? form.bsr.value || null : null
                     };
 
                     try {
@@ -659,23 +743,33 @@
                         pt_name: form.name.value || '',
                         age: form.age.value || '',
                         contact: form.contact.value || '',
-                        date: form.date?.value || new Date().toISOString().slice(0, 10),
-                        bp: form.bp.value || '',
-                        hr: form.hr.value || '',
-                        so2: form.so2.value || '',
-                        rr: form.rr.value || '',
-                        temp: form.temp.value || '',
-                        ht_wt: (heightInput?.value || weightInput?.value) ? `${heightInput?.value || '-'} cm / ${weightInput?.value || '-'} kg` : '',
+                        date: new Date().toISOString().slice(0, 10),
+                        ht_wt: (heightInput?.value || weightInput?.value) ? `${(window.cleanNumericValue ? window.cleanNumericValue(heightInput?.value) : heightInput?.value) || '-'} cm / ${(window.cleanNumericValue ? window.cleanNumericValue(weightInput?.value) : weightInput?.value) || '-'} kg` : '',
                         bmi: form.bmi.value || '',
-                        rbs: form.rbs.value || '',
-                        fbs: form.fbs.value || '',
-                        comorbs: form.comorbs.value || '',
-                        pc_dx: form.pc_dx.value || '',
-                        rx: form.rx.value || '',
-                        advice: form.advice.value || ''
+                        rbs: form.bsr ? form.bsr.value || '' : ''
                     };
 
                     try {
+                        // Create patient and initial visit automatically
+                        const initial_visit = {
+                            vitals_bp: form.vitals_bp?.value || null,
+                            vitals_weight: form.vitals_weight?.value ? parseFloat(form.vitals_weight.value) : (form.weight_kg?.value ? parseFloat(form.weight_kg.value) : null),
+                            vitals_temp: form.vitals_temp?.value ? parseFloat(form.vitals_temp.value) : null,
+                            vitals_bsr: form.bsr ? form.bsr.value || null : null,
+                            vitals_spo2: form.vitals_spo2?.value || null,
+                            vitals_heart_rate: form.vitals_heart_rate?.value || null,
+                            presenting_complaint: null,
+                            signs_symptoms: null,
+                            history_presenting_illness: null,
+                            past_medical_hx: null,
+                            family_history: null,
+                            examination: null,
+                            differentials: null,
+                            treatment_plan: null,
+                            consultation_fee: 0,
+                            medicines: []
+                        };
+
                         const saveResponse = await fetch('/api/patients', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -684,9 +778,12 @@
                                 age: parseInt(form.age.value, 10),
                                 contact: form.contact.value,
                                 gender: form.gender.value || null,
-                                occupation: form.occupation.value || null,
-                                marital_status: form.marital_status.value || null,
-                                address: form.address.value || null
+                                height_cm: form.height_cm?.value ? parseFloat(form.height_cm.value) : null,
+                                weight_kg: form.weight_kg?.value ? parseFloat(form.weight_kg.value) : null,
+                                bmi: form.bmi?.value ? parseFloat(form.bmi.value) : null,
+                                bsr: form.bsr ? form.bsr.value || null : null,
+                                create_visit: true,
+                                initial_visit: initial_visit
                             })
                         });
 
@@ -695,10 +792,32 @@
                             throw new Error(error.detail || 'Failed to save patient');
                         }
 
+                        const result = await saveResponse.json().catch(() => ({}));
+                        const pdfPayload = {
+                            patient_id: result.patient_id || null,
+                            pt_name: form.name.value || '',
+                            age: form.age.value || '',
+                            sex: form.gender.value || '',
+                            contact: form.contact.value || '',
+                            date: new Date().toISOString().slice(0, 10),
+                            height_cm: form.height_cm?.value || '',
+                            weight_kg: form.weight_kg?.value || '',
+                            ht_wt: (heightInput?.value || weightInput?.value) ? `${(window.cleanNumericValue ? window.cleanNumericValue(heightInput?.value) : heightInput?.value) || '-'} cm / ${(window.cleanNumericValue ? window.cleanNumericValue(weightInput?.value) : weightInput?.value) || '-'} kg` : '',
+                            bmi: form.bmi.value || '',
+                            rbs: form.bsr ? form.bsr.value || '' : '',
+                            // comorbs removed
+                            presenting_complaint: '',
+                            medical_examination: '',
+                            investigation_advised: '',
+                            provisional_diagnosis: '',
+                            special_note: '',
+                            medicines: []
+                        };
+
                         const pdfResponse = await fetch('/api/print_prescription', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
+                            body: JSON.stringify(pdfPayload)
                         });
 
                         if (!pdfResponse.ok) {

@@ -255,22 +255,22 @@
                     <div class="split two">
                         <div>
                             <div class="grid cols-5">
-                                <div class="field"><label for="bp">BP</label><input id="bp" name="bp" type="text" placeholder="120/80"></div>
-                                <div class="field"><label for="hr">HR</label><input id="hr" name="hr" type="text" placeholder="72"></div>
-                                <div class="field"><label for="so2">So2</label><input id="so2" name="so2" type="text" placeholder="98%"></div>
-                                <div class="field"><label for="rr">RR</label><input id="rr" name="rr" type="text" placeholder="18"></div>
-                                <div class="field"><label for="temp">Temp</label><input id="temp" name="temp" type="text" placeholder="98.6"></div>
+                                                                <div class="field"><label for="bp">BP (mmHg)</label><input class="bp-input" id="bp" name="bp" type="text" placeholder="120/80"></div>
+                                                                <div class="field"><label for="hr">HR (bpm)</label><input class="numeric-only unit-field" data-unit="bpm" id="hr" name="hr" type="text" inputmode="decimal" placeholder="72"></div>
+                                                                <div class="field"><label for="so2">SPO2 (%)</label><input class="numeric-only unit-field" data-unit="%" id="so2" name="so2" type="text" inputmode="decimal" placeholder="98"></div>
+                                                                <div class="field"><label for="rr">RR</label><input class="numeric-only unit-field" data-unit="bpm" id="rr" name="rr" type="text" inputmode="decimal" placeholder="18"></div>
+                                                                <div class="field"><label for="temp">Temp (F)</label><input class="numeric-only unit-field" data-unit="F" id="temp" name="temp" type="text" inputmode="decimal" placeholder="98.6"></div>
                             </div>
                         </div>
                         <div>
                             <div class="grid cols-4">
-                                <div class="field"><label for="height_cm">Height (cm)</label><input id="height_cm" name="height_cm" type="number" step="0.1" min="0" placeholder="170"></div>
-                                <div class="field"><label for="weight_kg">Weight (kg)</label><input id="weight_kg" name="weight_kg" type="number" step="0.1" min="0" placeholder="70"></div>
+                                                                <div class="field"><label for="height_cm">Height (cm)</label><input class="numeric-only unit-field" data-unit="cm" id="height_cm" name="height_cm" type="text" inputmode="decimal" placeholder="170"></div>
+                                                                <div class="field"><label for="weight_kg">Weight (kg)</label><input class="numeric-only unit-field" data-unit="kg" id="weight_kg" name="weight_kg" type="text" inputmode="decimal" placeholder="70"></div>
                                 <div class="field"><label for="bmi">BMI</label><input id="bmi" name="bmi" type="text" placeholder="24.2" readonly></div>
-                                <div class="field"><label for="rbs">RBS</label><input id="rbs" name="rbs" type="text" placeholder="140"></div>
+                                                                    <div class="field"><label for="bsr">BSR (mg/dL)</label><input class="numeric-only unit-field" data-unit="mg/dL" id="bsr" name="bsr" type="text" inputmode="decimal" placeholder="140"></div>
                             </div>
                             <div class="grid cols-4" style="margin-top: 16px;">
-                                <div class="field"><label for="fbs">FBS</label><input id="fbs" name="fbs" type="text" placeholder="96"></div>
+                                                                    <div class="field"><label for="fbs">FBS (mg/dL)</label><input class="numeric-only unit-field" data-unit="mg/dL" id="fbs" name="fbs" type="text" inputmode="decimal" placeholder="96"></div>
                             </div>
                         </div>
                     </div>
@@ -311,6 +311,66 @@
         const dateInput = document.getElementById('date');
         dateInput.value = new Date().toISOString().slice(0, 10);
 
+        const unitSuffixMap = {
+            cm: ' cm',
+            kg: ' kg',
+            F: ' F',
+            '%': ' %',
+            bpm: ' bpm',
+            'mg/dL': ' mg/dL'
+        };
+
+        function stripUnit(value) {
+            return String(value ?? '').replace(/\s*(cm|kg|F|%|bpm|mg\/dL)\s*$/i, '').trim();
+        }
+
+        function cleanNumeric(value) {
+            return stripUnit(value).replace(/[^0-9.]/g, '');
+        }
+
+        function wireUnitFields() {
+            document.querySelectorAll('.numeric-only').forEach(el => {
+                el.addEventListener('input', () => {
+                    el.value = cleanNumeric(el.value);
+                });
+            });
+
+            document.querySelectorAll('.unit-field').forEach(el => {
+                el.addEventListener('focus', () => {
+                    el.value = cleanNumeric(el.value);
+                });
+                el.addEventListener('blur', () => {
+                    const numeric = cleanNumeric(el.value);
+                    const unit = el.dataset.unit || '';
+                    if (numeric) {
+                        el.value = unit ? `${numeric}${unitSuffixMap[unit] || ` ${unit}`}` : numeric;
+                    }
+                });
+            });
+
+            document.querySelectorAll('.bp-input').forEach(bp => {
+                bp.addEventListener('focus', () => {
+                    bp.value = bp.value.replace(/\s*$/, '');
+                });
+                bp.addEventListener('blur', () => {
+                    let v = (bp.value || '').toString();
+                    if (v.includes('/')) return;
+                    const digits = v.replace(/[^0-9]/g, '');
+                    if (digits.length >= 4) {
+                        bp.value = `${digits.slice(0, 3)}/${digits.slice(3)}`;
+                    }
+                });
+                bp.addEventListener('keydown', (e) => {
+                    const allowed = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete'];
+                    if (allowed.includes(e.key)) return;
+                    if (/^[0-9]$/.test(e.key) || e.key === '/') return;
+                    e.preventDefault();
+                });
+            });
+        }
+
+        wireUnitFields();
+
         function getFormData() {
             const form = document.getElementById('prescriptionForm');
             const data = new FormData(form);
@@ -344,10 +404,15 @@
             try {
                 calculateBmi();
                 const formData = getFormData();
+                const heightValue = stripUnit(formData.height_cm || '');
+                const weightValue = stripUnit(formData.weight_kg || '');
                 const payload = {
                     ...formData,
-                    ht_wt: formData.height_cm || formData.weight_kg ? `${formData.height_cm || '-'} cm / ${formData.weight_kg || '-'} kg` : '',
-                    bmi: formData.bmi || ''
+                    height_cm: heightValue,
+                    weight_kg: weightValue,
+                    ht_wt: heightValue || weightValue ? `${heightValue || '-'} cm / ${weightValue || '-'} kg` : '',
+                    bmi: formData.bmi || '',
+                    rx: formData.rx || ''
                 };
                 const response = await fetch('/api/print_prescription', {
                     method: 'POST',

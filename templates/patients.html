@@ -560,9 +560,6 @@
                 <button id="btnRegisterPatient" class="btn btn-primary btn-large" onclick="openNewPatientModal()">
                     <i class="fas fa-user-plus"></i> Register New Patient
                 </button>
-                <button id="btnDebugPatients" class="btn btn-secondary btn-large" style="margin-left:12px;" onclick="debugPatients()">
-                    <i class="fas fa-bug"></i> Debug
-                </button>
             </div>
         </div>
 
@@ -572,17 +569,7 @@
             <button class="btn btn-primary" onclick="searchPatients()">
                 <i class="fas fa-search"></i> Search
             </button>
-            <div style="display:flex; gap:8px; align-items:center; margin-left:12px;">
-                <label style="color:var(--text-secondary);">Sort:</label>
-                <select id="patientSortBy" onchange="onPatientSortChange()">
-                    <option value="date_modified">Date Modified</option>
-                    <option value="date_added">Date Added</option>
-                </select>
-                <select id="patientSortOrder" onchange="onPatientSortChange()">
-                    <option value="desc">Newest First</option>
-                    <option value="asc">Oldest First</option>
-                </select>
-            </div>
+            <!-- Sorting removed: patients are always shown newest-first -->
         </div>
 
         <!-- Patient Table -->
@@ -660,92 +647,27 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="patientDate">Date</label>
-                            <input type="date" id="patientDate" name="date" placeholder="Date">
-                        </div>
-                        <div class="form-group">
-                            <label for="patientOccupation">Occupation</label>
-                            <input type="text" id="patientOccupation" name="occupation" placeholder="e.g., Teacher, Engineer">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="patientMarital">Marital Status</label>
-                            <select id="patientMarital" name="marital_status">
-                                <option value="">Select status</option>
-                                <option value="Single">Single</option>
-                                <option value="Married">Married</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="patientAddress">Address</label>
-                            <textarea id="patientAddress" name="address" placeholder="Enter full address" style="min-height: 80px;"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="form-row full" style="margin-top: 8px;">
-                        <div class="form-group">
-                            <label>Vitals Row 1</label>
-                            <div class="form-row" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 0;">
-                                <div class="form-group"><input type="text" name="bp" placeholder="BP"></div>
-                                <div class="form-group"><input type="text" name="hr" placeholder="HR"></div>
-                                <div class="form-group"><input type="text" name="so2" placeholder="So2"></div>
-                                <div class="form-group"><input type="text" name="rr" placeholder="RR"></div>
-                                <div class="form-group"><input type="text" name="temp" placeholder="Temp"></div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Date removed: set automatically to today's date -->
 
                     <div class="form-row full">
                         <div class="form-group">
-                            <label>Vitals Row 2</label>
-                            <div class="form-row" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 0;">
-                                <div class="form-group"><input type="number" step="0.1" min="0" name="height_cm" placeholder="Height (cm)"></div>
-                                <div class="form-group"><input type="number" step="0.1" min="0" name="weight_kg" placeholder="Weight (kg)"></div>
+                            <label>Vitals</label>
+                            <div class="form-row" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 8px;">
+                                <div class="form-group"><input class="numeric-only unit-field" data-unit="cm" type="text" inputmode="decimal" name="height_cm" id="patientHeight" placeholder="Height (cm)"></div>
+                                <div class="form-group"><input class="numeric-only unit-field" data-unit="kg" type="text" inputmode="decimal" name="weight_kg" id="patientWeight" placeholder="Weight (kg)"></div>
                                 <div class="form-group"><input type="text" name="bmi" id="patientBmi" placeholder="BMI" readonly></div>
-                                <div class="form-group"><input type="text" name="rbs" placeholder="RBS"></div>
+                                <div class="form-group"><input type="text" id="patientBsr" name="bsr" placeholder="BSR"></div>
                             </div>
-                            <div class="form-row" style="grid-template-columns: repeat(1, 1fr); margin-bottom: 0; margin-top: 10px;">
-                                <div class="form-group"><input type="text" name="fbs" placeholder="FBS"></div>
+                            <div class="form-row" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 0;">
+                                <div class="form-group"><input class="bp-input" type="text" name="vitals_bp" id="patientBP" placeholder="BP (mmHg)"></div>
+                                <div class="form-group"><input class="numeric-only unit-field" data-unit="F" type="text" inputmode="decimal" name="vitals_temp" id="patientTemp" placeholder="Temp (F)"></div>
+                                <div class="form-group"><input class="numeric-only unit-field" data-unit="%" type="text" inputmode="decimal" name="vitals_spo2" id="patientSPO2" placeholder="SPO2 (%)"></div>
+                                <div class="form-group"><input class="numeric-only unit-field" data-unit="bpm" type="text" inputmode="decimal" name="vitals_heart_rate" id="patientHR" placeholder="Heart Rate (bpm)"></div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-row full">
-                        <div class="form-group">
-                            <label for="patientComorbs">CoMorbs</label>
-                            <input type="text" id="patientComorbs" name="comorbs" placeholder="Co-morbid conditions">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="patientPcDx">PC/DX</label>
-                            <textarea id="patientPcDx" name="pc_dx" placeholder="Presenting complaint / diagnosis"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="patientRx">RX</label>
-                            <textarea id="patientRx" name="rx" placeholder="Prescription details"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="form-row full">
-                        <div class="form-group">
-                            <label for="patientAdvice">Advice</label>
-                            <textarea id="patientAdvice" name="advice" placeholder="Advice, follow-up and precautions"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="form-row full">
-                        <div class="form-group">
-                            <label for="patientLabReport">Lab Report Image (Optional)</label>
-                            <input type="file" id="patientLabReport" name="lab_report" accept="image/*">
-                        </div>
-                    </div>
+                    <!-- Removed CoMorbs and Lab Report as per request -->
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('newPatientModal')">Cancel</button>
@@ -795,74 +717,60 @@
                         <h4 style="color: var(--accent); margin-bottom: 15px;">
                             <i class="fas fa-heartbeat"></i> Vitals
                         </h4>
-                        <div class="form-row" style="grid-template-columns: repeat(6, 1fr);">
+                        <div class="form-row" style="grid-template-columns: repeat(8, 1fr);">
                             <div class="form-group">
-                            <label for="vitalsBP">BP</label>
-                            <input type="text" id="vitalsBP" name="vitals_bp" placeholder="120/80">
-                        </div>
+                                <label for="vitalsHeight">Height (cm)</label>
+                                <input class="numeric-only unit-field" data-unit="cm" type="text" inputmode="decimal" id="vitalsHeight" name="vitals_height_cm" placeholder="170">
+                            </div>
+                            <div class="form-group">
+                                <label for="vitalsBmi">BMI</label>
+                                <input class="numeric-only" type="text" id="vitalsBmi" name="vitals_bmi" placeholder="BMI" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="vitalsBP">BP (mmHg)</label>
+                                <input class="bp-input" type="text" id="vitalsBP" name="vitals_bp" placeholder="120/80">
+                            </div>
                         <div class="form-group">
                             <label for="vitalsWeight">Weight (kg)</label>
-                            <input type="number" id="vitalsWeight" name="vitals_weight" step="0.1" placeholder="70.5">
+                            <input class="numeric-only unit-field" data-unit="kg" type="text" inputmode="decimal" id="vitalsWeight" name="vitals_weight" placeholder="70.5">
                         </div>
                         <div class="form-group">
                             <label for="vitalsTemp">TMP (°F)</label>
-                            <input type="number" id="vitalsTemp" name="vitals_temp" step="0.1" placeholder="98.6">
+                            <input class="numeric-only unit-field" data-unit="F" type="text" inputmode="decimal" id="vitalsTemp" name="vitals_temp" placeholder="98.6">
                         </div>
                         <div class="form-group">
-                            <label for="vitalsBSR">BSR</label>
-                            <input type="text" id="vitalsBSR" name="vitals_bsr" placeholder="100 mg/dL">
+                            <label for="vitalsBSR">BSR (mg/dL)</label>
+                            <input class="numeric-only unit-field" data-unit="mg/dL" type="text" inputmode="decimal" id="vitalsBSR" name="vitals_bsr" placeholder="100">
                         </div>
                         <div class="form-group">
                             <label for="vitalsSPO2">SPO2 (%)</label>
-                            <input type="text" id="vitalsSPO2" name="vitals_spo2" placeholder="98%">
+                            <input class="numeric-only unit-field" data-unit="%" type="text" inputmode="decimal" id="vitalsSPO2" name="vitals_spo2" placeholder="98">
                         </div>
                         <div class="form-group">
                             <label for="vitalsHeartRate">Heart Rate</label>
-                            <input type="text" id="vitalsHeartRate" name="vitals_heart_rate" placeholder="72 bpm">
+                            <input class="numeric-only unit-field" data-unit="bpm" type="text" inputmode="decimal" id="vitalsHeartRate" name="vitals_heart_rate" placeholder="72">
                         </div>
                     </div>
 
-                    <!-- Clinical Assessment Section -->
+                    <!-- Simplified Clinical Section -->
                     <h4 style="color: var(--accent); margin: 20px 0 15px;">
-                        <i class="fas fa-notes-medical"></i> Clinical Assessment
+                        <i class="fas fa-notes-medical"></i> Clinical Details
                     </h4>
                     <div class="form-group">
-                        <label for="presentingComplaint">Presenting Complaint *</label>
-                        <textarea id="presentingComplaint" name="presenting_complaint" placeholder="Chief complaint..." style="min-height: 60px;"></textarea>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="signsSymptoms">Signs & Symptoms</label>
-                            <textarea id="signsSymptoms" name="signs_symptoms" placeholder="Observed signs and reported symptoms..." style="min-height: 80px;"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="historyPresentingIllness">History of Presenting Illness</label>
-                            <textarea id="historyPresentingIllness" name="history_presenting_illness" placeholder="Duration, onset, progression..." style="min-height: 80px;"></textarea>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="pastMedicalHx">Past Medical History</label>
-                            <textarea id="pastMedicalHx" name="past_medical_hx" placeholder="Previous conditions, surgeries, allergies..." style="min-height: 80px;"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="familyHistory">Family History</label>
-                            <textarea id="familyHistory" name="family_history" placeholder="Family medical history..." style="min-height: 80px;"></textarea>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="examination">Examination Findings</label>
-                            <textarea id="examination" name="examination" placeholder="Physical examination findings..." style="min-height: 80px;"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="differentials">Differential Diagnosis</label>
-                            <textarea id="differentials" name="differentials" placeholder="Possible diagnoses to consider..." style="min-height: 80px;"></textarea>
-                        </div>
+                        <label for="presentingComplaint">Presenting Complaints *</label>
+                        <textarea id="presentingComplaint" name="presenting_complaint" placeholder="Chief complaint..." style="min-height: 80px;"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="treatmentPlan">Treatment Plan</label>
-                        <textarea id="treatmentPlan" name="treatment_plan" placeholder="Recommended treatment, follow-up instructions..." style="min-height: 80px;"></textarea>
+                        <label for="examination">Medical Examination</label>
+                        <textarea id="examination" name="examination" placeholder="Physical examination findings..." style="min-height: 120px;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="investigationAdvised">Investigation Advised</label>
+                        <textarea id="investigationAdvised" name="treatment_plan" placeholder="Labs, imaging or tests advised..." style="min-height: 80px;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="provisionalDiagnosis">Provisional Diagnosis</label>
+                        <textarea id="provisionalDiagnosis" name="differentials" placeholder="Provisional / working diagnosis..." style="min-height: 80px;"></textarea>
                     </div>
 
                     <div class="form-group">
@@ -1037,23 +945,37 @@
         }
 
         function calculateBmiFromInputs() {
-            const heightInput = document.querySelector('input[name="height_cm"]');
-            const weightInput = document.querySelector('input[name="weight_kg"]');
-            const bmiInput = document.getElementById('patientBmi');
+                    // Patient-level BMI
+                    const heightInput = document.querySelector('input[name="height_cm"]');
+                    const weightInput = document.querySelector('input[name="weight_kg"]');
+                    const bmiInput = document.getElementById('patientBmi');
+                    if (heightInput && weightInput && bmiInput) {
+                        const heightCm = parseFloat(heightInput.value);
+                        const weightKg = parseFloat(weightInput.value);
+                        if (heightCm > 0 && weightKg > 0) {
+                            const heightM = heightCm / 100;
+                            const bmi = weightKg / (heightM * heightM);
+                            bmiInput.value = bmi.toFixed(1);
+                        } else {
+                            bmiInput.value = '';
+                        }
+                    }
 
-            if (!heightInput || !weightInput || !bmiInput) return;
-
-            const heightCm = parseFloat(heightInput.value);
-            const weightKg = parseFloat(weightInput.value);
-
-            if (!heightCm || !weightKg || heightCm <= 0 || weightKg <= 0) {
-                bmiInput.value = '';
-                return;
-            }
-
-            const heightM = heightCm / 100;
-            const bmi = weightKg / (heightM * heightM);
-            bmiInput.value = bmi.toFixed(1);
+                    // Visit-level BMI (if visit fields present)
+                    const vHeight = document.getElementById('vitalsHeight');
+                    const vWeight = document.getElementById('vitalsWeight');
+                    const vBmi = document.getElementById('vitalsBmi');
+                    if (vHeight && vWeight && vBmi) {
+                        const vh = parseFloat(vHeight.value);
+                        const vw = parseFloat(vWeight.value);
+                        if (vh > 0 && vw > 0) {
+                            const hm = vh / 100;
+                            const vbmi = vw / (hm * hm);
+                            vBmi.value = vbmi.toFixed(1);
+                        } else {
+                            vBmi.value = '';
+                        }
+                    }
         }
 
         function escapeHtmlAttribute(value) {
@@ -1079,6 +1001,43 @@
                 heightInput.addEventListener('input', calculateBmiFromInputs);
                 weightInput.addEventListener('input', calculateBmiFromInputs);
             }
+
+            const vHeight = document.getElementById('vitalsHeight');
+            const vWeight = document.getElementById('vitalsWeight');
+            if (vHeight && vWeight) {
+                vHeight.addEventListener('input', calculateBmiFromInputs);
+                vWeight.addEventListener('input', calculateBmiFromInputs);
+            }
+
+            // Restrict numeric fields from typing units and auto-format BP entries
+            document.querySelectorAll('.numeric-only').forEach(el => {
+                el.addEventListener('input', () => { el.value = (el.value || '').toString().replace(/[^0-9.]/g, ''); });
+            });
+
+            function formatBPField(el) {
+                if (!el) return;
+                // keep existing if contains '/'
+                let v = (el.value || '').toString();
+                if (v.includes('/')) return;
+                const digits = v.replace(/[^0-9]/g, '');
+                if (digits.length >= 4) {
+                    // split as first 3 and the rest, e.g., 12080 -> 120/80
+                    const first = digits.slice(0, 3);
+                    const second = digits.slice(3);
+                    el.value = `${first}/${second}`;
+                }
+            }
+
+            document.querySelectorAll('.bp-input').forEach(bp => {
+                bp.addEventListener('blur', () => formatBPField(bp));
+                bp.addEventListener('keydown', (e) => {
+                    // if user types slash allow it, else allow digits and Backspace
+                    const allowed = ['Backspace','Tab','ArrowLeft','ArrowRight','Delete'];
+                    if (allowed.includes(e.key)) return;
+                    if (/^[0-9]$/.test(e.key) || e.key === '/') return;
+                    e.preventDefault();
+                });
+            });
         });
 
         // Load all patients
@@ -1115,9 +1074,10 @@
 
             const rows = Array.isArray(patients) ? [...patients] : [...((patients && (patients.patients || patients.data)) || [])];
 
-            const sortBy = document.getElementById('patientSortBy')?.value || 'date_modified';
-            const sortOrder = document.getElementById('patientSortOrder')?.value || 'desc';
-            const multiplier = sortOrder === 'asc' ? 1 : -1;
+            // Always sort newest first (server already returns newest first by default)
+            const sortBy = 'date_modified';
+            const sortOrder = 'desc';
+            const multiplier = -1; // newest first
 
             rows.sort((a, b) => {
                 const rawA = sortBy === 'date_added' ? (a.date_added || '') : (a.date_modified || a.last_visit || '');
@@ -1235,7 +1195,6 @@
         function openNewPatientModal() {
             if (typeof window.resetUiBlockingLayers === 'function') window.resetUiBlockingLayers();
             document.getElementById('newPatientForm').reset();
-            document.getElementById('patientDate').value = new Date().toISOString().slice(0, 10);
             calculateBmiFromInputs();
             document.getElementById('newPatientModal').style.display = 'flex';
             document.getElementById('newPatientModal').classList.add('active');
@@ -1299,9 +1258,10 @@
                     <div><strong>Age:</strong> ${patient.age || 'N/A'} years</div>
                     <div><strong>Gender:</strong> ${patient.gender || 'N/A'}</div>
                     <div><strong>Contact:</strong> ${patient.contact || 'N/A'}</div>
-                    <div><strong>Occupation:</strong> ${patient.occupation || 'N/A'}</div>
-                    <div><strong>Marital Status:</strong> ${patient.marital_status || 'N/A'}</div>
-                    ${patient.address ? `<div><strong>Address:</strong> ${patient.address}</div>` : ''}
+                    ${patient.height_cm ? `<div><strong>Height:</strong> ${patient.height_cm} cm</div>` : ''}
+                    ${patient.weight_kg ? `<div><strong>Weight:</strong> ${patient.weight_kg} kg</div>` : ''}
+                    ${patient.bmi ? `<div><strong>BMI:</strong> ${patient.bmi}</div>` : ''}
+                    ${patient.bsr ? `<div><strong>BSR:</strong> ${patient.bsr}</div>` : ''}
                 `;
                 
                 // Display previous visits
@@ -1390,77 +1350,52 @@
                 age: parseInt(form.age.value),
                 contact: form.contact.value,
                 gender: form.gender.value || null,
-                occupation: form.occupation.value,
-                marital_status: form.marital_status.value || null,
-                address: form.address.value
+                height_cm: parseFloat(form.height_cm?.value) || null,
+                weight_kg: parseFloat(form.weight_kg?.value) || null,
+                bmi: form.bmi?.value ? parseFloat(form.bmi.value) : null,
+                bsr: form.bsr ? form.bsr.value || null : null
             };
 
             try {
+                // Build initial visit payload to send together with patient creation
+                    const visitPayload = {
+                        vitals_bp: form.vitals_bp?.value || null,
+                        vitals_weight: parseFloat(form.weight_kg?.value) || null,
+                        vitals_temp: form.vitals_temp?.value ? parseFloat(form.vitals_temp.value) : null,
+                        vitals_bsr: (form.bsr && form.bsr.value) ? form.bsr.value : null,
+                        vitals_spo2: form.vitals_spo2?.value || null,
+                        vitals_heart_rate: form.vitals_heart_rate?.value || null,
+                    presenting_complaint: null,
+                    signs_symptoms: null,
+                    history_presenting_illness: null,
+                        past_medical_hx: null,
+                    family_history: null,
+                    examination: null,
+                    differentials: null,
+                    treatment_plan: null,
+                    consultation_fee: 0,
+                    medicines: []
+                };
+
+                // Send patient + initial visit in one request (backend will create visit atomically)
                 const response = await fetch('/api/patients', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(Object.assign({}, data, { create_visit: true, initial_visit: visitPayload }))
                 });
 
                 if (response.ok) {
                     const result = await response.json().catch(() => ({}));
                     const patientId = result.patient_id;
+                    const visitId = result.visit_id;
 
-                    // Save the initial visit using the same form so register = register + visit.
-                    if (patientId) {
-                        const visitPayload = {
-                            patient_id: patientId,
-                            vitals_bp: form.bp.value || null,
-                            vitals_weight: parseFloat(form.weight_kg?.value) || null,
-                            vitals_temp: parseFloat(form.temp.value) || null,
-                            vitals_bsr: form.rbs.value || form.fbs.value || null,
-                            vitals_spo2: form.so2.value || null,
-                            vitals_heart_rate: form.hr.value || null,
-                            presenting_complaint: form.pc_dx.value || null,
-                            signs_symptoms: form.advice.value || null,
-                            history_presenting_illness: null,
-                            past_medical_hx: form.comorbs.value || null,
-                            family_history: null,
-                            examination: null,
-                            differentials: null,
-                            treatment_plan: form.rx.value || form.advice.value || null,
-                            consultation_fee: 0,
-                            medicines: []
-                        };
-
-                        const visitResponse = await fetch('/api/visits', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(visitPayload)
-                        });
-
-                        if (!visitResponse.ok) {
-                            const error = await visitResponse.json().catch(() => ({}));
-                            throw new Error(error.detail || 'Patient saved, but visit could not be created');
-                        }
-
-                        const visitResult = await visitResponse.json().catch(() => ({}));
-                        const visitId = visitResult.visit_id;
-                        const labFile = document.getElementById('patientLabReport')?.files?.[0];
-                        if (visitId && labFile) {
-                            const formData = new FormData();
-                            formData.append('file', labFile);
-                            const uploadResp = await fetch(`/api/visits/${visitId}/lab-report`, {
-                                method: 'POST',
-                                body: formData
-                            });
-                            if (!uploadResp.ok) {
-                                const uploadErr = await uploadResp.json().catch(() => ({}));
-                                throw new Error(uploadErr.detail || 'Visit saved but lab report upload failed');
-                            }
-                        }
-                    }
+                    // no lab report or comorbid fields on registration
 
                     closeModal('newPatientModal');
                     loadPatients();
                     showToast('Patient and initial visit saved successfully!', 'success');
                 } else {
-                    const error = await response.json();
+                    const error = await response.json().catch(() => ({}));
                     showToast('Error: ' + (error.detail || 'Failed to register'), 'error');
                 }
             } catch (error) {
@@ -1471,45 +1406,47 @@
 
         async function printNewPatientPdf() {
             const form = document.getElementById('newPatientForm');
+            if (!form) return;
             calculateBmiFromInputs();
-            const heightCm = form.height_cm.value.trim();
-            const weightKg = form.weight_kg.value.trim();
-            const patientData = {
-                name: form.name.value,
-                age: parseInt(form.age.value),
-                contact: form.contact.value,
-                gender: form.gender.value || null,
-                occupation: form.occupation.value,
-                marital_status: form.marital_status.value || null,
-                address: form.address.value
-            };
+            const heightCm = (form.height_cm?.value || '').trim();
+            const weightKg = (form.weight_kg?.value || '').trim();
 
-            const payload = {
-                pt_name: form.name.value || '',
-                age: form.age.value || '',
-                contact: form.contact.value || '',
-                date: form.date.value || '',
-                bp: form.bp.value || '',
-                hr: form.hr.value || '',
-                so2: form.so2.value || '',
-                rr: form.rr.value || '',
-                temp: form.temp.value || '',
-                ht_wt: heightCm || weightKg ? `${heightCm || '-'} cm / ${weightKg || '-'} kg` : '',
-                bmi: form.bmi.value || '',
-                rbs: form.rbs.value || '',
-                fbs: form.fbs.value || '',
-                comorbs: form.comorbs.value || '',
-                pc_dx: '',
-                rx: '',
-                advice: '',
-                include_clinical_sections: false
+            // Build initial visit payload so backend creates visit atomically
+            const initial_visit = {
+                vitals_bp: form.vitals_bp?.value || null,
+                vitals_weight: form.vitals_weight?.value ? parseFloat(form.vitals_weight.value) : (weightKg ? parseFloat(weightKg) : null),
+                vitals_temp: form.vitals_temp?.value ? parseFloat(form.vitals_temp.value) : null,
+                vitals_bsr: form.bsr ? form.bsr.value || null : null,
+                vitals_spo2: form.vitals_spo2?.value || null,
+                vitals_heart_rate: form.vitals_heart_rate?.value || null,
+                presenting_complaint: null,
+                signs_symptoms: null,
+                history_presenting_illness: null,
+                past_medical_hx: null,
+                family_history: null,
+                examination: null,
+                differentials: null,
+                treatment_plan: null,
+                consultation_fee: 0,
+                medicines: []
             };
 
             try {
                 const saveResponse = await fetch('/api/patients', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(patientData)
+                    body: JSON.stringify({
+                        name: form.name.value,
+                        age: parseInt(form.age.value, 10),
+                        contact: form.contact.value,
+                        gender: form.gender.value || null,
+                        height_cm: heightCm ? parseFloat(heightCm) : null,
+                        weight_kg: weightKg ? parseFloat(weightKg) : null,
+                        bmi: form.bmi?.value ? parseFloat(form.bmi.value) : null,
+                        bsr: form.bsr ? form.bsr.value || null : null,
+                        create_visit: true,
+                        initial_visit: initial_visit
+                    })
                 });
 
                 if (!saveResponse.ok) {
@@ -1517,10 +1454,35 @@
                     throw new Error(error.detail || 'Failed to save patient');
                 }
 
+                const result = await saveResponse.json().catch(() => ({}));
+                const pdfPayload = {
+                    patient_id: result.patient_id || null,
+                    pt_name: form.name.value || '',
+                    age: form.age.value || '',
+                    sex: form.gender.value || '',
+                    contact: form.contact.value || '',
+                    date: new Date().toISOString().slice(0, 10),
+                    height_cm: form.height_cm?.value || '',
+                    weight_kg: form.weight_kg?.value || '',
+                    ht_wt: (heightCm || weightKg) ? `${(window.cleanNumericValue ? window.cleanNumericValue(heightCm) : heightCm) || '-'} cm / ${(window.cleanNumericValue ? window.cleanNumericValue(weightKg) : weightKg) || '-'} kg` : '',
+                    bmi: form.bmi?.value || '',
+                    rbs: form.bsr ? form.bsr.value || '' : '',
+                    bp: form.vitals_bp?.value || '',
+                    hr: form.vitals_heart_rate?.value || '',
+                    so2: form.vitals_spo2?.value || '',
+                    temp: form.vitals_temp?.value || '',
+                    presenting_complaint: '',
+                    medical_examination: '',
+                    investigation_advised: '',
+                    provisional_diagnosis: '',
+                    special_note: '',
+                    medicines: []
+                };
+
                 const pdfResponse = await fetch('/api/print_prescription', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(pdfPayload)
                 });
 
                 if (!pdfResponse.ok) {
@@ -1714,13 +1676,9 @@
                 vitals_spo2: document.getElementById('vitalsSPO2').value,
                 vitals_heart_rate: document.getElementById('vitalsHeartRate').value,
                 presenting_complaint: document.getElementById('presentingComplaint').value,
-                signs_symptoms: document.getElementById('signsSymptoms').value,
-                history_presenting_illness: document.getElementById('historyPresentingIllness').value,
-                past_medical_hx: document.getElementById('pastMedicalHx').value,
-                family_history: document.getElementById('familyHistory').value,
                 examination: document.getElementById('examination').value,
-                differentials: document.getElementById('differentials').value,
-                treatment_plan: document.getElementById('treatmentPlan').value,
+                treatment_plan: document.getElementById('investigationAdvised').value,
+                differentials: document.getElementById('provisionalDiagnosis').value,
                 consultation_fee: 0,
                 medicines: medicines
             };
@@ -1770,7 +1728,7 @@
             const medicines = [];
             const rows = document.querySelectorAll('.medicine-item');
 
-            rows.forEach((row, index) => {
+            rows.forEach((row) => {
                 syncMedicineQuantity(row);
                 const hiddenInput = row.querySelector('input[name="medicine_id"]');
                 const searchInput = row.querySelector('input[name="medicine_search"]');
@@ -1781,38 +1739,47 @@
 
                 if ((hiddenInput && hiddenInput.value) || manualName) {
                     const item = hiddenInput && hiddenInput.value ? inventoryItems.find(i => i.id === parseInt(hiddenInput.value, 10)) : null;
-                    const times = (freqTimes?.value || '1').trim();
-                    const days = (freqDays?.value || '3').trim();
-                    const qty = (quantity?.value || '1').trim();
+                    const times = parseInt(freqTimes?.value || '1', 10) || 1;
+                    const days = parseInt(freqDays?.value || '1', 10) || 1;
+                    const qty = parseInt(quantity?.value || String(times * days), 10) || (times * days);
                     const medicineName = item?.brand_name || manualName || 'Medicine';
-                    medicines.push(`${index + 1}. ${medicineName} - ${times}x${days} daily (Qty: ${qty})`);
+                    medicines.push({
+                        inventory_id: item?.id || null,
+                        medicine_name: medicineName,
+                        quantity: qty,
+                        dosage: `${times}×${days}`,
+                        freq_times: times,
+                        freq_days: days,
+                        duration: `${days} days`,
+                        price: item?.price || 0
+                    });
                 }
             });
 
+            const hValue = document.getElementById('vitalsHeight')?.value?.trim() || '';
+            const bmiValue = document.getElementById('vitalsBmi')?.value?.trim() || '';
             return {
+                patient_id: parseInt(document.getElementById('visitPatientId')?.value, 10) || null,
                 pt_name: currentPatientName || document.getElementById('visitPatientName')?.textContent || '',
                 age: '',
+                sex: '',
                 contact: currentPatientContact || '',
                 date: new Date().toISOString().slice(0, 10),
+                height_cm: hValue || '',
+                weight_kg: vitalsWeight ? parseFloat(vitalsWeight) : null,
+                ht_wt: (hValue || vitalsWeight) ? `${(window.cleanNumericValue ? window.cleanNumericValue(hValue) : hValue) || '-'} cm / ${(window.cleanNumericValue ? window.cleanNumericValue(vitalsWeight) : vitalsWeight) || '-'} kg` : '',
+                bmi: bmiValue || '',
+                rbs: document.getElementById('vitalsBSR')?.value || '',
                 bp: document.getElementById('vitalsBP')?.value || '',
                 hr: document.getElementById('vitalsHeartRate')?.value || '',
                 so2: document.getElementById('vitalsSPO2')?.value || '',
-                rr: '',
                 temp: document.getElementById('vitalsTemp')?.value || '',
-                ht_wt: vitalsWeight ? `Weight: ${vitalsWeight} kg` : '',
-                bmi: '',
-                rbs: document.getElementById('vitalsBSR')?.value || '',
-                fbs: '',
-                comorbs: document.getElementById('pastMedicalHx')?.value || '',
-                pc_dx: [
-                    document.getElementById('presentingComplaint')?.value || '',
-                    document.getElementById('differentials')?.value || ''
-                ].filter(Boolean).join('\n\n'),
-                rx: medicines.join('\n') || (document.getElementById('treatmentPlan')?.value || ''),
-                advice: [
-                    document.getElementById('treatmentPlan')?.value || '',
-                    document.getElementById('signsSymptoms')?.value || ''
-                ].filter(Boolean).join('\n\n'),
+                presenting_complaint: document.getElementById('presentingComplaint')?.value || '',
+                medical_examination: document.getElementById('examination')?.value || '',
+                investigation_advised: document.getElementById('investigationAdvised')?.value || '',
+                provisional_diagnosis: document.getElementById('provisionalDiagnosis')?.value || '',
+                special_note: '',
+                medicines: medicines,
                 include_clinical_sections: true
             };
         }
@@ -1992,9 +1959,10 @@ Take care! 🤲
                     <div><strong>Age:</strong> ${patient.age ?? 'N/A'} years</div>
                     <div><strong>Gender:</strong> ${patient.gender || 'N/A'}</div>
                     <div><strong>Contact:</strong> ${patient.contact || 'N/A'}</div>
-                    <div><strong>Occupation:</strong> ${patient.occupation || 'N/A'}</div>
-                    <div><strong>Marital Status:</strong> ${patient.marital_status || 'N/A'}</div>
-                    <div style="grid-column: span 2;"><strong>Address:</strong> ${patient.address || 'N/A'}</div>
+                    ${patient.height_cm ? `<div><strong>Height:</strong> ${patient.height_cm} cm</div>` : ''}
+                    ${patient.weight_kg ? `<div><strong>Weight:</strong> ${patient.weight_kg} kg</div>` : ''}
+                    ${patient.bmi ? `<div><strong>BMI:</strong> ${patient.bmi}</div>` : ''}
+                    ${patient.bsr ? `<div><strong>BSR:</strong> ${patient.bsr}</div>` : ''}
                 `;
 
                 if (!visits.length) {
@@ -2188,25 +2156,12 @@ Take care! 🤲
             }
         })();
 
-        function onPatientSortChange() {
-            try {
-                const currentQuery = document.getElementById('searchInput')?.value?.trim() || '';
-                if (currentQuery) {
-                    searchPatients();
-                } else {
-                    loadPatients();
-                }
-            } catch (e) {
-                console.error('Patient sort error', e);
-            }
-        }
 
         window.openVisitModal = openVisitModal;
         window.viewPatientRecord = viewPatientRecord;
         window.openNewPatientModal = openNewPatientModal;
         window.closeModal = closeModal;
         window.debugPatients = debugPatients;
-        window.onPatientSortChange = onPatientSortChange;
     </script>
     <script src="/static/app.js"></script>
 </body>
