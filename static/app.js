@@ -759,10 +759,6 @@
                             vitals_spo2: form.vitals_spo2?.value || null,
                             vitals_heart_rate: form.vitals_heart_rate?.value || null,
                             presenting_complaint: null,
-                            signs_symptoms: null,
-                            history_presenting_illness: null,
-                            past_medical_hx: null,
-                            family_history: null,
                             examination: null,
                             differentials: null,
                             treatment_plan: null,
@@ -805,7 +801,6 @@
                             ht_wt: (heightInput?.value || weightInput?.value) ? `${(window.cleanNumericValue ? window.cleanNumericValue(heightInput?.value) : heightInput?.value) || '-'} cm / ${(window.cleanNumericValue ? window.cleanNumericValue(weightInput?.value) : weightInput?.value) || '-'} kg` : '',
                             bmi: form.bmi.value || '',
                             rbs: form.bsr ? form.bsr.value || '' : '',
-                            // comorbs removed
                             presenting_complaint: '',
                             medical_examination: '',
                             investigation_advised: '',

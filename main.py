@@ -88,10 +88,6 @@ class VisitCreate(BaseModel):
     vitals_spo2: Optional[str] = None
     vitals_heart_rate: Optional[str] = None
     presenting_complaint: Optional[str] = None
-    signs_symptoms: Optional[str] = None
-    history_presenting_illness: Optional[str] = None
-    past_medical_hx: Optional[str] = None
-    family_history: Optional[str] = None
     examination: Optional[str] = None
     differentials: Optional[str] = None
     treatment_plan: Optional[str] = None
@@ -110,10 +106,6 @@ class VisitUpdate(BaseModel):
     vitals_height_cm: Optional[float] = None
     vitals_bmi: Optional[float] = None
     presenting_complaint: Optional[str] = None
-    signs_symptoms: Optional[str] = None
-    history_presenting_illness: Optional[str] = None
-    past_medical_hx: Optional[str] = None
-    family_history: Optional[str] = None
     examination: Optional[str] = None
     differentials: Optional[str] = None
     treatment_plan: Optional[str] = None
@@ -138,15 +130,12 @@ class PrescriptionPrintRequest(BaseModel):
     ht_wt: Optional[str] = None
     bmi: Optional[str] = None
     rbs: Optional[str] = None
-    comorbs: Optional[str] = None
     presenting_complaint: Optional[str] = None
     medical_examination: Optional[str] = None
     investigation_advised: Optional[str] = None
     provisional_diagnosis: Optional[str] = None
     special_note: Optional[str] = None
-    pc_dx: Optional[str] = None
     rx: Optional[str] = None
-    advice: Optional[str] = None
     medicines: List[MedicineItem] = []
 
 
@@ -535,10 +524,9 @@ async def create_patient(patient: PatientCreate):
 
             cursor.execute("""
                 INSERT INTO visits (patient_id, date, vitals_bp, vitals_weight, vitals_temp, vitals_bsr, 
-                    vitals_spo2, vitals_heart_rate, presenting_complaint, signs_symptoms, 
-                    history_presenting_illness, past_medical_hx, family_history, examination, 
+                    vitals_spo2, vitals_heart_rate, presenting_complaint, examination, 
                     differentials, treatment_plan, lab_report_path)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 patient_id,
                 today,
@@ -549,10 +537,6 @@ async def create_patient(patient: PatientCreate):
                 iv.get('vitals_spo2'),
                 iv.get('vitals_heart_rate'),
                 iv.get('presenting_complaint'),
-                iv.get('signs_symptoms'),
-                iv.get('history_presenting_illness'),
-                iv.get('past_medical_hx'),
-                iv.get('family_history'),
                 iv.get('examination'),
                 iv.get('differentials'),
                 iv.get('treatment_plan'),
@@ -699,7 +683,7 @@ async def get_patient_history(patient_id: int):
     
     cursor.execute("""
         SELECT id, date, vitals_bp, vitals_weight, vitals_temp, vitals_bsr,
-            vitals_spo2, vitals_heart_rate, presenting_complaint, signs_symptoms, 
+            vitals_spo2, vitals_heart_rate, presenting_complaint,
             differentials, treatment_plan
         FROM visits
         WHERE patient_id = ?
@@ -734,8 +718,7 @@ async def get_patient_full_record(patient_id: int):
     # Get all visits with their prescriptions
     cursor.execute("""
         SELECT id, date, vitals_bp, vitals_weight, vitals_temp, vitals_bsr,
-            vitals_spo2, vitals_heart_rate, presenting_complaint, signs_symptoms,
-            history_presenting_illness, past_medical_hx, family_history,
+            vitals_spo2, vitals_heart_rate, presenting_complaint,
             examination, differentials, treatment_plan, lab_report_path
         FROM visits
         WHERE patient_id = ?
@@ -778,10 +761,9 @@ async def create_visit(visit: VisitCreate):
         # 1. Create the visit record
         cursor.execute("""
             INSERT INTO visits (patient_id, date, vitals_bp, vitals_weight, vitals_temp, vitals_bsr, 
-                vitals_spo2, vitals_heart_rate, presenting_complaint, signs_symptoms, 
-                history_presenting_illness, past_medical_hx, family_history, examination, 
+                vitals_spo2, vitals_heart_rate, presenting_complaint, examination, 
                 differentials, treatment_plan, lab_report_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             visit.patient_id,
             today,
@@ -792,10 +774,6 @@ async def create_visit(visit: VisitCreate):
             visit.vitals_spo2,
             visit.vitals_heart_rate,
             visit.presenting_complaint,
-            visit.signs_symptoms,
-            visit.history_presenting_illness,
-            visit.past_medical_hx,
-            visit.family_history,
             visit.examination,
             visit.differentials,
             visit.treatment_plan,
@@ -1666,7 +1644,6 @@ async def print_prescription(visit_id: int):
             "ht_wt": ht_wt_str,
             "bmi": bmi_str,
             "rbs": visit.get("vitals_bsr", "") or "",
-            "comorbs": visit.get("past_medical_hx", "") or "",
             "presenting_complaint": visit.get("presenting_complaint", "") or "",
             "medical_examination": visit.get("examination", "") or "",
             "investigation_advised": visit.get("treatment_plan", "") or "",
@@ -1677,7 +1654,6 @@ async def print_prescription(visit_id: int):
                 f"{index + 1}. {med.get('medicine_name', '')} - {med.get('dosage', '')} ({med.get('quantity', '')}) {med.get('duration', '')}".strip()
                 for index, med in enumerate(medicines)
             ),
-            "advice": visit.get("treatment_plan", "") or "",
             "include_clinical_sections": True,
         }
 
@@ -1768,7 +1744,6 @@ async def get_prescription_data(visit_id: int):
         SELECT 
             v.id, v.date, v.presenting_complaint, v.differentials, 
             v.vitals_bp, v.vitals_weight, v.vitals_temp, v.vitals_bsr, v.vitals_spo2, v.vitals_heart_rate,
-            v.signs_symptoms, v.history_presenting_illness, v.past_medical_hx, v.family_history,
             v.examination, v.treatment_plan, v.lab_report_path,
             p.id as patient_id, p.name as patient_name, p.age, p.contact,
             p.height_cm as height_cm, p.weight_kg as patient_weight_kg, p.bmi as patient_bmi
@@ -1805,8 +1780,7 @@ async def update_visit(visit_id: int, visit: VisitUpdate):
         cursor.execute("""
             UPDATE visits
             SET vitals_bp = ?, vitals_weight = ?, vitals_temp = ?, vitals_bsr = ?,
-                vitals_spo2 = ?, vitals_heart_rate = ?, presenting_complaint = ?, signs_symptoms = ?,
-                history_presenting_illness = ?, past_medical_hx = ?, family_history = ?, examination = ?,
+                vitals_spo2 = ?, vitals_heart_rate = ?, presenting_complaint = ?, examination = ?,
                 differentials = ?, treatment_plan = ?, lab_report_path = ?
             WHERE id = ?
         """, (
@@ -1817,10 +1791,6 @@ async def update_visit(visit_id: int, visit: VisitUpdate):
             visit.vitals_spo2,
             visit.vitals_heart_rate,
             visit.presenting_complaint,
-            visit.signs_symptoms,
-            visit.history_presenting_illness,
-            visit.past_medical_hx,
-            visit.family_history,
             visit.examination,
             visit.differentials,
             visit.treatment_plan,

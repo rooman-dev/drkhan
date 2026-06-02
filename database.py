@@ -131,10 +131,6 @@ def init_database():
             vitals_spo2 TEXT,
             vitals_heart_rate TEXT,
             presenting_complaint TEXT,
-            signs_symptoms TEXT,
-            history_presenting_illness TEXT,
-            past_medical_hx TEXT,
-            family_history TEXT,
             examination TEXT,
             differentials TEXT,
             treatment_plan TEXT,
@@ -148,6 +144,45 @@ def init_database():
     visit_columns = {row[1] for row in cursor.fetchall()}
     if "lab_report_path" not in visit_columns:
         cursor.execute("ALTER TABLE visits ADD COLUMN lab_report_path TEXT")
+
+    # Remove legacy clinical fields so only the 4 required assessment fields remain
+    legacy_clinical_cols = {"signs_symptoms", "history_presenting_illness", "past_medical_hx", "family_history"}
+    if legacy_clinical_cols.intersection(visit_columns):
+        cursor.execute("PRAGMA foreign_keys=OFF")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS visits_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                patient_id INTEGER NOT NULL,
+                date TEXT NOT NULL DEFAULT CURRENT_DATE,
+                vitals_bp TEXT,
+                vitals_weight REAL,
+                vitals_temp REAL,
+                vitals_bsr TEXT,
+                vitals_spo2 TEXT,
+                vitals_heart_rate TEXT,
+                presenting_complaint TEXT,
+                examination TEXT,
+                differentials TEXT,
+                treatment_plan TEXT,
+                lab_report_path TEXT,
+                FOREIGN KEY (patient_id) REFERENCES patients (id)
+            )
+        """)
+        cursor.execute("""
+            INSERT INTO visits_new (
+                id, patient_id, date, vitals_bp, vitals_weight, vitals_temp,
+                vitals_bsr, vitals_spo2, vitals_heart_rate,
+                presenting_complaint, examination, differentials, treatment_plan, lab_report_path
+            )
+            SELECT
+                id, patient_id, date, vitals_bp, vitals_weight, vitals_temp,
+                vitals_bsr, vitals_spo2, vitals_heart_rate,
+                presenting_complaint, examination, differentials, treatment_plan, lab_report_path
+            FROM visits
+        """)
+        cursor.execute("DROP TABLE visits")
+        cursor.execute("ALTER TABLE visits_new RENAME TO visits")
+        cursor.execute("PRAGMA foreign_keys=ON")
 
     # Create inventory table
     cursor.execute("""
@@ -358,7 +393,7 @@ def add_test_data():
             cursor.execute("""
                 INSERT INTO visits (patient_id, date, vitals_bp, vitals_weight, vitals_temp,
                     vitals_bsr, vitals_spo2, vitals_heart_rate, presenting_complaint,
-                    signs_symptoms, differentials, treatment_plan)
+                    examination, differentials, treatment_plan)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (patient_id, visit_date, bp, weight, temp, bsr, spo2, hr,
                   complaint[0], complaint[1], complaint[2], complaint[3]))

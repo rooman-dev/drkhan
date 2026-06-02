@@ -667,7 +667,7 @@
                         </div>
                     </div>
 
-                    <!-- Removed CoMorbs and Lab Report as per request -->
+                    <!-- Lab report field removed on registration form -->
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('newPatientModal')">Cancel</button>
@@ -717,7 +717,7 @@
                         <h4 style="color: var(--accent); margin-bottom: 15px;">
                             <i class="fas fa-heartbeat"></i> Vitals
                         </h4>
-                        <div class="form-row" style="grid-template-columns: repeat(8, 1fr);">
+                        <div class="form-row" style="grid-template-columns: repeat(4, 1fr);">
                             <div class="form-group">
                                 <label for="vitalsHeight">Height (cm)</label>
                                 <input class="numeric-only unit-field" data-unit="cm" type="text" inputmode="decimal" id="vitalsHeight" name="vitals_height_cm" placeholder="170">
@@ -1296,9 +1296,7 @@
                                         </div>
                                     ` : ''}
                                     ${visit.presenting_complaint ? `<div style="margin-bottom: 5px;"><strong>Complaint:</strong> ${visit.presenting_complaint}</div>` : ''}
-                                    ${visit.signs_symptoms ? `<div style="margin-bottom: 5px;"><strong>Signs/Symptoms:</strong> ${visit.signs_symptoms}</div>` : ''}
-                                    ${visit.past_medical_hx ? `<div style="margin-bottom: 5px;"><strong>Past Medical Hx:</strong> ${visit.past_medical_hx}</div>` : ''}
-                                    ${visit.family_history ? `<div style="margin-bottom: 5px;"><strong>Family Hx:</strong> ${visit.family_history}</div>` : ''}
+                                    ${visit.examination ? `<div style="margin-bottom: 5px;"><strong>Medical Examination:</strong> ${visit.examination}</div>` : ''}
                                     ${visit.differentials ? `<div style="margin-bottom: 5px;"><strong>Differentials:</strong> ${visit.differentials}</div>` : ''}
                                     ${visit.treatment_plan ? `<div style="margin-bottom: 5px;"><strong>Treatment:</strong> ${visit.treatment_plan}</div>` : ''}
                                     ${visit.prescriptions && visit.prescriptions.length > 0 ? `
@@ -1366,10 +1364,6 @@
                         vitals_spo2: form.vitals_spo2?.value || null,
                         vitals_heart_rate: form.vitals_heart_rate?.value || null,
                     presenting_complaint: null,
-                    signs_symptoms: null,
-                    history_presenting_illness: null,
-                        past_medical_hx: null,
-                    family_history: null,
                     examination: null,
                     differentials: null,
                     treatment_plan: null,
@@ -1420,10 +1414,6 @@
                 vitals_spo2: form.vitals_spo2?.value || null,
                 vitals_heart_rate: form.vitals_heart_rate?.value || null,
                 presenting_complaint: null,
-                signs_symptoms: null,
-                history_presenting_illness: null,
-                past_medical_hx: null,
-                family_history: null,
                 examination: null,
                 differentials: null,
                 treatment_plan: null,

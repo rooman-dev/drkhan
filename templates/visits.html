@@ -744,29 +744,28 @@
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div>
-                            <strong style="color: var(--accent);">Vitals:</strong>
-                            <div style="padding: 10px; background: var(--bg-surface); border-radius: 8px; margin-top: 5px;">
-                                ${visit.vitals_bp ? `<div>BP: ${visit.vitals_bp}</div>` : ''}
-                                ${visit.vitals_weight ? `<div>Weight: ${visit.vitals_weight} kg</div>` : ''}
-                                ${!visit.vitals_bp && !visit.vitals_weight ? '<div style="color: var(--text-secondary);">Not recorded</div>' : ''}
+                            <strong style="color: var(--accent);">All Vitals:</strong>
+                            <div style="padding: 10px; background: var(--bg-surface); border-radius: 8px; margin-top: 5px; display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                                <div><strong>Height:</strong> ${visit.height_cm ? `${visit.height_cm} cm` : 'N/A'}</div>
+                                <div><strong>Weight:</strong> ${visit.vitals_weight ? `${visit.vitals_weight} kg` : (visit.patient_weight_kg ? `${visit.patient_weight_kg} kg` : 'N/A')}</div>
+                                <div><strong>BMI:</strong> ${visit.patient_bmi || 'N/A'}</div>
+                                <div><strong>BP:</strong> ${visit.vitals_bp || 'N/A'}</div>
+                                <div><strong>Temp:</strong> ${visit.vitals_temp ? `${visit.vitals_temp} F` : 'N/A'}</div>
+                                <div><strong>BSR:</strong> ${visit.vitals_bsr ? `${visit.vitals_bsr} mg/dL` : 'N/A'}</div>
+                                <div><strong>SPO2:</strong> ${visit.vitals_spo2 ? `${visit.vitals_spo2}%` : 'N/A'}</div>
+                                <div><strong>Heart Rate:</strong> ${visit.vitals_heart_rate ? `${visit.vitals_heart_rate} bpm` : 'N/A'}</div>
                             </div>
                         </div>
                         <div>
-                            <strong style="color: var(--accent);">Complaint:</strong>
-                            <div style="padding: 10px; background: var(--bg-surface); border-radius: 8px; margin-top: 5px;">
-                                ${visit.presenting_complaint || 'Not specified'}
+                            <strong style="color: var(--accent);">All Clinical Assessment:</strong>
+                            <div style="padding: 10px; background: var(--bg-surface); border-radius: 8px; margin-top: 5px; display:grid; gap:10px;">
+                                <div><strong>Presenting Complaint:</strong><br>${visit.presenting_complaint || 'Not recorded'}</div>
+                                <div><strong>Medical Examination:</strong><br>${visit.examination || 'Not recorded'}</div>
+                                <div><strong>Investigation Advised:</strong><br>${visit.treatment_plan || 'Not recorded'}</div>
+                                <div><strong>Provisional Diagnosis:</strong><br>${visit.differentials || 'Not recorded'}</div>
                             </div>
                         </div>
                     </div>
-                    
-                    ${visit.differentials ? `
-                        <div style="margin-top: 15px;">
-                            <strong style="color: var(--accent);">Differentials:</strong>
-                            <div style="padding: 10px; background: var(--bg-surface); border-radius: 8px; margin-top: 5px;">
-                                ${visit.differentials}
-                            </div>
-                        </div>
-                    ` : ''}
                     
                     ${prescriptions.length > 0 ? `
                         <div style="margin-top: 15px;">
@@ -857,7 +856,7 @@
                     </div>
 
                     <h4 style="color: var(--accent); margin-bottom: 12px;">Vitals</h4>
-                    <div class="form-row" style="grid-template-columns: repeat(8, 1fr);">
+                    <div class="form-row" style="grid-template-columns: repeat(4, 1fr);">
                         <div class="form-group">
                             <label for="editHeight">Height (cm)</label>
                             <input class="numeric-only unit-field" data-unit="cm" type="text" inputmode="decimal" id="editHeight" name="vitals_height_cm" value="${visit.height_cm || ''}" placeholder="170">
@@ -893,21 +892,23 @@
                     </div>
 
                     <h4 style="color: var(--accent); margin: 18px 0 12px;">Clinical Details</h4>
-                    <div class="form-group">
-                        <label for="editComplaint">Presenting Complaints</label>
-                        <textarea id="editComplaint" name="presenting_complaint" placeholder="Chief complaint..." style="min-height: 80px;">${visit.presenting_complaint || ''}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="editExamination">Medical Examination</label>
-                        <textarea id="editExamination" name="examination" placeholder="Physical examination findings..." style="min-height: 120px;">${visit.examination || ''}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="editInvestigation">Investigation Advised</label>
-                        <textarea id="editInvestigation" name="treatment_plan" placeholder="Labs, imaging or tests advised..." style="min-height: 80px;">${visit.treatment_plan || ''}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="editProvisional">Provisional Diagnosis</label>
-                        <textarea id="editProvisional" name="differentials" placeholder="Provisional / working diagnosis..." style="min-height: 80px;">${visit.differentials || ''}</textarea>
+                    <div class="form-row" style="grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                        <div class="form-group">
+                            <label for="editComplaint">Presenting Complaints</label>
+                            <textarea id="editComplaint" name="presenting_complaint" placeholder="Chief complaint..." style="min-height: 80px;">${visit.presenting_complaint || ''}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="editExamination">Medical Examination</label>
+                            <textarea id="editExamination" name="examination" placeholder="Physical examination findings..." style="min-height: 120px;">${visit.examination || ''}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="editInvestigation">Investigation Advised</label>
+                            <textarea id="editInvestigation" name="treatment_plan" placeholder="Labs, imaging or tests advised..." style="min-height: 80px;">${visit.treatment_plan || ''}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="editProvisional">Provisional Diagnosis</label>
+                            <textarea id="editProvisional" name="differentials" placeholder="Provisional / working diagnosis..." style="min-height: 80px;">${visit.differentials || ''}</textarea>
+                        </div>
                     </div>
 
                     <div class="form-group">

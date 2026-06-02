@@ -348,13 +348,12 @@ class PrescriptionSheetPDF(FPDF):
         bmi = payload.get("bmi", "")
         rbs = payload.get("rbs", "")
         bsr = payload.get("bsr", "") or rbs
-        comorbs = payload.get("comorbs", "")
         special_note = payload.get("special_note", "")
 
-        presenting_complaint = payload.get("presenting_complaint") or payload.get("pc_dx", "")
-        medical_examination = payload.get("medical_examination") or payload.get("advice", "")
-        investigation_advised = payload.get("investigation_advised") or payload.get("advice", "")
-        provisional_diagnosis = payload.get("provisional_diagnosis") or payload.get("pc_dx", "")
+        presenting_complaint = payload.get("presenting_complaint") or ""
+        medical_examination = payload.get("medical_examination") or ""
+        investigation_advised = payload.get("investigation_advised") or ""
+        provisional_diagnosis = payload.get("provisional_diagnosis") or ""
 
         medicines = self._extract_medicines(payload)
 
