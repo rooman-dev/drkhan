@@ -553,7 +553,15 @@ async def create_patient(patient: PatientCreate):
                     cursor.execute("SELECT stock, brand_name FROM inventory WHERE id = ?", (med.get('inventory_id'),))
                     item = cursor.fetchone()
                     if item:
-                        cursor.execute("UPDATE inventory SET stock = stock - ? WHERE id = ?", (med.get('quantity', 0), med.get('inventory_id')))
+                        # coerce quantity to int safely
+                        try:
+                            qnty = int(med.get('quantity', 0))
+                        except Exception:
+                            try:
+                                qnty = int(float(med.get('quantity', 0)))
+                            except Exception:
+                                qnty = 0
+                        cursor.execute("UPDATE inventory SET stock = stock - ? WHERE id = ?", (qnty, med.get('inventory_id')))
 
                 medicine_name = (med.get('medicine_name') or (item['brand_name'] if item else None) or f"Medicine {med.get('inventory_id') or ''}").strip()
                 if not medicine_name:
@@ -561,10 +569,23 @@ async def create_patient(patient: PatientCreate):
 
                 duration_val = med.get('duration') or (f"{int(med.get('freq_days'))} days" if med.get('freq_days') else '7 days')
 
+                # coerce quantity and price
+                try:
+                    q_final = int(med.get('quantity', 1))
+                except Exception:
+                    try:
+                        q_final = int(float(med.get('quantity', 1)))
+                    except Exception:
+                        q_final = 1
+                try:
+                    price_final = float(med.get('price', 0) or 0)
+                except Exception:
+                    price_final = 0.0
+
                 cursor.execute("""
                     INSERT INTO prescriptions (visit_id, medicine_name, dosage, duration, quantity, price, inventory_id)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, (visit_id, med.get('dosage') or 'As directed', med.get('dosage') or 'As directed', duration_val, med.get('quantity', 1), med.get('price', 0), med.get('inventory_id')))
+                """, (visit_id, med.get('dosage') or 'As directed', med.get('dosage') or 'As directed', duration_val, q_final, price_final, med.get('inventory_id')))
 
             # Update patient's modified timestamp
             cursor.execute("UPDATE patients SET modified_at = datetime('now') WHERE id = ?", (patient_id,))
@@ -790,9 +811,17 @@ async def create_visit(visit: VisitCreate):
                 item = cursor.fetchone()
 
                 if item:
+                    # coerce quantity to int safely
+                    try:
+                        qnty = int(med.quantity)
+                    except Exception:
+                        try:
+                            qnty = int(float(med.quantity))
+                        except Exception:
+                            qnty = 0
                     cursor.execute("""
                         UPDATE inventory SET stock = stock - ? WHERE id = ?
-                    """, (med.quantity, med.inventory_id))
+                    """, (qnty, med.inventory_id))
 
             medicine_name = (med.medicine_name or (item["brand_name"] if item else None) or f"Medicine {med.inventory_id or ''}").strip()
             if not medicine_name:
@@ -811,12 +840,25 @@ async def create_visit(visit: VisitCreate):
             else:
                 duration_val = "7 days"
 
+            # coerce quantity and price
+            try:
+                q_final = int(med.quantity)
+            except Exception:
+                try:
+                    q_final = int(float(med.quantity))
+                except Exception:
+                    q_final = 1
+            try:
+                price_final = float(med.price or 0)
+            except Exception:
+                price_final = 0.0
+
             cursor.execute("""
                 INSERT INTO prescriptions (visit_id, medicine_name, dosage, duration, quantity, price, inventory_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (visit_id, medicine_name, med.dosage or "As directed", duration_val, med.quantity, med.price, getattr(med, 'inventory_id', None)))
+            """, (visit_id, medicine_name, med.dosage or "As directed", duration_val, q_final, price_final, getattr(med, 'inventory_id', None)))
             
-            medicine_total += med.price * med.quantity
+            medicine_total += price_final * (q_final or 0)
         
         # 3. Calculate total bill (for display only, not added to finance)
         total_bill = medicine_total
@@ -1549,7 +1591,16 @@ async def print_prescription_form(request: Request):
         payload = PrescriptionPrintRequest.model_validate(raw_data)
         logging.info(f"Generating prescription PDF for: {payload.pt_name if hasattr(payload, 'pt_name') else payload}")
 
-        file_path = generate_prescription_form_pdf(payload.model_dump())
+        # Merge original raw keys into the validated dict so alternate keys (e.g. 'examination')
+        # are preserved for the PDF renderer which accepts multiple field names.
+        safe_payload = payload.model_dump()
+        if isinstance(raw_data, dict):
+            for k, v in raw_data.items():
+                # prefer existing validated values unless empty; allow raw_data to fill in missing clinical keys
+                if k not in safe_payload or not safe_payload.get(k):
+                    safe_payload[k] = v
+
+        file_path = generate_prescription_form_pdf(safe_payload)
         logging.info(f"Prescription PDF generated at: {file_path}")
         # If running on Windows locally, try to open the PDF using the default system viewer
         try:
@@ -1577,7 +1628,7 @@ async def print_prescription(visit_id: int):
         cursor.execute("""
             SELECT
                 v.id, v.date, v.vitals_bp, v.vitals_weight, v.vitals_temp, v.vitals_bsr,
-                v.vitals_spo2, v.vitals_heart_rate, v.presenting_complaint, v.differentials,
+                v.vitals_spo2, v.vitals_heart_rate, v.presenting_complaint, v.examination, v.differentials,
                 v.treatment_plan,
                 p.id as patient_id, p.name as patient_name, p.age, p.gender, p.contact, p.height_cm, p.weight_kg, p.bmi
             FROM visits v
@@ -1831,24 +1882,35 @@ async def update_visit(visit_id: int, visit: VisitUpdate):
                 for med in visit.medicines:
                     inv_id = getattr(med, 'inventory_id', None)
                     item = None
+                    # coerce quantity and price safely
+                    try:
+                        q_final = int(getattr(med, 'quantity', 1))
+                    except Exception:
+                        try:
+                            q_final = int(float(getattr(med, 'quantity', 1)))
+                        except Exception:
+                            q_final = 1
+                    try:
+                        price_final = float(getattr(med, 'price', 0) or 0)
+                    except Exception:
+                        price_final = 0.0
+
                     if inv_id is not None:
                         cursor.execute("SELECT stock, brand_name FROM inventory WHERE id = ?", (inv_id,))
                         item = cursor.fetchone()
                         if not item:
                             conn.rollback()
                             raise HTTPException(status_code=400, detail=f"Inventory item {inv_id} not found")
-                        cursor.execute("UPDATE inventory SET stock = stock - ? WHERE id = ?", (med.quantity, inv_id))
+                        cursor.execute("UPDATE inventory SET stock = stock - ? WHERE id = ?", (q_final, inv_id))
 
-                    med_name = (med.medicine_name or (item["brand_name"] if item else None) or f"Medicine {inv_id or ''}").strip() or 'Medicine'
-                    dosage = med.dosage or 'As directed'
-                    qty = med.quantity or 1
-                    price = med.price or 0.0
+                    med_name = (getattr(med, 'medicine_name', None) or (item["brand_name"] if item else None) or f"Medicine {inv_id or ''}").strip() or 'Medicine'
+                    dosage = getattr(med, 'dosage', None) or 'As directed'
                     duration_val = getattr(med, 'duration', None) or (f"{getattr(med, 'freq_days', '')} days" if getattr(med, 'freq_days', None) else '7 days')
 
                     cursor.execute("""
                         INSERT INTO prescriptions (visit_id, medicine_name, dosage, duration, quantity, price, inventory_id)
                         VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """, (visit_id, med_name, dosage, duration_val, qty, price, inv_id))
+                    """, (visit_id, med_name, dosage, duration_val, q_final, price_final, inv_id))
             except HTTPException:
                 raise
             except Exception:
@@ -1999,6 +2061,22 @@ if __name__ == "__main__":
 
     def focus_window():
         try:
+            # Attempt to maximize the window on startup for better UX.
+            try:
+                maximize_fn = getattr(window, 'maximize', None)
+                if callable(maximize_fn):
+                    maximize_fn()
+                else:
+                    # Fallback: try accessing created windows list
+                    if hasattr(webview, 'windows') and webview.windows:
+                        w0 = webview.windows[0]
+                        m = getattr(w0, 'maximize', None)
+                        if callable(m):
+                            m()
+            except Exception:
+                # ignore maximize errors on platforms where unavailable
+                pass
+
             # Some pywebview builds expose focus as a boolean/property instead of a callable.
             # Guard the call and fallback to bring_to_front on the first window if available.
             focus_fn = getattr(window, 'focus', None)

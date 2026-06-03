@@ -633,26 +633,9 @@
                     ${prescriptions.length > 0 ? `
                         <div style="margin-top: 15px;">
                             <strong style="color: var(--accent);"><i class="fas fa-pills"></i> Prescribed Medicines:</strong>
-                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
-                                <thead>
-                                    <tr style="background: var(--accent); color: var(--text-primary);">
-                                        <th style="padding: 8px; text-align: left; border-radius: 5px 0 0 0;">Medicine</th>
-                                        <th style="padding: 8px; text-align: left;">Dosage</th>
-                                        <th style="padding: 8px; text-align: center;">Qty</th>
-                                        <th style="padding: 8px; text-align: right; border-radius: 0 5px 0 0;">Price</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${prescriptions.map(p => `
-                                        <tr style="background: var(--bg-surface-2); border-bottom: 1px solid var(--border-color);">
-                                            <td style="padding: 8px;">${p.medicine_name}</td>
-                                            <td style="padding: 8px;">${p.dosage}</td>
-                                            <td style="padding: 8px; text-align: center;">${p.quantity}</td>
-                                            <td style="padding: 8px; text-align: right;">Rs. ${(p.price * p.quantity).toFixed(2)}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+                            <ul style="margin: 10px 0 0 18px; padding: 0;">
+                                ${prescriptions.map(p => `<li>${p.medicine_name || ''}</li>`).join('')}
+                            </ul>
                         </div>
                     ` : ''}
                 `;

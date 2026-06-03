@@ -154,70 +154,73 @@ class PrescriptionSheetPDF(FPDF):
         inner_top = self.get_y() + 1
         inner_width = w - 4
 
-        # Make medicine name column wider, remaining columns share the rest
-        col1_width = inner_width * 0.50
-        other_width = (inner_width - col1_width) / 3.0
-        col_widths = [col1_width, other_width, other_width, other_width]
-
-        header_labels = ["Medicine Name", "Dosage", "Quantity", "Frequency"]
-        header_h = 7
-        cur_y = inner_top
-
-        self.set_fill_color(240, 240, 240)
-        self.set_draw_color(210, 210, 210)
-        self.set_line_width(0.12)
-        cur_x = inner_left
-        for col_idx, label in enumerate(header_labels):
-            w_col = col_widths[col_idx]
-            self.rect(cur_x, cur_y, w_col, header_h, style='DF')
-            self.set_xy(cur_x + 2, cur_y + 1.6)
-            self.set_font("Helvetica", "B", 8)
-            self.set_text_color(0, 0, 0)
-            self.cell(w_col - 4, 4, label, border=0, align="C")
-            cur_x += w_col
+        # Use four columns (no column headers). Give the first column more width
+        # so medicine names can fit better while the other three keep equal smaller widths.
+        columns = 4
+        first_col_share = 0.4  # 40% of inner width for medicine name
+        remaining_share = 1.0 - first_col_share
+        other_col_width = (inner_width * remaining_share) / (columns - 1)
+        col_widths = [inner_width * first_col_share] + [other_col_width for _ in range(columns - 1)]
 
         rows = list(medicines or [])
         visible_rows = max(6, len(rows))
-        body_top = inner_top + header_h
 
-        # Base row height constraints
+        # Base row height constraints and line height for wrapping
         min_row_h = 9
-        max_row_h = 28
-        line_h = 3.8
+        line_h = 4.2
 
-        cur_y = body_top
+        def _estimate_lines(text: str, col_w: float) -> int:
+            # Estimate number of wrapped lines for `text` within `col_w - 4` (padding)
+            if not text:
+                return 0
+            content_w = max(col_w - 4, 10)
+            self.set_font("Helvetica", "", 8)
+            words = str(text).split()
+            if not words:
+                return 1
+            lines = 0
+            cur_w = 0.0
+            space_w = self.get_string_width(' ')
+            for word in words:
+                w = self.get_string_width(word)
+                if cur_w == 0:
+                    # first word on line
+                    cur_w = w
+                else:
+                    if cur_w + space_w + w <= content_w:
+                        cur_w += space_w + w
+                    else:
+                        lines += 1
+                        cur_w = w
+                # handle overly long single word
+                if cur_w > content_w:
+                    # split roughly into chunks
+                    approx = int(cur_w / content_w) + 1
+                    lines += approx
+                    cur_w = 0
+            if cur_w > 0:
+                lines += 1
+            return max(1, lines)
+
+        cur_y = inner_top
         for index in range(visible_rows):
             item = rows[index] if index < len(rows) else {}
 
-            # Prepare values
-            medicine_name = self._value_text(item.get("medicine_name") if isinstance(item, dict) else getattr(item, "medicine_name", ""))
-            dosage = self._value_text(item.get("dosage") if isinstance(item, dict) else getattr(item, "dosage", ""))
-            quantity = self._value_text(item.get("quantity") if isinstance(item, dict) else getattr(item, "quantity", ""))
-            freq_times = self._value_text(item.get("freq_times") if isinstance(item, dict) else getattr(item, "freq_times", ""))
-            freq_days = self._value_text(item.get("freq_days") if isinstance(item, dict) else getattr(item, "freq_days", ""))
-            duration = self._value_text(item.get("duration") if isinstance(item, dict) else getattr(item, "duration", ""))
-            if freq_times and freq_days:
-                frequency = f"{freq_times}×{freq_days}"
-            elif freq_times:
-                frequency = freq_times
-            else:
-                frequency = duration
+            # Map the four free-form fields into columns
+            col1 = self._value_text(item.get("medicine_name") if isinstance(item, dict) else getattr(item, "medicine_name", ""))
+            col2 = self._value_text(item.get("dosage") if isinstance(item, dict) else getattr(item, "dosage", ""))
+            col3 = self._value_text(item.get("duration") if isinstance(item, dict) else getattr(item, "duration", ""))
+            # quantity may be numeric or free-form string
+            col4 = self._value_text(item.get("quantity") if isinstance(item, dict) else getattr(item, "quantity", ""))
 
-            values = [medicine_name, dosage, quantity, frequency]
+            values = [col1, col2, col3, col4]
 
-            # Estimate required height based on medicine name wrapping
-            name_width = col_widths[0] - 4
-            if medicine_name:
-                name_lines = max(1, int(ceil(self.get_string_width(medicine_name) / max(1.0, name_width))))
-            else:
-                name_lines = 1
-            required_h = max_row_h
-            try:
-                required_h = max(min_row_h, min(max_row_h, int(name_lines * line_h) + 4))
-            except Exception:
-                required_h = min_row_h
-
-            row_h = required_h
+            # Determine required height for this row based on wrapped lines in each column
+            required_heights = []
+            for ci in range(columns):
+                lines = _estimate_lines(values[ci], col_widths[ci])
+                required_heights.append(max(min_row_h, int(lines * line_h) + 2))
+            row_h = max(required_heights)
 
             # alternating very light background
             if index % 2 == 0:
@@ -226,24 +229,22 @@ class PrescriptionSheetPDF(FPDF):
                 self.set_fill_color(255, 255, 255)
 
             cur_x = inner_left
-
-            for col_idx in range(4):
+            # Draw each cell then write text using multi_cell with computed line_h
+            for col_idx in range(columns):
                 w_col = col_widths[col_idx]
                 self.set_draw_color(230, 230, 230)
                 self.set_line_width(0.08)
-                # draw rect (fill then stroke)
+                # draw rect (fill then stroke) using computed row height
                 self.rect(cur_x, cur_y, w_col, row_h, style='DF')
 
                 self.set_xy(cur_x + 2, cur_y + 1.6)
                 self.set_font("Helvetica", "", 8)
                 self.set_text_color(30, 30, 30)
-                # For medicine name allow wrapping (no truncation)
                 text_val = values[col_idx]
                 if text_val:
-                    if col_idx == 0:
-                        self.multi_cell(w_col - 4, line_h, text_val, border=0, align="L")
-                    else:
-                        self.multi_cell(w_col - 4, line_h, self._fit_text(text_val, w_col - 4), border=0, align="L")
+                    # allow wrapping across multiple lines without truncation
+                    self.multi_cell(w_col - 4, line_h, text_val, border=0, align="L")
+
                 cur_x += w_col
 
             cur_y += row_h
@@ -350,10 +351,11 @@ class PrescriptionSheetPDF(FPDF):
         bsr = payload.get("bsr", "") or rbs
         special_note = payload.get("special_note", "")
 
-        presenting_complaint = payload.get("presenting_complaint") or ""
-        medical_examination = payload.get("medical_examination") or ""
-        investigation_advised = payload.get("investigation_advised") or ""
-        provisional_diagnosis = payload.get("provisional_diagnosis") or ""
+        # Accept multiple possible keys for backwards compatibility with templates/backend
+        presenting_complaint = payload.get("presenting_complaint") or payload.get("presenting_complain") or payload.get("complaint") or ""
+        medical_examination = payload.get("medical_examination") or payload.get("examination") or payload.get("medical_exam") or ""
+        investigation_advised = payload.get("investigation_advised") or payload.get("treatment_plan") or payload.get("investigation") or ""
+        provisional_diagnosis = payload.get("provisional_diagnosis") or payload.get("differentials") or payload.get("provisional") or ""
 
         medicines = self._extract_medicines(payload)
 
@@ -457,15 +459,234 @@ def generate_patient_history_pdf(patient_id: int) -> str:
         conn.close()
         raise ValueError(f"Patient {patient_id} not found")
     patient = dict(patient)
+
+    # fetch visits for this patient
+    cursor.execute(
+        "SELECT id, date, presenting_complaint, examination, treatment_plan, differentials, vitals_bp, vitals_temp, vitals_spo2, vitals_heart_rate, vitals_weight FROM visits WHERE patient_id = ? ORDER BY date DESC",
+        (patient_id,)
+    )
+    visits = [dict(r) for r in cursor.fetchall()]
+
+    # fetch prescriptions per visit
+    visit_prescriptions = {}
+    for v in visits:
+        cursor.execute(
+            "SELECT medicine_name, dosage, duration, quantity FROM prescriptions WHERE visit_id = ? ORDER BY id",
+            (v.get('id'),)
+        )
+        visit_prescriptions[v.get('id')] = [dict(r) for r in cursor.fetchall()]
+
     conn.close()
+
     output_dir = get_output_dir()
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_file = output_dir / f"patient_history_{patient_id}_{timestamp}.pdf"
-    # stub: create an empty PDF
-    pdf = FPDF()
+    safe_name = _slugify(str(patient.get('name') or f'patient_{patient_id}'))
+    output_file = output_dir / f"patient_history_{safe_name}_{timestamp}.pdf"
+
+    # Render PDF
+    pdf = FPDF(orientation='P', unit='mm', format='A4')
+    pdf.set_auto_page_break(auto=True, margin=18)
+    pdf.set_margins(12, 12, 12)
+
+    # Header helper
+    def _draw_header():
+        pdf.set_fill_color(255, 255, 255)
+        # Prefer the colored logo for history PDFs; the black PDF logo is too heavy here.
+        logo = Path(resource_path('static/logo.png'))
+        y0 = 10
+        try:
+            if logo and Path(logo).exists():
+                # smaller logo to avoid overlap and create breathing room
+                pdf.image(str(logo), x=12, y=y0, w=14)
+        except Exception:
+            pass
+        pdf.set_xy(32, y0 + 1)
+        pdf.set_font('Helvetica', 'B', 12)
+        pdf.cell(0, 6, 'DR KHAN CLINIC', ln=1)
+        pdf.set_x(32)
+        pdf.set_font('Helvetica', '', 8.5)
+        pdf.cell(0, 5, 'QUALITY HEALTHCARE FOR EVERY AGE', ln=1)
+        # tighten spacing a bit
+        pdf.ln(1.5)
+        pdf.set_draw_color(200, 200, 200)
+        pdf.set_line_width(0.12)
+        # place divider below the logo and header text to avoid overlapping the logo
+        divider_y = max(pdf.get_y(), y0 + 18)
+        try:
+            pdf.line(pdf.l_margin, divider_y, pdf.w - pdf.r_margin, divider_y)
+        except Exception:
+            # fallback to current y if something unexpected happens
+            pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
+        # move cursor a bit below the divider
+        pdf.set_y(divider_y + 3)
+
+    # Patient info box
+    def _draw_patient_info():
+        pdf.set_font('Helvetica', 'B', 11)
+        pdf.set_text_color(0, 0, 0)
+        pdf.cell(0, 6, 'Patient Summary', ln=1)
+        pdf.set_font('Helvetica', '', 9)
+        avail_w = pdf.w - pdf.l_margin - pdf.r_margin
+        gap = 4
+        left_w = (avail_w - gap) * 0.62
+        right_w = avail_w - gap - left_w
+        x = pdf.l_margin
+        y = pdf.get_y()
+        # compute required height dynamically based on content lines to avoid excessive whitespace
+        left_lines = 1  # name
+        left_lines += 1  # age/gender
+        left_lines += 1  # contact
+        right_lines = 3  # id, height, weight
+        line_h = 4.2
+        padding_v = 6
+        content_h = max(left_lines, right_lines) * line_h
+        box_h = max(22, int(content_h + padding_v))
+
+        pdf.set_draw_color(220, 220, 220)
+        pdf.rect(x, y, avail_w, box_h)
+        pdf.line(x + left_w + (gap / 2), y, x + left_w + (gap / 2), y + box_h)
+
+        pdf.set_xy(x + 3, y + 3)
+        pdf.set_font('Helvetica', 'B', 10)
+        pdf.multi_cell(left_w - 6, 4.2, f"Name: {patient.get('name', '')}")
+        pdf.set_x(x + 3)
+        pdf.set_font('Helvetica', '', 9)
+        pdf.multi_cell(left_w - 6, 4.2, f"Age: {patient.get('age', '')}    Gender: {patient.get('gender', '')}")
+        pdf.set_x(x + 3)
+        pdf.multi_cell(left_w - 6, 4.2, f"Contact: {patient.get('contact', '')}")
+
+        pdf.set_xy(x + left_w + gap + 3, y + 3)
+        pdf.set_font('Helvetica', 'B', 9)
+        pdf.multi_cell(right_w - 6, 4.2, f"Patient ID: {patient.get('id')}")
+        pdf.set_x(x + left_w + gap + 3)
+        pdf.set_font('Helvetica', '', 9)
+        pdf.multi_cell(right_w - 6, 4.2, f"Height: {patient.get('height_cm','-')} cm")
+        pdf.set_x(x + left_w + gap + 3)
+        pdf.multi_cell(right_w - 6, 4.2, f"Weight: {patient.get('weight_kg','-')} kg")
+        # move cursor to just below the box with a small gap
+        pdf.set_y(y + box_h + 4)
+
+    # Draw a visit block
+    def _draw_visit(v: dict, prescriptions: list):
+        pdf.set_font('Helvetica', 'B', 10)
+        date_str = v.get('date') or ''
+        pdf.cell(0, 6, f"Visit: {date_str}", ln=1)
+        pdf.set_font('Helvetica', '', 9)
+        avail_w = pdf.w - pdf.l_margin - pdf.r_margin
+        if v.get('presenting_complaint'):
+            pdf.set_x(pdf.l_margin)
+            pdf.multi_cell(avail_w, 4.5, f"Presenting Complaint: {v.get('presenting_complaint')}")
+        if v.get('examination'):
+            pdf.set_x(pdf.l_margin)
+            pdf.multi_cell(avail_w, 4.5, f"Medical Examination: {v.get('examination')}")
+        if v.get('treatment_plan'):
+            pdf.set_x(pdf.l_margin)
+            pdf.multi_cell(avail_w, 4.5, f"Investigation / Treatment: {v.get('treatment_plan')}")
+        if v.get('differentials'):
+            pdf.set_x(pdf.l_margin)
+            pdf.multi_cell(avail_w, 4.5, f"Provisional Diagnosis: {v.get('differentials')}")
+
+        # Vitals summary line
+        vitals = []
+        if v.get('vitals_bp'):
+            vitals.append(f"BP: {v.get('vitals_bp')}")
+        if v.get('vitals_temp'):
+            vitals.append(f"Temp: {v.get('vitals_temp')}")
+        if v.get('vitals_spo2'):
+            vitals.append(f"SPO2: {v.get('vitals_spo2')}")
+        if v.get('vitals_heart_rate'):
+            vitals.append(f"HR: {v.get('vitals_heart_rate')}")
+        if v.get('vitals_weight'):
+            vitals.append(f"Wt: {v.get('vitals_weight')}kg")
+        if vitals:
+            pdf.set_font('Helvetica', 'I', 9)
+            pdf.set_x(pdf.l_margin)
+            pdf.multi_cell(avail_w, 4.2, ' | '.join(vitals))
+
+        # Prescriptions table
+        if prescriptions:
+            pdf.ln(2)
+            pdf.set_font('Helvetica', 'B', 9)
+            pdf.cell(0, 5, 'Medicines:', ln=1)
+            pdf.set_font('Helvetica', '', 9)
+            col_w = (pdf.w - pdf.l_margin - pdf.r_margin)
+            pdf.set_fill_color(245, 245, 245)
+
+            # helper to estimate wrapped lines for a given width
+            def _estimate_lines(text: str, width: float, line_h: float = 4.8) -> int:
+                if not text:
+                    return 1
+                pdf.set_font('Helvetica', '', 9)
+                words = str(text).split()
+                if not words:
+                    return 1
+                content_w = max(width - 6, 10)
+                space_w = pdf.get_string_width(' ')
+                lines = 0
+                cur_w = 0.0
+                for word in words:
+                    w = pdf.get_string_width(word)
+                    if cur_w == 0:
+                        cur_w = w
+                    else:
+                        if cur_w + space_w + w <= content_w:
+                            cur_w += space_w + w
+                        else:
+                            lines += 1
+                            cur_w = w
+                    if cur_w > content_w:
+                        approx = int(cur_w / content_w) + 1
+                        lines += approx
+                        cur_w = 0
+                if cur_w > 0:
+                    lines += 1
+                return max(1, lines)
+
+            line_h = 4.8
+            for p in prescriptions:
+                name = p.get('medicine_name', '') or ''
+                if not name:
+                    continue
+                entry_text = f"- {name}"
+                x0 = pdf.l_margin
+                y0 = pdf.get_y()
+                lines = _estimate_lines(entry_text, col_w, line_h)
+                h_box = (lines * line_h) + 6
+                # draw box and then text inside with padding
+                pdf.set_draw_color(230, 230, 230)
+                pdf.rect(x0, y0, col_w, h_box)
+                pdf.set_xy(x0 + 3, y0 + 2)
+                pdf.multi_cell(col_w - 6, line_h, entry_text, border=0)
+                # advance to below box
+                pdf.set_y(y0 + h_box + 2)
+
+        # slightly reduced gap after each visit to keep history compact
+        pdf.ln(4)
+
+    # Compose document
     pdf.add_page()
-    pdf.set_font('Helvetica', '', 12)
-    pdf.cell(0, 10, f"Patient history for {patient.get('name', patient_id)}")
+    _draw_header()
+    _draw_patient_info()
+
+    pdf.set_font('Helvetica', '', 9)
+    pdf.set_text_color(40, 40, 40)
+
+    if not visits:
+        pdf.cell(0, 6, 'No visits recorded for this patient.', ln=1)
+    else:
+        for v in visits:
+            # page break if needed
+            if pdf.get_y() > pdf.h - pdf.b_margin - 60:
+                pdf.add_page()
+                _draw_header()
+            _draw_visit(v, visit_prescriptions.get(v.get('id', 0), []))
+
+    # Footer
+    pdf.set_y(-20)
+    pdf.set_font('Helvetica', '', 9)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(0, 5, 'Generated by Dr Khan Clinic', ln=1)
+
     pdf.output(str(output_file))
     return str(output_file)
 

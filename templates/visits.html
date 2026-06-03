@@ -7,6 +7,13 @@
     <link rel="stylesheet" href="/static/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Force edit modal vitals to 4x4 grid */
+        #editVisitContent .form-row.vitals-4x4 { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; grid-auto-rows: minmax(40px, auto) !important; gap: 12px !important; }
+        /* Ensure inputs use available grid space and prevent implicit min-width wrapping */
+        #editVisitModal .modal { max-width: 920px !important; }
+        #editVisitContent .form-row.vitals-4x4 .form-group { min-width: 0 !important; }
+        #editVisitContent .form-row.vitals-4x4 .form-group input,
+        #editVisitContent .form-row.vitals-4x4 .form-group textarea { width: 100% !important; box-sizing: border-box !important; }
         /* Page Specific Styles */
         .page-header {
             display: flex;
@@ -770,26 +777,9 @@
                     ${prescriptions.length > 0 ? `
                         <div style="margin-top: 15px;">
                             <strong style="color: var(--accent);"><i class="fas fa-pills"></i> Prescribed Medicines:</strong>
-                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
-                                <thead>
-                                    <tr style="background: var(--accent); color: var(--text-primary);">
-                                        <th style="padding: 8px; text-align: left; border-radius: 5px 0 0 0;">Medicine</th>
-                                        <th style="padding: 8px; text-align: left;">Dosage</th>
-                                        <th style="padding: 8px; text-align: center;">Qty</th>
-                                        <th style="padding: 8px; text-align: right; border-radius: 0 5px 0 0;">Price</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${prescriptions.map(p => `
-                                        <tr style="background: var(--bg-surface); border-bottom: 1px solid var(--border-color);">
-                                            <td style="padding: 8px;">${p.medicine_name}</td>
-                                            <td style="padding: 8px;">${p.dosage}</td>
-                                            <td style="padding: 8px; text-align: center;">${p.quantity}</td>
-                                            <td style="padding: 8px; text-align: right;">Rs. ${(p.price * p.quantity).toFixed(2)}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+                            <ul style="margin: 10px 0 0 18px; padding: 0;">
+                                ${prescriptions.map(p => `<li>${p.medicine_name || ''}</li>`).join('')}
+                            </ul>
                         </div>
                     ` : ''}
 
@@ -856,58 +846,61 @@
                     </div>
 
                     <h4 style="color: var(--accent); margin-bottom: 12px;">Vitals</h4>
-                    <div class="form-row" style="grid-template-columns: repeat(4, 1fr);">
-                        <div class="form-group">
+                    <div class="form-row vitals-4x4" style="display:grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: minmax(40px, auto); gap:12px;">
+                        <div class="form-group" style="grid-column: 1; grid-row: 1;">
                             <label for="editHeight">Height (cm)</label>
                             <input class="numeric-only unit-field" data-unit="cm" type="text" inputmode="decimal" id="editHeight" name="vitals_height_cm" value="${visit.height_cm || ''}" placeholder="170">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" style="grid-column: 2; grid-row: 1;">
                             <label for="editBmi">BMI</label>
                             <input type="text" id="editBmi" name="vitals_bmi" value="${visit.patient_bmi || ''}" placeholder="BMI" readonly>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" style="grid-column: 3; grid-row: 1;">
                             <label for="editBP">BP (mmHg)</label>
                             <input class="bp-input" type="text" id="editBP" name="vitals_bp" value="${visit.vitals_bp || ''}" placeholder="120/80">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" style="grid-column: 4; grid-row: 1;">
                             <label for="editWeight">Weight (kg)</label>
                             <input class="numeric-only unit-field" data-unit="kg" type="text" inputmode="decimal" id="editWeight" name="vitals_weight" value="${visit.vitals_weight || ''}" placeholder="70.5">
                         </div>
-                        <div class="form-group">
+
+                        <div class="form-group" style="grid-column: 1; grid-row: 2;">
                             <label for="editTemp">Temp (F)</label>
                             <input class="numeric-only unit-field" data-unit="F" type="text" inputmode="decimal" id="editTemp" name="vitals_temp" value="${visit.vitals_temp || ''}" placeholder="98.6">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" style="grid-column: 2; grid-row: 2;">
                             <label for="editBSR">BSR (mg/dL)</label>
                             <input class="numeric-only unit-field" data-unit="mg/dL" type="text" inputmode="decimal" id="editBSR" name="vitals_bsr" value="${visit.vitals_bsr || ''}" placeholder="100">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" style="grid-column: 3; grid-row: 2;">
                             <label for="editSPO2">SPO2 (%)</label>
                             <input class="numeric-only unit-field" data-unit="%" type="text" inputmode="decimal" id="editSPO2" name="vitals_spo2" value="${visit.vitals_spo2 || ''}" placeholder="98">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" style="grid-column: 4; grid-row: 2;">
                             <label for="editHeartRate">Heart Rate (bpm)</label>
                             <input class="numeric-only unit-field" data-unit="bpm" type="text" inputmode="decimal" id="editHeartRate" name="vitals_heart_rate" value="${visit.vitals_heart_rate || ''}" placeholder="72">
                         </div>
+
+                        <!-- Removed extra reserved rows to eliminate large gap -->
                     </div>
 
                     <h4 style="color: var(--accent); margin: 18px 0 12px;">Clinical Details</h4>
-                    <div class="form-row" style="grid-template-columns: repeat(2, 1fr); gap: 16px;">
-                        <div class="form-group">
+                    <div class="form-row" style="grid-template-columns: repeat(2, 1fr); gap: 16px; grid-auto-rows: 1fr;">
+                        <div class="form-group" style="display:flex; flex-direction:column;">
                             <label for="editComplaint">Presenting Complaints</label>
-                            <textarea id="editComplaint" name="presenting_complaint" placeholder="Chief complaint..." style="min-height: 80px;">${visit.presenting_complaint || ''}</textarea>
+                            <textarea id="editComplaint" name="presenting_complaint" placeholder="Chief complaint..." style="flex:1; min-height:0;">${visit.presenting_complaint || ''}</textarea>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" style="display:flex; flex-direction:column;">
                             <label for="editExamination">Medical Examination</label>
-                            <textarea id="editExamination" name="examination" placeholder="Physical examination findings..." style="min-height: 120px;">${visit.examination || ''}</textarea>
+                            <textarea id="editExamination" name="examination" placeholder="Physical examination findings..." style="flex:1; min-height:0;">${visit.examination || ''}</textarea>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" style="display:flex; flex-direction:column;">
                             <label for="editInvestigation">Investigation Advised</label>
-                            <textarea id="editInvestigation" name="treatment_plan" placeholder="Labs, imaging or tests advised..." style="min-height: 80px;">${visit.treatment_plan || ''}</textarea>
+                            <textarea id="editInvestigation" name="treatment_plan" placeholder="Labs, imaging or tests advised..." style="flex:1; min-height:0;">${visit.treatment_plan || ''}</textarea>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" style="display:flex; flex-direction:column;">
                             <label for="editProvisional">Provisional Diagnosis</label>
-                            <textarea id="editProvisional" name="differentials" placeholder="Provisional / working diagnosis..." style="min-height: 80px;">${visit.differentials || ''}</textarea>
+                            <textarea id="editProvisional" name="differentials" placeholder="Provisional / working diagnosis..." style="flex:1; min-height:0;">${visit.differentials || ''}</textarea>
                         </div>
                     </div>
 
@@ -921,39 +914,35 @@
                         <div class="prescription-header">
                             <h4><i class="fas fa-pills"></i> Prescription</h4>
                             <div style="display:flex; gap:8px; align-items:center;">
-                                <select id="inventorySelect" style="padding:8px; min-width:240px;">
-                                    <option value="">-- Select medicine from inventory --</option>
-                                </select>
-                                <button type="button" class="btn-add-medicine" onclick="addSelectedInventory()">
-                                    <i class="fas fa-plus"></i> Add from Inventory
+                                <button type="button" class="btn-add-medicine" onclick="addMedicineRow()">
+                                    <i class="fas fa-plus"></i> Add Medicine
                                 </button>
                             </div>
                         </div>
                         <div id="medList">
                             ${prescriptions.length > 0 ? prescriptions.map((p, idx) => `
-                                <div class="med-row" data-index="${idx}" data-inventory-id="${p.inventory_id || ''}" style="display:flex; gap:8px; margin-bottom:6px;">
-                                    <input class="med-name" placeholder="Medicine name" value="${p.medicine_name}" style="flex:1; padding:8px;">
-                                    <input class="med-dosage" placeholder="Dosage" value="${p.dosage}" style="width:140px; padding:8px;">
-                                    <input class="med-freq-times" type="number" min="1" max="9" value="1" title="Times per day" oninput="syncEditMedicineQuantity(this.closest('.med-row'))" onchange="syncEditMedicineQuantity(this.closest('.med-row'))" style="width:70px; padding:8px; text-align:center;">
-                                    <span style="align-self:center; color: var(--text-secondary);">×</span>
-                                    <input class="med-freq-days" type="number" min="1" max="99" value="${p.quantity || 1}" title="Number of days" oninput="syncEditMedicineQuantity(this.closest('.med-row'))" onchange="syncEditMedicineQuantity(this.closest('.med-row'))" style="width:70px; padding:8px; text-align:center;">
-                                    <span style="align-self:center; color: var(--text-secondary);">=</span>
-                                    <input class="med-qty" type="number" min="1" value="${p.quantity || 1}" readonly style="width:80px; padding:8px; text-align:center; background: var(--bg-surface);">
+                                <div class="med-row" data-index="${idx}" data-inventory-id="${p.inventory_id || ''}">
+                                    <div class="med-name-wrap">
+                                        <input type="text" class="med-field1 med-input" list="visitMedList-shared" placeholder="Type brand name or formula..." onchange="selectVisitMedicine(this, ${idx})" oninput="filterVisitMedicines(this, ${idx})" value="${p.medicine_name}">
+                                        <input type="hidden" class="med-id-hidden" value="${p.inventory_id || ''}">
+                                        <div class="med-stock-info"></div>
+                                    </div>
+                                    <input class="med-field2 med-input" placeholder="Field 2" value="${p.dosage}">
+                                    <input class="med-field3 med-input" placeholder="Field 3" value="${p.duration || ''}">
+                                    <input class="med-field4 med-input med-qty" placeholder="Field 4" value="${p.quantity || ''}">
                                     <button type="button" class="btn btn-secondary" onclick="removeMedicineRow(this)"><i class="fas fa-trash"></i></button>
                                 </div>
                             `).join('') : ''}
                         </div>
                         <div style="display:flex; gap:8px; margin-top:8px;">
-                            <button type="button" class="btn btn-primary" onclick="addMedicineRow()"><i class="fas fa-plus"></i> Add Medicine</button>
-                            <small style="align-self:center; color:var(--text-secondary);">Changes here will update visit prescriptions (does not adjust inventory automatically).</small>
+                            <small style="align-self:center; color:var(--text-secondary);">Changes here update visit prescriptions and inventory automatically.</small>
                         </div>
                     </div>
 
                     <input type="hidden" id="editVisitId" value="${visitId}">
                 `;
-                // Populate inventory select
+                // Load inventory into memory for datalists
                 loadInventory();
-                syncAllEditMedicineQuantities();
                 // Wire BMI calculation for edit modal
                 try {
                     const hEl = document.getElementById('editHeight');
@@ -1038,33 +1027,27 @@
             };
             
                 // Collect medicines from medList
-                try {
-                        syncAllEditMedicineQuantities();
-                        const medRows = Array.from(document.querySelectorAll('#medList .med-row'));
-                        const meds = medRows.map(row => {
-                            const freqTimes = row.querySelector('.med-freq-times');
-                            const freqDays = row.querySelector('.med-freq-days');
-                            const qtyInput = row.querySelector('.med-qty');
-                            const timesInt = Math.max(1, parseInt(freqTimes?.value || '1', 10) || 1);
-                            const daysInt = Math.max(1, parseInt(freqDays?.value || '1', 10) || 1);
-                            const quantity = Math.max(1, parseInt(qtyInput?.value || `${timesInt * daysInt}`, 10) || (timesInt * daysInt));
-                            return {
-                                medicine_name: row.querySelector('.med-name')?.value || null,
-                                dosage: row.querySelector('.med-dosage')?.value || null,
-                                quantity: quantity,
-                                freq_times: timesInt,
-                                freq_days: daysInt,
-                                duration: `${daysInt} days`,
-                                base_quantity: 1,
-                                price: 0,
-                                inventory_id: row.dataset.inventoryId ? parseInt(row.dataset.inventoryId) : null
-                            };
-                        }).filter(m => m.medicine_name);
+                        try {
+                                const medRows = Array.from(document.querySelectorAll('#medList .med-row'));
+                                const meds = medRows.map(row => {
+                                    const f1 = row.querySelector('.med-field1')?.value || null;
+                                    const f2 = row.querySelector('.med-field2')?.value || null;
+                                    const f3 = row.querySelector('.med-field3')?.value || null;
+                                    const f4 = row.querySelector('.med-field4')?.value || null;
+                                    return {
+                                        medicine_name: f1,
+                                        dosage: f2,
+                                        duration: f3,
+                                        quantity: (function(v){ try { return parseInt(v); } catch(e){ return v || 1 } })(f4),
+                                        price: 0,
+                                        inventory_id: row.dataset.inventoryId ? parseInt(row.dataset.inventoryId) : null
+                                    };
+                                }).filter(m => m.medicine_name);
 
-                    if (meds.length) payload.medicines = meds;
-                } catch (e) {
-                    console.error('Error collecting medicines', e);
-                }
+                            if (meds.length) payload.medicines = meds;
+                        } catch (e) {
+                            console.error('Error collecting medicines', e);
+                        }
             
             try {
                 const response = await fetch(`/api/visits/${vId}`, {
@@ -1109,81 +1092,122 @@
             div.className = 'med-row';
             div.dataset.index = idx;
             div.dataset.inventoryId = '';
-            div.style = 'display:flex; gap:8px; margin-bottom:6px;';
+            div.style = '';
             div.innerHTML = `
-                <input class="med-name" placeholder="Medicine name" style="flex:1; padding:8px;">
-                <input class="med-dosage" placeholder="Dosage" style="width:140px; padding:8px;">
-                <input class="med-freq-times" type="number" min="1" max="9" value="1" title="Times per day" oninput="syncEditMedicineQuantity(this.closest('.med-row'))" onchange="syncEditMedicineQuantity(this.closest('.med-row'))" style="width:70px; padding:8px; text-align:center;">
-                <span style="align-self:center; color: var(--text-secondary);">×</span>
-                <input class="med-freq-days" type="number" min="1" max="99" value="1" title="Number of days" oninput="syncEditMedicineQuantity(this.closest('.med-row'))" onchange="syncEditMedicineQuantity(this.closest('.med-row'))" style="width:70px; padding:8px; text-align:center;">
-                <span style="align-self:center; color: var(--text-secondary);">=</span>
-                <input class="med-qty" type="number" min="1" value="1" readonly style="width:80px; padding:8px; text-align:center; background: var(--bg-surface);">
+                <div class="med-name-wrap">
+                    <input class="med-field1 med-input" placeholder="Medicine">
+                    <div class="med-stock-info"></div>
+                </div>
+                <input class="med-field2 med-input" placeholder="Field 2">
+                <input class="med-field3 med-input" placeholder="Field 3">
+                <input class="med-field4 med-input med-qty" placeholder="Field 4">
                 <button type="button" class="btn btn-secondary" onclick="removeMedicineRow(this)"><i class="fas fa-trash"></i></button>
             `;
             container.appendChild(div);
-            syncEditMedicineQuantity(div);
         }
 
-        // Load inventory items into the inventory select
+        // Load inventory items into memory for datalists
         async function loadInventory() {
             try {
                 const resp = await fetch('/api/inventory');
                 if (!resp.ok) return;
                 const items = await resp.json();
                 window._inventoryItems = items;
-                const sel = document.getElementById('inventorySelect');
-                if (!sel) return;
-                sel.innerHTML = '<option value="">-- Select medicine from inventory --</option>' + items.map(i => `<option value="${i.id}">${i.brand_name} (Stock: ${i.stock})</option>`).join('');
+
+                // populate shared datalist for existing rows
+                const optionsHtml = (items || []).map(item => {
+                    const displayText = item.formula ? `${item.brand_name} (${item.formula})` : item.brand_name;
+                    return `<option value="${displayText}" data-id="${item.id}" data-brand="${item.brand_name}" data-formula="${item.formula || ''}" data-price="${item.price}" data-stock="${item.stock}">`;
+                }).join('');
+
+                let shared = document.getElementById('visitMedList-shared');
+                if (!shared) {
+                    shared = document.createElement('datalist');
+                    shared.id = 'visitMedList-shared';
+                    document.body.appendChild(shared);
+                }
+                shared.innerHTML = optionsHtml;
+
+                // also populate any per-row datalists if present
+                document.querySelectorAll('datalist[id^="visitMedList-"]').forEach(d => { d.innerHTML = optionsHtml; });
             } catch (e) {
                 console.error('Failed to load inventory', e);
             }
         }
 
-        function addSelectedInventory() {
-            const sel = document.getElementById('inventorySelect');
-            if (!sel) return;
-            const id = sel.value;
-            if (!id) return showToast('Please select a medicine first', 'error');
-            const item = (window._inventoryItems || []).find(i => String(i.id) === String(id));
-            if (!item) return showToast('Selected item not found', 'error');
+        // Add a medicine row with datalist-backed medicine field (like new-visit)
+        function addMedicineRow() {
             const container = document.getElementById('medList');
             const idx = container.children.length;
             const div = document.createElement('div');
             div.className = 'med-row';
             div.dataset.index = idx;
-            div.dataset.inventoryId = String(item.id);
-            div.style = 'display:flex; gap:8px; margin-bottom:6px;';
+            div.dataset.inventoryId = '';
+            div.style = '';
+
+            const optionsHtml = (window._inventoryItems || []).map(item => {
+                const displayText = item.formula ? `${item.brand_name} (${item.formula})` : item.brand_name;
+                return `<option value="${displayText}" data-id="${item.id}" data-brand="${item.brand_name}" data-formula="${item.formula || ''}" data-price="${item.price}" data-stock="${item.stock}">`;
+            }).join('');
+
             div.innerHTML = `
-                <input class="med-name" placeholder="Medicine name" value="${item.brand_name}" style="flex:1; padding:8px;">
-                <input class="med-dosage" placeholder="Dosage" style="width:140px; padding:8px;">
-                <input class="med-freq-times" type="number" min="1" max="9" value="1" title="Times per day" oninput="syncEditMedicineQuantity(this.closest('.med-row'))" onchange="syncEditMedicineQuantity(this.closest('.med-row'))" style="width:70px; padding:8px; text-align:center;">
-                <span style="align-self:center; color: var(--text-secondary);">×</span>
-                <input class="med-freq-days" type="number" min="1" max="99" value="1" title="Number of days" oninput="syncEditMedicineQuantity(this.closest('.med-row'))" onchange="syncEditMedicineQuantity(this.closest('.med-row'))" style="width:70px; padding:8px; text-align:center;">
-                <span style="align-self:center; color: var(--text-secondary);">=</span>
-                <input class="med-qty" type="number" min="1" value="1" readonly style="width:80px; padding:8px; text-align:center; background: var(--bg-surface);">
+                <div class="med-name-wrap">
+                    <input type="text" class="med-field1 med-input" list="visitMedList-${idx}" placeholder="Type brand name or formula..." onchange="selectVisitMedicine(this, ${idx})" oninput="filterVisitMedicines(this, ${idx})">
+                    <datalist id="visitMedList-${idx}">${optionsHtml}</datalist>
+                    <input type="hidden" class="med-id-hidden" value="">
+                    <div class="med-stock-info"></div>
+                </div>
+                <input class="med-field2 med-input" placeholder="Field 2">
+                <input class="med-field3 med-input" placeholder="Field 3">
+                <input class="med-field4 med-input med-qty" placeholder="Field 4">
                 <button type="button" class="btn btn-secondary" onclick="removeMedicineRow(this)"><i class="fas fa-trash"></i></button>
             `;
             container.appendChild(div);
-            syncEditMedicineQuantity(div);
         }
 
-        function getEditMedicineQuantity(row) {
-            if (!row) return 1;
-            const times = Math.max(1, parseInt(row.querySelector('.med-freq-times')?.value || '1', 10) || 1);
-            const days = Math.max(1, parseInt(row.querySelector('.med-freq-days')?.value || '1', 10) || 1);
-            return times * days;
-        }
-
-        function syncEditMedicineQuantity(row) {
+        // Select medicine from datalist in edit modal
+        function selectVisitMedicine(input, rowIdx) {
+            const value = (input.value || '').toLowerCase();
+            const item = (window._inventoryItems || []).find(i => {
+                const displayText = i.formula ? `${i.brand_name} (${i.formula})` : i.brand_name;
+                return i.brand_name.toLowerCase() === value || (i.formula && i.formula.toLowerCase() === value) || displayText.toLowerCase() === value;
+            });
+            const row = document.querySelector(`#medList .med-row[data-index='${rowIdx}']`);
             if (!row) return;
-            const quantity = row.querySelector('.med-qty');
-            if (!quantity) return;
-            quantity.value = getEditMedicineQuantity(row);
+            const hidden = row.querySelector('.med-id-hidden');
+            const stockInfo = row.querySelector('.med-stock-info');
+            if (item) {
+                hidden.value = item.id;
+                row.dataset.inventoryId = String(item.id);
+                if (stockInfo) {
+                    stockInfo.textContent = `Stock: ${item.stock ?? '-'} | Price: Rs. ${Number(item.price || 0).toFixed(2)}`;
+                }
+            } else {
+                if (hidden) hidden.value = '';
+                row.dataset.inventoryId = '';
+                if (stockInfo) stockInfo.textContent = '';
+            }
         }
 
-        function syncAllEditMedicineQuantities() {
-            document.querySelectorAll('#medList .med-row').forEach(syncEditMedicineQuantity);
+        function filterVisitMedicines(input, rowIdx) {
+            // datalist handles filtering; clear hidden id if text doesn't match
+            const value = (input.value || '').toLowerCase();
+            const item = (window._inventoryItems || []).find(i => {
+                const displayText = i.formula ? `${i.brand_name} (${i.formula})` : i.brand_name;
+                return i.brand_name.toLowerCase() === value || (i.formula && i.formula.toLowerCase() === value) || displayText.toLowerCase() === value;
+            });
+            const row = document.querySelector(`#medList .med-row[data-index='${rowIdx}']`);
+            if (!row) return;
+            const hidden = row.querySelector('.med-id-hidden');
+            const stockInfo = row.querySelector('.med-stock-info');
+            if (!item) {
+                if (hidden) hidden.value = '';
+                row.dataset.inventoryId = '';
+                if (stockInfo) stockInfo.textContent = '';
+            }
         }
+
+        
 
         function removeMedicineRow(btn) {
             const row = btn && btn.closest && btn.closest('.med-row');

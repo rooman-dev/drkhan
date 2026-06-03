@@ -1506,7 +1506,7 @@
             row.id = `medicine-${medicineCounter}`;
             row.innerHTML = `
                 <div style="flex: 2; min-width: 200px;">
-                    <input type="text" name="medicine_search" list="medicineList-${medicineCounter}" 
+                    <input type="text" name="medicine_search" class="med-field1" list="medicineList-${medicineCounter}" 
                         placeholder="Type brand name or formula..." 
                         onchange="selectMedicine(this, ${medicineCounter})" 
                         oninput="filterMedicines(this, ${medicineCounter})"
@@ -1519,34 +1519,15 @@
                     <small id="stockInfo-${medicineCounter}" style="color: var(--text-secondary); font-size: 11px;"></small>
                 </div>
                
-                <input type="number" name="freq_times" min="1" max="9" value="1" style="width: 60px; text-align: center;" title="Times per day" oninput="syncMedicineQuantity(this.closest('.medicine-item')); updateMedicineTotal()" onchange="syncMedicineQuantity(this.closest('.medicine-item')); updateMedicineTotal()">
-                <span class="freq-label">×</span>
-                <input type="number" name="freq_days" min="1" max="99" value="3" style="width: 60px; text-align: center;" title="Number of days" oninput="syncMedicineQuantity(this.closest('.medicine-item')); updateMedicineTotal()" onchange="syncMedicineQuantity(this.closest('.medicine-item')); updateMedicineTotal()">
-                <span class="freq-label">=</span>
-                <input type="number" name="quantity" min="1" value="1" readonly style="width: 72px; text-align: center; background: var(--bg-surface);" title="Auto-calculated quantity">
+                <input type="text" class="med-field2" placeholder="Field 2" style="width: 140px;">
+                <input type="text" class="med-field3" placeholder="Field 3" style="width: 140px;">
+                <input type="text" class="med-field4" placeholder="Field 4" style="width: 72px; text-align: center;">
                 <button type="button" class="btn-remove-medicine" onclick="removeMedicineRow(${medicineCounter})">
                     <i class="fas fa-trash"></i>
                 </button>
             `;
             medicineList.appendChild(row);
-            syncMedicineQuantity(row);
             updateMedicineTotal();
-        }
-
-        function getMedicineQuantity(row) {
-            if (!row) return 1;
-            const freqTimes = row.querySelector('input[name="freq_times"]');
-            const freqDays = row.querySelector('input[name="freq_days"]');
-            const times = Math.max(1, parseInt(freqTimes?.value || '1', 10) || 1);
-            const days = Math.max(1, parseInt(freqDays?.value || '1', 10) || 1);
-            return times * days;
-        }
-
-        function syncMedicineQuantity(row) {
-            if (!row) return;
-            const quantity = row.querySelector('input[name="quantity"]');
-            if (!quantity) return;
-            quantity.value = getMedicineQuantity(row);
         }
 
         // Select medicine from search - matches by brand name, formula, or display text
@@ -1601,16 +1582,15 @@
         function updateMedicineTotal() {
             let total = 0;
             const rows = document.querySelectorAll('.medicine-item');
-            
+
             rows.forEach(row => {
-                syncMedicineQuantity(row);
                 const hiddenInput = row.querySelector('input[name="medicine_id"]');
-                const quantity = row.querySelector('input[name="quantity"]');
-                
-                if (hiddenInput && hiddenInput.value && quantity.value) {
+                const customQty = row.querySelector('.med-field4') ? row.querySelector('.med-field4').value : null;
+                const qtyNum = parseFloat(String(customQty));
+                if (hiddenInput && hiddenInput.value && customQty && !isNaN(qtyNum)) {
                     const item = inventoryItems.find(i => i.id === parseInt(hiddenInput.value));
                     if (item) {
-                        total += item.price * parseInt(quantity.value);
+                        total += item.price * qtyNum;
                     }
                 }
             });
@@ -1626,33 +1606,27 @@
             const medicines = [];
             const rows = document.querySelectorAll('.medicine-item');
             rows.forEach(row => {
-                syncMedicineQuantity(row);
                 const hiddenInput = row.querySelector('input[name="medicine_id"]');
-                const searchInput = row.querySelector('input[name="medicine_search"]');
-                const quantity = row.querySelector('input[name="quantity"]');
-                const freqTimes = row.querySelector('input[name="freq_times"]');
-                const freqDays = row.querySelector('input[name="freq_days"]');
-                const manualName = (searchInput?.value || '').trim();
-                
-                if ((hiddenInput && hiddenInput.value) || manualName) {
+                const f1 = row.querySelector('.med-field1')?.value?.trim() || '';
+                const f2 = row.querySelector('.med-field2')?.value?.trim() || '';
+                const f3 = row.querySelector('.med-field3')?.value?.trim() || '';
+                const f4 = row.querySelector('.med-field4')?.value?.trim() || '';
+
+                if ((hiddenInput && hiddenInput.value) || f1) {
                     const item = hiddenInput && hiddenInput.value ? inventoryItems.find(i => i.id === parseInt(hiddenInput.value)) : null;
-                    const times = freqTimes ? freqTimes.value : '1';
-                    const days = freqDays ? freqDays.value : '3';
-                    const dosage = `${times}×${days} daily`;
-                    const timesInt = parseInt(times) || 1;
-                    const daysInt = parseInt(days) || 1;
-                    const finalQty = parseInt(quantity?.value || '') || (timesInt * daysInt);
+                    const qtyParsed = parseInt(f4, 10);
+                    const finalQty = !isNaN(qtyParsed) ? qtyParsed : (f4 || null);
 
                     medicines.push({
                         inventory_id: hiddenInput && hiddenInput.value ? parseInt(hiddenInput.value) : null,
-                        medicine_name: item?.brand_name || manualName || null,
+                        medicine_name: item?.brand_name || f1 || null,
                         quantity: finalQty,
                         base_quantity: 1,
-                        dosage: dosage,
+                        dosage: f2 || null,
                         price: item?.price || 0,
-                        freq_times: timesInt,
-                        freq_days: daysInt,
-                        duration: `${daysInt} days`
+                        freq_times: null,
+                        freq_days: null,
+                        duration: f3 || null
                     });
                 }
             });
@@ -1719,28 +1693,25 @@
             const rows = document.querySelectorAll('.medicine-item');
 
             rows.forEach((row) => {
-                syncMedicineQuantity(row);
                 const hiddenInput = row.querySelector('input[name="medicine_id"]');
-                const searchInput = row.querySelector('input[name="medicine_search"]');
-                const quantity = row.querySelector('input[name="quantity"]');
-                const freqTimes = row.querySelector('input[name="freq_times"]');
-                const freqDays = row.querySelector('input[name="freq_days"]');
-                const manualName = (searchInput?.value || '').trim();
+                const f1 = row.querySelector('.med-field1')?.value?.trim() || '';
+                const f2 = row.querySelector('.med-field2')?.value?.trim() || '';
+                const f3 = row.querySelector('.med-field3')?.value?.trim() || '';
+                const f4 = row.querySelector('.med-field4')?.value?.trim() || '';
 
-                if ((hiddenInput && hiddenInput.value) || manualName) {
+                if ((hiddenInput && hiddenInput.value) || f1) {
                     const item = hiddenInput && hiddenInput.value ? inventoryItems.find(i => i.id === parseInt(hiddenInput.value, 10)) : null;
-                    const times = parseInt(freqTimes?.value || '1', 10) || 1;
-                    const days = parseInt(freqDays?.value || '1', 10) || 1;
-                    const qty = parseInt(quantity?.value || String(times * days), 10) || (times * days);
-                    const medicineName = item?.brand_name || manualName || 'Medicine';
+                    const qtyParsed = parseInt(f4, 10);
+                    const qty = !isNaN(qtyParsed) ? qtyParsed : (f4 || null);
+                    const medicineName = item?.brand_name || f1 || 'Medicine';
                     medicines.push({
                         inventory_id: item?.id || null,
                         medicine_name: medicineName,
                         quantity: qty,
-                        dosage: `${times}×${days}`,
-                        freq_times: times,
-                        freq_days: days,
-                        duration: `${days} days`,
+                        dosage: f2 || null,
+                        freq_times: null,
+                        freq_days: null,
+                        duration: f3 || null,
                         price: item?.price || 0
                     });
                 }
@@ -1972,7 +1943,7 @@ Take care! 🤲
                                 <div style="margin-top: 10px; background: var(--bg-surface-2); border-radius: 8px; padding: 10px;">
                                     <strong style="color: var(--accent);">Prescription</strong>
                                     <ul style="margin: 8px 0 0 18px;">
-                                        ${visit.prescriptions.map(rx => `<li>${rx.medicine_name || ''} - Qty: ${rx.quantity || 1}${rx.dosage ? `, ${rx.dosage}` : ''}${rx.duration ? ` ${rx.duration}` : ''}</li>`).join('')}
+                                        ${visit.prescriptions.map(rx => `<li>${rx.medicine_name || ''}</li>`).join('')}
                                     </ul>
                                 </div>
                             ` : ''}
@@ -1994,9 +1965,6 @@ Take care! 🤲
                                 <tr style="background: var(--accent); color: var(--text-primary);">
                                     <th style="padding: 12px; text-align: left;">Date</th>
                                     <th style="padding: 12px; text-align: left;">Medicine</th>
-                                    <th style="padding: 12px; text-align: center;">Qty</th>
-                                    <th style="padding: 12px; text-align: left;">Dosage</th>
-                                    <th style="padding: 12px; text-align: left;">Duration</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2004,9 +1972,6 @@ Take care! 🤲
                                     <tr style="border-bottom: 1px solid var(--border-color);">
                                         <td style="padding: 10px;">${rx.date || ''}</td>
                                         <td style="padding: 10px; font-weight: 600;">${rx.medicine_name || ''}</td>
-                                        <td style="padding: 10px; text-align: center;">${rx.quantity ?? 1}</td>
-                                        <td style="padding: 10px;">${rx.dosage || '-'}</td>
-                                        <td style="padding: 10px;">${rx.duration || '-'}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
